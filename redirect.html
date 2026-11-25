@@ -16,10 +16,8 @@
     .mini-name { font-weight: 800; font-size: 18px; color: #000; display: block; }
     .mini-label { font-size: 12px; color: #64748b; font-weight: 500; }
     .icon { font-size: 40px; margin-bottom: 10px; }
-    h1 { font-size: 22px; margin-bottom: 12px; color: #000; font-weight: 800; margin-top: 0; }
+    h1 { font-size: 22px; margin-bottom: 36px; color: #000; font-weight: 800; margin-top: 0; }
     p { color: #666; line-height: 1.6; margin-bottom: 20px; font-size: 15px; }
-    .badge { background: #eb4d4b; color: white; padding: 4px 12px; border-radius: 8px; font-weight: bold; display: inline-flex; align-items: center; vertical-align: middle; }
-    .flag-circle { width: 18px; height: 18px; border-radius: 50%; object-fit: cover; margin-left: 8px; border: 1px solid rgba(255,255,255,0.3); }
     .btn { display: block; background: #1a73e8; color: white; padding: 18px; text-decoration: none; border-radius: 15px; font-weight: bold; font-size: 18px; transition: 0.2s; box-shadow: 0 4px 12px rgba(26,115,232,0.2); margin-bottom: 20px; cursor: pointer; }
     .btn:active { transform: scale(0.97); }
     .secondary-link { display: inline-block; color: #64748b; text-decoration: none; font-weight: 600; font-size: 14px; padding: 10px; transition: 0.2s; }
@@ -44,7 +42,6 @@
     </div>
     <div class="icon">📍</div>
     <h1>Нужно выключить VPN</h1>
-    <p id="region-row"></p>
     <p id="vpn-reason">Сайт доступен только для жителей <b>России</b>. Пожалуйста, отключите VPN и нажмите кнопку ниже.</p>
     <a href="javascript:location.reload();" class="btn">Я отключил VPN, продолжить</a>
     <a href="/mfo.html" class="secondary-link">← Назад</a>
@@ -90,7 +87,6 @@
       const domain = new URL(targetUrl).hostname;
       const fallbackIcon = 'https://google.com' + domain;
 
-      // Пробуем забрать карточку из /mfo.html, /mfo или /
       const pagesToTry = ['/mfo.html', '/mfo', '/'];
       for (const pageUrl of pagesToTry) {
         try {
@@ -118,29 +114,14 @@
         } catch (e) {}
       }
 
-      // Если страница витрины не распарсилась — ставим имя и иконку домена
       nameEl.innerText = slug.toUpperCase();
       logoImg.onerror = () => { logoImg.style.display = 'none'; };
       logoImg.src = fallbackIcon;
     }
 
-    function getFlagEmoji(countryCode) {
-      return countryCode.toUpperCase().replace(/./g, char => String.fromCodePoint(char.charCodeAt(0) + 127397));
-    }
-
-    async function showVpnBlock(reasonText, countryCode) {
+    async function showVpnBlock(reasonText) {
       await loadCardInfo(offerKey);
       document.title = 'Доступ ограничен';
-
-      const regionRow = document.getElementById('region-row');
-      if (countryCode) {
-        const code = countryCode.toLowerCase();
-        const emoji = getFlagEmoji(countryCode);
-        regionRow.innerHTML = `Ваш регион: <span class="badge">${countryCode}<img class="flag-circle" src="https://flagcdn.com{code}.png" onerror="this.onerror=function(){this.outerHTML='<span style=\\'margin-left:6px;font-size:16px\\'>${emoji}</span>'}; this.src='https://flagpedia.net{code}.png';"></span>`;
-        regionRow.classList.remove('hidden');
-      } else {
-        regionRow.classList.add('hidden');
-      }
 
       if (reasonText) {
         document.getElementById('vpn-reason').innerHTML = reasonText;
@@ -150,21 +131,18 @@
     }
 
     async function getCountryCode() {
-      // 1. Основной быстрый API (Cloudflare)
       try {
         const res1 = await fetch('https://country.is', { cache: 'no-store' });
         const data1 = await res1.json();
         if (data1 && data1.country) return data1.country.toUpperCase();
       } catch (e) {}
 
-      // 2. Резервный API, если первый недоступен
       try {
         const res2 = await fetch('https://ip2location.io', { cache: 'no-store' });
         const data2 = await res2.json();
         if (data2 && data2.country_code) return data2.country_code.toUpperCase();
       } catch (e) {}
 
-      // 3. Третий резервный API
       try {
         const res3 = await fetch('https://ipwho.is', { cache: 'no-store' });
         const data3 = await res3.json();
@@ -178,12 +156,12 @@
       const country = await getCountryCode();
 
       if (!country) {
-        await showVpnBlock('Не удалось проверить соединение. Отключите VPN или блокировщик рекламы и нажмите кнопку ниже.', null);
+        await showVpnBlock('Не удалось проверить соединение. Отключите VPN или блокировщик рекламы и нажмите кнопку ниже.');
         return;
       }
 
       if (country !== 'RU') {
-        await showVpnBlock(null, country);
+        await showVpnBlock(null);
         return;
       }
 
