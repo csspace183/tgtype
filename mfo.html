@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Микрозаймы</title>
+  <style>
+    :root { --vzo-orange: #ff6e00; --border-color: #e2e8f0; --text-dark: #1e293b; --text-muted: #64748b; }
+    body { font-family: -apple-system, system-ui, sans-serif; background: #f8fafc; margin: 0; padding: 0; color: var(--text-dark); }
+    .container { max-width: 1000px; margin: 0 auto; padding: 10px; }
+    .top-content { padding: 20px 5px; text-align: left; }
+    .top-content h1 { font-size: 28px; font-weight: 800; margin: 0; color: #000; }
+    .top-content p { font-size: 15px; color: var(--text-muted); margin: 8px 0 15px 0; max-width: 600px; }
+    .offers-count { display: block; font-weight: 800; color: #000; font-size: 16px; margin-bottom: 10px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(165px, 1fr)); gap: 12px; }
+    @media (min-width: 768px) { .grid { grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 20px; } }
+    .card { background: #fff; border-radius: 12px; padding: 15px 12px; display: flex; flex-direction: column; border: 1px solid var(--border-color); box-sizing: border-box; }
+    .card-header { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+    .mfo-logo { width: 32px; height: 32px; border-radius: 6px; object-fit: contain; flex-shrink: 0; }
+    .logo-name { font-size: 12px; font-weight: 800; text-transform: uppercase; color: #000; line-height: 1.1; }
+    .props-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; flex-grow: 1; }
+    .item { display: flex; flex-direction: column; padding-bottom: 4px; border-bottom: 1px solid #f1f5f9; }
+    .item:last-child { border-bottom: none; }
+    .label { font-size: 9px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; }
+    .value { font-size: 12px; font-weight: 700; color: #111; }
+    .btn { background: var(--vzo-orange); color: white; text-align: center; padding: 12px 2px; text-decoration: none; border-radius: 8px; font-weight: 700; font-size: 14px; margin-top: auto; transition: 0.2s; cursor: pointer; }
+    .btn:hover { filter: brightness(0.85); }
+    footer { text-align: center; padding: 40px 20px; margin-top: 20px; border-top: 1px solid var(--border-color); }
+    .home-link { color: var(--text-muted); text-decoration: none; font-weight: 600; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="top-content">
+      <h1>Микрозаймы</h1>
+      <p>Выбирайте подходящие микрозаймы и оформляйте заявку для получения денег на карту онлайн</p>
+      <span class="offers-count"><span id="total-offers">0</span> предложений:</span>
+    </div>
+    <div class="grid">
+      <div class="card">
+        <div class="card-header"><img src="https://favicon.yandex.net/favicon/v2/https://www.zaymer.ru/?size=32" class="mfo-logo"><div class="logo-name">Займер</div></div>
+        <div class="props-list">
+          <div class="item"><span class="label">Сумма</span><span class="value">до 35 000 ₽</span></div>
+          <div class="item"><span class="label">Срок</span><span class="value">до 30 дней</span></div>
+          <div class="item"><span class="label">Срок без %</span><span class="value">30 дней</span></div>
+          <div class="item"><span class="label">Ставка</span><span class="value">0.8%</span></div>
+          <div class="item"><span class="label">Возраст</span><span class="value">от 18 лет</span></div>
+        </div>
+        <a href="/zaymer" class="btn">Получить</a>
+      </div>
+      <div class="card">
+        <div class="card-header"><img src="https://favicon.yandex.net/favicon/v2/https://moneyman.ru/?size=32" class="mfo-logo"><div class="logo-name">Moneyman</div></div>
+        <div class="props-list">
+          <div class="item"><span class="label">Сумма</span><span class="value">до 30 000 ₽</span></div>
+          <div class="item"><span class="label">Срок</span><span class="value">до 30 дней</span></div>
+          <div class="item"><span class="label">Срок без %</span><span class="value">21 день</span></div>
+          <div class="item"><span class="label">Ставка</span><span class="value">0.8%</span></div>
+          <div class="item"><span class="label">Возраст</span><span class="value">от 20 лет</span></div>
+        </div>
+        <a href="/moneyman" class="btn">Получить</a>
+      </div>
+      <div class="card">
+        <div class="card-header"><img src="https://favicon.yandex.net/favicon/v2/https://web-zaim.ru/?size=32" class="mfo-logo"><div class="logo-name">Web-Zaim</div></div>
+        <div class="props-list">
+          <div class="item"><span class="label">Сумма</span><span class="value">до 30 000 ₽</span></div>
+          <div class="item"><span class="label">Срок</span><span class="value">до 30 дней</span></div>
+          <div class="item"><span class="label">Срок без %</span><span class="value">14 дней</span></div>
+          <div class="item"><span class="label">Ставка</span><span class="value">0.8%</span></div>
+          <div class="item"><span class="label">Возраст</span><span class="value">от 18 лет</span></div>
+        </div>
+        <a href="/web-zaim" class="btn">Получить</a>
+      </div>
+      <div class="card">
+        <div class="card-header"><img src="https://favicon.yandex.net/favicon/v2/https://ekapusta.com/?size=32" class="mfo-logo"><div class="logo-name">еКапуста</div></div>
+        <div class="props-list">
+          <div class="item"><span class="label">Сумма</span><span class="value">до 30 000 ₽</span></div>
+          <div class="item"><span class="label">Срок</span><span class="value">до 21 дня</span></div>
+          <div class="item"><span class="label">Срок без %</span><span class="value">21 день</span></div>
+          <div class="item"><span class="label">Ставка</span><span class="value">0.8%</span></div>
+          <div class="item"><span class="label">Возраст</span><span class="value">от 18 лет</span></div>
+        </div>
+        <a href="/ekapusta" class="btn">Получить</a>
+      </div>
+      <div class="card">
+        <div class="card-header"><img src="https://favicon.yandex.net/favicon/v2/https://joymoney.ru/?size=32" class="mfo-logo"><div class="logo-name">JoyMoney</div></div>
+        <div class="props-list">
+          <div class="item"><span class="label">Сумма</span><span class="value">до 29 000 ₽</span></div>
+          <div class="item"><span class="label">Срок</span><span class="value">до 30 дней</span></div>
+          <div class="item"><span class="label">Срок без %</span><span class="value">нет</span></div>
+          <div class="item"><span class="label">Ставка</span><span class="value">0.8%</span></div>
+          <div class="item"><span class="label">Возраст</span><span class="value">от 21 года</span></div>
+        </div>
+        <a href="/joymoney" class="btn">Получить</a>
+      </div>
+      <div class="card">
+        <div class="card-header"><img src="https://favicon.yandex.net/favicon/v2/https://dozarplati.com/?size=32" class="mfo-logo"><div class="logo-name">До Зарплаты</div></div>
+        <div class="props-list">
+          <div class="item"><span class="label">Сумма</span><span class="value">до 100 000 ₽</span></div>
+          <div class="item"><span class="label">Срок</span><span class="value">до 12 мес.</span></div>
+          <div class="item"><span class="label">Срок без %</span><span class="value">нет</span></div>
+          <div class="item"><span class="label">Ставка</span><span class="value">0.8%</span></div>
+          <div class="item"><span class="label">Возраст</span><span class="value">от 18 лет</span></div>
+        </div>
+        <a href="/dozarplati" class="btn">Получить</a>
+      </div>
+      <div class="card">
+        <div class="card-header"><img src="https://favicon.yandex.net/favicon/v2/https://finfive.ru/?size=32" class="mfo-logo"><div class="logo-name">Finfive</div></div>
+        <div class="props-list">
+          <div class="item"><span class="label">Сумма</span><span class="value">до 30 000 ₽</span></div>
+          <div class="item"><span class="label">Срок</span><span class="value">до 30 дней</span></div>
+          <div class="item"><span class="label">Срок без %</span><span class="value">нет</span></div>
+          <div class="item"><span class="label">Ставка</span><span class="value">0.8%</span></div>
+          <div class="item"><span class="label">Возраст</span><span class="value">от 18 лет</span></div>
+        </div>
+        <a href="/finfive" class="btn">Получить</a>
+      </div>
+      <div class="card">
+        <div class="card-header"><img src="https://favicon.yandex.net/favicon/v2/https://smartcash.ru/?size=32" class="mfo-logo"><div class="logo-name">Умные наличные</div></div>
+        <div class="props-list">
+          <div class="item"><span class="label">Сумма</span><span class="value">до 30 000 ₽</span></div>
+          <div class="item"><span class="label">Срок</span><span class="value">до 30 дней</span></div>
+          <div class="item"><span class="label">Срок без %</span><span class="value">нет</span></div>
+          <div class="item"><span class="label">Ставка</span><span class="value">0.8%</span></div>
+          <div class="item"><span class="label">Возраст</span><span class="value">от 18 лет</span></div>
+        </div>
+        <a href="/smartcash" class="btn">Получить</a>
+      </div>
+      <div class="card">
+        <div class="card-header"><img src="https://favicon.yandex.net/favicon/v2/https://turbozaim.ru/?size=32" class="mfo-logo"><div class="logo-name">Турбозайм</div></div>
+        <div class="props-list">
+          <div class="item"><span class="label">Сумма</span><span class="value">до 50 000 ₽</span></div>
+          <div class="item"><span class="label">Срок</span><span class="value">до 30 дней</span></div>
+          <div class="item"><span class="label">Срок без %</span><span class="value">нет</span></div>
+          <div class="item"><span class="label">Ставка</span><span class="value">0.8%</span></div>
+          <div class="item"><span class="label">Возраст</span><span class="value">от 21 года</span></div>
+        </div>
+        <a href="/turbozaim" class="btn">Получить</a>
+      </div>
+      <div class="card">
+        <div class="card-header"><img src="https://favicon.yandex.net/favicon/v2/https://srochnodengi.ru/?size=32" class="mfo-logo"><div class="logo-name">СрочноДеньги</div></div>
+        <div class="props-list">
+          <div class="item"><span class="label">Сумма</span><span class="value">до 100 000 ₽</span></div>
+          <div class="item"><span class="label">Срок</span><span class="value">до 180 дней</span></div>
+          <div class="item"><span class="label">Срок без %</span><span class="value">10 дней</span></div>
+          <div class="item"><span class="label">Ставка</span><span class="value">0.8%</span></div>
+          <div class="item"><span class="label">Возраст</span><span class="value">от 18 лет</span></div>
+        </div>
+        <a href="/srochnodengi" class="btn">Получить</a>
+      </div>
+      <div class="card">
+        <div class="card-header"><img src="https://favicon.yandex.net/favicon/v2/https://dengisrazy.ru/?size=32" class="mfo-logo"><div class="logo-name">Деньги сразу</div></div>
+        <div class="props-list">
+          <div class="item"><span class="label">Сумма</span><span class="value">до 100 000 ₽</span></div>
+          <div class="item"><span class="label">Срок</span><span class="value">до 1
