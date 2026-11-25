@@ -12,7 +12,6 @@
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     h2 { font-size: 18px; margin: 0 0 10px; }
     p { font-size: 14px; color: #64748b; margin: 0 0 20px; line-height: 1.4; }
-    .country-badge { display: inline-block; background: #fee2e2; color: #b91c1c; font-weight: 700; padding: 4px 10px; border-radius: 6px; font-size: 13px; margin-bottom: 15px; }
     .btn { display: inline-block; background: #ff6e00; color: #fff; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 14px; border: none; cursor: pointer; }
     .hidden { display: none; }
   </style>
@@ -26,9 +25,8 @@
   </div>
 
   <div class="box hidden" id="vpn-box">
-    <h2>⚠️ Отключите VPN</h2>
-    <div class="country-badge" id="country-info">Ваша страна: неизвестно</div>
-    <p>Для оформления займа необходим российский IP-адрес (RU). Отключите VPN и нажмите кнопку ниже.</p>
+    <h2>⚠️ Отключите VPN или Прокси</h2>
+    <p id="vpn-reason">Для оформления займа необходим российский IP-адрес без использования VPN. Отключите его и попробуйте снова.</p>
     <button class="btn" onclick="location.reload()">Я отключил VPN, продолжить</button>
   </div>
 
@@ -63,48 +61,58 @@
     if (!targetUrl) {
       window.location.replace('/');
     } else {
-      checkCountry();
+      checkVpnAndRedirect();
     }
 
-    function showVpnBlock(countryCode) {
-      const badge = document.getElementById('country-info');
-      badge.innerText = countryCode ? ('Ваша страна: ' + countryCode) : 'Не удалось определить страну';
+    function showVpnBlock(reasonText) {
+      if (reasonText) {
+        document.getElementById('vpn-reason').innerText = reasonText;
+      }
       document.getElementById('loader-box').classList.add('hidden');
       document.getElementById('vpn-box').classList.remove('hidden');
     }
 
-    async function checkCountry() {
-      let country = null;
-
-      // 1. Основной запрос через api.country.is (работает на базе Cloudflare, доступен в РФ)
+    async function getCountryCode() {
+      // 1. Основной быстрый API (Cloudflare)
       try {
-        const res = await fetch('https://country.is', { cache: 'no-store' });
-        const data = await res.json();
-        if (data && data.country) {
-          country = data.country.toUpperCase();
-        }
+        const res1 = await fetch('https://country.is', { cache: 'no-store' });
+        const data1 = await res1.json();
+        if (data1 && data1.country) return data1.country.toUpperCase();
       } catch (e) {}
 
-      // 2. Запасной запрос напрямую в Cloudflare trace, если первый не ответил
-      if (!country) {
-        try {
-          const res2 = await fetch('https://cloudflare.com', { cache: 'no-store' });
-          const text = await res2.text();
-          const match = text.match(/loc=([A-Z]{2})/);
-          if (match) country = match;
-        } catch (e) {}
-      }
+      // 2. Резервный API, если первый недоступен
+      try {
+        const res2 = await fetch('https://ip2location.io', { cache: 'no-store' });
+        const data2 = await res2.json();
+        if (data2 && data2.country_code) return data2.country_code.toUpperCase();
+      } catch (e) {}
 
+      // 3. Третий резервный API
+      try {
+        const res3 = await fetch('https://ipwho.is', { cache: 'no-store' });
+        const data3 = await res3.json();
+        if (data3 && data3.country_code) return data3.country_code.toUpperCase();
+      } catch (e) {}
+
+      return null;
+    }
+
+    async function checkVpnAndRedirect() {
+      const country = await getCountryCode();
+
+      // Если ни один сервис не ответил (например, жесткий блокировщик рекламы)
       if (!country) {
-        showVpnBlock(null);
+        showVpnBlock('Не удалось проверить соединение. Отключите VPN или блокировщик рекламы и нажмите кнопку ниже.');
         return;
       }
 
+      // Если IP не российский (включен зарубежный VPN)
       if (country !== 'RU') {
-        showVpnBlock(country);
+        showVpnBlock();
         return;
       }
 
+      // IP российский — пропускаем на сайт
       window.location.replace(targetUrl);
     }
   </script>
