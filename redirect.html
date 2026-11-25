@@ -35,7 +35,7 @@
   </div>
 
   <div class="box hidden" id="vpn-box">
-    <div class="mini-card">
+    <div class="mini-card" id="mini-card">
       <img id="mfo-logo" src="" class="mini-logo" onerror="this.style.display='none'">
       <div class="mini-info">
         <span class="mini-label">Вы переходите в:</span>
@@ -47,51 +47,76 @@
     <p id="region-row">Ваш регион: <span class="badge"><span id="country-code"></span><img id="country-flag" class="flag-circle" src="" onerror="this.style.display='none'"></span></p>
     <p id="vpn-reason">Сайт доступен только для жителей <b>России</b>. Пожалуйста, отключите VPN и нажмите кнопку ниже.</p>
     <a href="javascript:location.reload();" class="btn">Я отключил VPN, продолжить</a>
-    <a href="/" class="secondary-link">← Назад</a>
+    <a href="/mfo.html" class="secondary-link">← Назад</a>
   </div>
 
   <script>
     const OFFERS = {
-      'zaymer': { name: 'Займер', logo: 'https://yandex.net', url: 'https://zaymer.ru' },
-      'moneyman': { name: 'Moneyman', logo: 'https://yandex.net', url: 'https://moneyman.ru' },
-      'web-zaim': { name: 'Web-Zaim', logo: 'https://yandex.net', url: 'https://web-zaim.ru' },
-      'ekapusta': { name: 'еКапуста', logo: 'https://yandex.net', url: 'https://ekapusta.com' },
-      'joymoney': { name: 'JoyMoney', logo: 'https://yandex.net', url: 'https://joymoney.ru' },
-      'dozarplati': { name: 'До Зарплаты', logo: 'https://yandex.net', url: 'https://dozarplati.com' },
-      'finfive': { name: 'Finfive', logo: 'https://yandex.net', url: 'https://finfive.ru' },
-      'smartcash': { name: 'Умные наличные', logo: 'https://yandex.net', url: 'https://smartcash.ru' },
-      'turbozaim': { name: 'Турбозайм', logo: 'https://yandex.net', url: 'https://turbozaim.ru' },
-      'srochnodengi': { name: 'СрочноДеньги', logo: 'https://yandex.net', url: 'https://srochnodengi.ru' },
-      'dengisrazy': { name: 'Деньги сразу', logo: 'https://yandex.net', url: 'https://dengisrazy.ru' },
-      'skelamoney': { name: 'Скела мани', logo: 'https://ibb.co', url: 'https://skelamoney.ru' },
-      'dobrozaim': { name: 'Доброзайм', logo: 'https://yandex.net', url: 'https://dobrozaim.ru' },
-      'finters': { name: 'Finters', logo: 'https://ibb.co', url: 'https://finters.ru' },
-      'denga': { name: 'Деньга', logo: 'https://ibb.co', url: 'https://denga.ru' },
-      'privetsosed': { name: 'Привет, сосед!', logo: 'https://ibb.co', url: 'https://privetsosed.ru' },
-      'beriberu': { name: 'Бери-Беру', logo: 'https://ibb.co', url: 'https://beriberu.ru' },
-      'krediska': { name: 'Krediska', logo: 'https://yandex.net', url: 'https://krediska.ru' },
-      'webbankir': { name: 'ВЭББАНКИР', logo: 'https://yandex.net', url: 'https://webbankir.com' },
-      'credit7': { name: 'credit7', logo: 'https://yandex.net', url: 'https://credit7.ru' }
+      'zaymer': 'https://zaymer.ru',
+      'moneyman': 'https://moneyman.ru',
+      'web-zaim': 'https://web-zaim.ru',
+      'ekapusta': 'https://ekapusta.com',
+      'joymoney': 'https://joymoney.ru',
+      'dozarplati': 'https://dozarplati.com',
+      'finfive': 'https://finfive.ru',
+      'smartcash': 'https://smartcash.ru',
+      'turbozaim': 'https://turbozaim.ru',
+      'srochnodengi': 'https://srochnodengi.ru',
+      'dengisrazy': 'https://dengisrazy.ru',
+      'skelamoney': 'https://skelamoney.ru',
+      'dobrozaim': 'https://dobrozaim.ru',
+      'finters': 'https://finters.ru',
+      'denga': 'https://denga.ru',
+      'privetsosed': 'https://privetsosed.ru',
+      'beriberu': 'https://beriberu.ru',
+      'krediska': 'https://krediska.ru',
+      'webbankir': 'https://webbankir.com',
+      'credit7': 'https://credit7.ru'
     };
 
     const params = new URLSearchParams(window.location.search);
     const offerKey = params.get('offer');
-    const item = OFFERS[offerKey];
+    const targetUrl = OFFERS[offerKey];
 
-    if (!item) {
-      window.location.replace('/');
+    if (!targetUrl) {
+      window.location.replace('/mfo.html');
     } else {
-      document.title = 'Доступ ограничен';
-      document.getElementById('mfo-name').innerText = item.name;
-      document.getElementById('mfo-logo').src = item.logo;
       checkVpnAndRedirect();
     }
 
-    function showVpnBlock(reasonText, countryCode) {
+    // Автоматически подтягиваем логотип и название карточки из mfo.html
+    async function loadCardInfoFromMfoHtml(slug) {
+      try {
+        const res = await fetch('/mfo.html', { cache: 'no-store' });
+        const html = await res.text();
+        const doc = new DOMParser().parseFromString(html, 'text/html');
+        const link = doc.querySelector(`a[href="/${slug}"], a[href="${slug}"]`);
+        if (link) {
+          const card = link.closest('.card');
+          if (card) {
+            const nameEl = card.querySelector('.logo-name');
+            const logoEl = card.querySelector('.mfo-logo');
+            if (nameEl) document.getElementById('mfo-name').innerText = nameEl.innerText.trim();
+            if (logoEl && logoEl.getAttribute('src')) {
+              document.getElementById('mfo-logo').src = logoEl.getAttribute('src');
+            }
+            return;
+          }
+        }
+      } catch (e) {}
+      // Если вдруг не нашлось в mfo.html — просто ставим ключ заглавными
+      document.getElementById('mfo-name').innerText = slug.toUpperCase();
+      document.getElementById('mfo-logo').style.display = 'none';
+    }
+
+    async function showVpnBlock(reasonText, countryCode) {
+      await loadCardInfoFromMfoHtml(offerKey);
+      document.title = 'Доступ ограничен';
+
       const regionRow = document.getElementById('region-row');
       if (countryCode) {
         document.getElementById('country-code').innerText = countryCode;
-        document.getElementById('country-flag').src = 'https://flagcdn.com/w80/' + countryCode.toLowerCase() + '.png';
+        document.getElementById('country-flag').src = 'https://flagcdn.com' + countryCode.toLowerCase() + '.png';
         regionRow.classList.remove('hidden');
       } else {
         regionRow.classList.add('hidden');
@@ -133,16 +158,16 @@
       const country = await getCountryCode();
 
       if (!country) {
-        showVpnBlock('Не удалось проверить соединение. Отключите VPN или блокировщик рекламы и нажмите кнопку ниже.', null);
+        await showVpnBlock('Не удалось проверить соединение. Отключите VPN или блокировщик рекламы и нажмите кнопку ниже.', null);
         return;
       }
 
       if (country !== 'RU') {
-        showVpnBlock(null, country);
+        await showVpnBlock(null, country);
         return;
       }
 
-      window.location.replace(item.url);
+      window.location.replace(targetUrl);
     }
   </script>
 </body>
