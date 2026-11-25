@@ -72,32 +72,48 @@
       document.getElementById('vpn-box').classList.remove('hidden');
     }
 
-    async function checkVpnAndRedirect() {
+    async function getCountryCode() {
+      // 1. Основной быстрый API (Cloudflare)
       try {
-        const res = await fetch('https://country.is', { cache: 'no-store' });
-        const data = await res.json();
+        const res1 = await fetch('https://country.is', { cache: 'no-store' });
+        const data1 = await res1.json();
+        if (data1 && data1.country) return data1.country.toUpperCase();
+      } catch (e) {}
 
-        if (!data || !data.country || data.country !== 'RU') {
-          showVpnBlock();
-          return;
-        }
+      // 2. Резервный API, если первый недоступен
+      try {
+        const res2 = await fetch('https://ip2location.io', { cache: 'no-store' });
+        const data2 = await res2.json();
+        if (data2 && data2.country_code) return data2.country_code.toUpperCase();
+      } catch (e) {}
 
-        try {
-          const secRes = await fetch('https://ipwho.is', { cache: 'no-store' });
-          const secData = await secRes.json();
-          if (secData.success && secData.security) {
-            if (secData.security.vpn || secData.security.proxy || secData.security.tor || secData.security.hosting) {
-              showVpnBlock();
-              return;
-            }
-          }
-        } catch (ignored) {}
+      // 3. Третий резервный API
+      try {
+        const res3 = await fetch('https://ipwho.is', { cache: 'no-store' });
+        const data3 = await res3.json();
+        if (data3 && data3.country_code) return data3.country_code.toUpperCase();
+      } catch (e) {}
 
-        window.location.replace(targetUrl);
+      return null;
+    }
 
-      } catch (e) {
+    async function checkVpnAndRedirect() {
+      const country = await getCountryCode();
+
+      // Если ни один сервис не ответил (например, жесткий блокировщик рекламы)
+      if (!country) {
         showVpnBlock('Не удалось проверить соединение. Отключите VPN или блокировщик рекламы и нажмите кнопку ниже.');
+        return;
       }
+
+      // Если IP не российский (включен зарубежный VPN)
+      if (country !== 'RU') {
+        showVpnBlock();
+        return;
+      }
+
+      // IP российский — пропускаем на сайт
+      window.location.replace(targetUrl);
     }
   </script>
 </body>
