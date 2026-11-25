@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Переход на сайт...</title>
+  <style>
+    body { font-family: -apple-system, system-ui, sans-serif; background: #f8fafc; color: #1e293b; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; padding: 20px; text-align: center; }
+    .box { background: #fff; padding: 30px 25px; border-radius: 16px; border: 1px solid #e2e8f0; max-width: 400px; width: 100%; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+    .spinner { width: 40px; height: 40px; border: 4px solid #f1f5f9; border-top: 4px solid #ff6e00; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 15px; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    h2 { font-size: 18px; margin: 0 0 10px; }
+    p { font-size: 14px; color: #64748b; margin: 0 0 20px; line-height: 1.4; }
+    .btn { display: inline-block; background: #ff6e00; color: #fff; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 14px; border: none; cursor: pointer; }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+
+  <!-- Экран загрузки -->
+  <div class="box" id="loader-box">
+    <div class="spinner"></div>
+    <h2>Проверяем соединение...</h2>
+    <p>Пожалуйста, подождите пару секунд, идет перенаправление на сайт.</p>
+  </div>
+
+  <!-- Экран блокировки при включенном VPN -->
+  <div class="box hidden" id="vpn-box">
+    <h2>⚠️ Обнаружен VPN или Прокси</h2>
+    <p>Для корректного оформления заявки и одобрения займа отключите VPN, затем нажмите кнопку ниже.</p>
+    <button class="btn" onclick="location.reload()">Я отключил VPN, продолжить</button>
+  </div>
+
+  <script>
+    // ВПИШИ СВОИ ПАРТНЕРСКИЕ ССЫЛКИ НИЖЕ:
+    const OFFERS = {
+      'zaymer': 'https://zaymer.ru',
+      'moneyman': 'https://moneyman.ru',
+      'web-zaim': 'https://web-zaim.ru',
+      'ekapusta': 'https://ekapusta.com',
+      'joymoney': 'https://joymoney.ru',
+      'dozarplati': 'https://dozarplati.com',
+      'finfive': 'https://finfive.ru',
+      'smartcash': 'https://smartcash.ru',
+      'turbozaim': 'https://turbozaim.ru',
+      'srochnodengi': 'https://srochnodengi.ru',
+      'dengisrazy': 'https://dengisrazy.ru',
+      'skelamoney': 'https://skelamoney.ru',
+      'dobrozaim': 'https://dobrozaim.ru',
+      'finters': 'https://finters.ru',
+      'denga': 'https://denga.ru',
+      'privetsosed': 'https://privetsosed.ru',
+      'beriberu': 'https://beriberu.ru',
+      'krediska': 'https://krediska.ru',
+      'webbankir': 'https://webbankir.com',
+      'credit7': 'https://credit7.ru'
+    };
+
+    const params = new URLSearchParams(window.location.search);
+    const offerKey = params.get('offer');
+    const targetUrl = OFFERS[offerKey];
+
+    // Если оффер не найден — возвращаем на главную
+    if (!targetUrl) {
+      window.location.replace('/');
+    } else {
+      checkVpnAndRedirect();
+    }
+
+    async function checkVpnAndRedirect() {
+      try {
+        // Проверка IP на VPN, Proxy, Tor и хостинг-серверы
+        const response = await fetch('https://ipapi.is');
+        const data = await response.json();
+
+        const isVpn = data.is_vpn || data.is_proxy || data.is_tor || data.is_datacenter;
+
+        if (isVpn) {
+          document.getElementById('loader-box').classList.add('hidden');
+          document.getElementById('vpn-box').classList.remove('hidden');
+        } else {
+          window.location.replace(targetUrl);
+        }
+      } catch (error) {
+        // Если API проверки недоступно (например, блокировщик рекламы), все равно пропускаем клиента
+        window.location.replace(targetUrl);
+      }
+    }
+  </script>
+</body>
+</html>
