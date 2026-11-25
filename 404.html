@@ -1,0 +1,17 @@
+html
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <script>
+    // Берем название МФО из URL (например, "zaymer" из "/zaymer")
+    const path = window.location.pathname.replace(/^\/|\/$/g, '').toLowerCase();
+    if (path) {
+      window.location.replace('/redirect.html?offer=' + encodeURIComponent(path));
+    } else {
+      window.location.replace('/');
+    }
+  </script>
+</head>
+<body></body>
+</html>
