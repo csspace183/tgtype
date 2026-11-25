@@ -42,13 +42,13 @@
         <span class="mini-name" id="mfo-name"></span>
       </div>
     </div>
-    <div class="icon">📍</div>
-    <h1>Нужно выключить VPN</h1>
-    <p id="region-row">Ваш регион: <span class="badge"><span id="country-code"></span><img id="country-flag" class="flag-circle" src="" referrerpolicy="no-referrer"></span></p>
-    <p id="vpn-reason">Сайт доступен только для жителей <b>России</b>. Пожалуйста, отключите VPN и нажмите кнопку ниже.</p>
-    <a href="javascript:location.reload();" class="btn">Я отключил VPN, продолжить</a>
-    <a href="/mfo.html" class="secondary-link">← Назад</a>
-  </div>
+     <div class="icon">📍</div>
+              <h1>Нужно выключить VPN</h1>
+              <p>Ваш регион: <span class="badge">${country}<img class="flag-circle" src="https://flagcdn.com/w80/${country.toLowerCase()}.png" onerror="this.style.display='none'"></span></p>
+              <p>Сайт доступен только для жителей <b>России</b>. Пожалуйста, отключите VPN и нажмите кнопку ниже.</p>
+              <a href="javascript:location.reload();" class="btn">Я отключил VPN, продолжить</a>
+              <a href="${item.back}" class="secondary-link">← Назад</a>
+            </div>
 
   <script>
     const OFFERS = {
