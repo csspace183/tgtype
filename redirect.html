@@ -12,6 +12,7 @@
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     h2 { font-size: 18px; margin: 0 0 10px; }
     p { font-size: 14px; color: #64748b; margin: 0 0 20px; line-height: 1.4; }
+    .country-badge { display: inline-block; background: #fee2e2; color: #b91c1c; font-weight: 700; padding: 4px 10px; border-radius: 6px; font-size: 13px; margin-bottom: 15px; }
     .btn { display: inline-block; background: #ff6e00; color: #fff; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 14px; border: none; cursor: pointer; }
     .hidden { display: none; }
   </style>
@@ -26,6 +27,7 @@
 
   <div class="box hidden" id="vpn-box">
     <h2>⚠️ Отключите VPN или Прокси</h2>
+    <div class="country-badge hidden" id="country-badge"></div>
     <p id="vpn-reason">Для оформления займа необходим российский IP-адрес без использования VPN. Отключите его и попробуйте снова.</p>
     <button class="btn" onclick="location.reload()">Я отключил VPN, продолжить</button>
   </div>
@@ -64,7 +66,15 @@
       checkVpnAndRedirect();
     }
 
-    function showVpnBlock(reasonText) {
+    function showVpnBlock(reasonText, countryCode) {
+      const badge = document.getElementById('country-badge');
+      if (countryCode) {
+        badge.innerText = 'Ваша страна: ' + countryCode;
+        badge.classList.remove('hidden');
+      } else {
+        badge.classList.add('hidden');
+      }
+
       if (reasonText) {
         document.getElementById('vpn-reason').innerText = reasonText;
       }
@@ -100,15 +110,15 @@
     async function checkVpnAndRedirect() {
       const country = await getCountryCode();
 
-      // Если ни один сервис не ответил (например, жесткий блокировщик рекламы)
+      // Если ни один сервис не ответил
       if (!country) {
-        showVpnBlock('Не удалось проверить соединение. Отключите VPN или блокировщик рекламы и нажмите кнопку ниже.');
+        showVpnBlock('Не удалось проверить соединение. Отключите VPN или блокировщик рекламы и нажмите кнопку ниже.', null);
         return;
       }
 
-      // Если IP не российский (включен зарубежный VPN)
+      // Если IP не российский — показываем страну и просим отключить VPN
       if (country !== 'RU') {
-        showVpnBlock();
+        showVpnBlock(null, country);
         return;
       }
 
