@@ -541,6 +541,8 @@
       titleEl.contentEditable = canEdit;
       storyEl.contentEditable = canEdit;
       toolbar.style.display = canEdit ? 'flex' : 'none';
+      // Админ может редактировать строку под заголовком как обычный текст
+      metaInfoEl.contentEditable = (canEdit && currentUser && isAdmin(currentUser));
     }
 
     function slugify(text) {
