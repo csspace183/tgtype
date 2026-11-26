@@ -2,261 +2,94 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>MFO1.Click — Финансовый маркетплейс</title>
-  <style id="page-styles">
-    body { font-family: -apple-system, system-ui, sans-serif; background: #f8fafc; margin: 0; display: flex; align-items: center; justify-content: center; min-height: 100vh; color: #1e293b; }
-    .container { width: 100%; max-width: 500px; padding: 20px; box-sizing: border-box; text-align: center; }
-    h1 { font-size: 32px; font-weight: 800; margin-bottom: 10px; color: #000; }
-    p { color: #64748b; margin-bottom: 30px; font-size: 16px; }
-    .menu { display: flex; flex-direction: column; gap: 15px; }
-    .menu-btn {
-      display: flex; align-items: center; justify-content: space-between;
-      background: #fff; padding: 20px; border-radius: 16px;
-      text-decoration: none; color: #000; font-weight: 700; font-size: 18px;
-      border: 1px solid #e2e8f0; transition: 0.2s;
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Пошаговая инструкция</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      color: #222;
+      background: #fff;
+      line-height: 1.65;
+      margin: 0;
+      padding: 24px 16px 60px;
     }
-    .menu-btn:hover { filter: brightness(0.95); border-color: #ff6e00; }
-    .menu-btn span { background: #ff6e00; color: white; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 20px; }
+    .article {
+      max-width: 680px;
+      margin: 0 auto;
+    }
+    h1 {
+      font-size: 28px;
+      line-height: 1.25;
+      margin-bottom: 8px;
+      font-weight: 700;
+    }
+    .meta {
+      color: #888;
+      font-size: 14px;
+      margin-bottom: 28px;
+    }
+    p {
+      font-size: 17px;
+      margin: 16px 0;
+    }
+    img {
+      max-width: 100%;
+      border-radius: 8px;
+      margin: 16px 0;
+      display: block;
+      border: 1px solid #eee;
+    }
+    .step {
+      background: #f8f9fa;
+      border-left: 4px solid #2481cc;
+      padding: 12px 16px;
+      margin: 20px 0;
+      border-radius: 0 8px 8px 0;
+    }
+    .btn {
+      display: inline-block;
+      background: #2481cc;
+      color: #fff !important;
+      text-decoration: none;
+      padding: 14px 28px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 16px;
+      margin: 16px 0;
+      text-align: center;
+    }
+    .btn:hover { background: #1c6ca8; }
   </style>
 </head>
 <body>
-  <div id="app"></div>
+  <div class="article">
+    <!-- ЗАГОЛОВОК СТАТЬИ -->
+    <h1>Как выполнить задание за 1 минуту</h1>
+    <div class="meta">Инструкция • Время чтения: 1 мин</div>
 
-  <script>
-    const redirects = {
-      // МФО ТОП 10
-      "/zaymer": "https://rfnd.io/t/zcktz/?pid=27&erid=2SDnjeZXEdv",
-      "/moneyman": "https://rfnd.io/t/9vd64/?pid=2084&erid=2SDnjdxRUef",
-      "/web-zaim": "https://rfnd.io/t/gxy99/?erid=2SDnjeEQjaR",
-      "/ekapusta": "https://rfnd.io/t/ysjvg/?pid=159&erid=2SDnje8RRwU",
-      "/joymoney": "https://rfnd.io/t/gmjtv/?pid=602&erid=2SDnjdxQLkK",
-      "/dozarplati": "https://rfnd.io/t/9tkrd/?pid=808&erid=2SDnjdfdfmr",
-      "/finfive": "https://rfnd.io/t/9xw46/?pid=1760&erid=2SDnjcmeLc3",
-      "/smartcash": "https://rfnd.io/t/grr5j/?pid=604&erid=2SDnjdX9H1d",
-      "/turbozaim": "https://rfnd.io/t/nsufa/?pid=477&erid=2SDnjcSqnN1",
-      "/srochnodengi": "https://rfnd.io/t/gvyzm/?pid=408&erid=2SDnjdSHnEk",
-      // ОСТАЛЬНЫЕ МФО
-      "/dengisrazy": "https://rfnd.io/t/55fmj/?pid=327&erid=2SDnjdVFkoS",
-      "/skelamoney": "https://rfnd.io/t/mu93r/?pid=1919&erid=2SDnjcD91UB",
-      "/dobrozaim": "https://rfnd.io/t/yhmxm/?pid=144&erid=2SDnjcYMB45",
-      "/finters": "https://rfnd.io/t/jzd3d/?pid=1775&erid=2SDnjdSPD94",
-      "/denga": "https://rfnd.io/t/4scdq/?pid=225&erid=2SDnjcYi3GX",
-      "/privetsosed": "https://rfnd.io/t/n4fys/?pid=1252&erid=2SDnjeu6pQ8",
-      "/beri-beru": "https://rfnd.io/t/ma5y7/?erid=2SDnjd34qrM",
-      "/krediska": "https://rfnd.io/t/m9tme/?pid=533&erid=2SDnjeycB3K",
-      "/webbankir": "https://rfnd.io/t/vj8e8/?pid=595&erid=2SDnjefXdtt",
-      "/credit7": "https://rfnd.io/t/9q5j6/?pid=559&erid=2SDnjemPSYm",
-      // ДЕБЕТОВЫЕ КАРТЫ
-      "/t-black": "https://www.tbank.ru/baf/AaAszPy3LMI",
-      "/vtb-mir": "https://rfnd.io/t/crxh3/?pid=92&erid=2SDnjeHDi24",
-      "/gpb-mir": "https://rfnd.io/t/v5wez/?pid=1102&erid=2SDnjdiaLmk",
-      "/alfa-card": "https://rfnd.io/t/6qgpu/?pid=2137&erid=2SDnje1F4nS",
-      "/mts-money": "https://rfnd.io/t/wbydc/?pid=1799&erid=2SDnjerEhAa",
-      // КРЕДИТНЫЕ КАРТЫ
-      "/t-platinum": "https://bit.ly/3YLm6KI",
-      "/eb-plus": "https://bit.ly/4lLQChF",
-      "/halva": "https://bit.ly/3ED7gPS",
-      "/uralsib-120": "https://bit.ly/4lJmaEG",
-      "/sber-120": "https://bit.ly/3SeKNvD"
-    };
+    <!-- ВСТУПЛЕНИЕ -->
+    <p>Внимательно прочитайте шаги ниже, чтобы задание было оплачено сразу без доработок.</p>
 
-    const offerData = {
-      "/zaymer": { name: "Займер", logo: "https://favicon.yandex.net/favicon/v2/https://www.zaymer.ru/?size=32", back: "/mfo" },
-      "/moneyman": { name: "Moneyman", logo: "https://favicon.yandex.net/favicon/v2/https://moneyman.ru/?size=32", back: "/mfo" },
-      "/web-zaim": { name: "Web-Zaim", logo: "https://favicon.yandex.net/favicon/v2/https://web-zaim.ru/?size=32", back: "/mfo" },
-      "/ekapusta": { name: "еКапуста", logo: "https://favicon.yandex.net/favicon/v2/https://ekapusta.com/?size=32", back: "/mfo" },
-      "/joymoney": { name: "JoyMoney", logo: "https://favicon.yandex.net/favicon/v2/https://joymoney.ru/?size=32", back: "/mfo" },
-      "/dozarplati": { name: "До Зарплаты", logo: "https://favicon.yandex.net/favicon/v2/https://dozarplati.com/?size=32", back: "/mfo" },
-      "/finfive": { name: "Finfive", logo: "https://favicon.yandex.net/favicon/v2/https://finfive.ru/?size=32", back: "/mfo" },
-      "/smartcash": { name: "Умные наличные", logo: "https://favicon.yandex.net/favicon/v2/https://smartcash.ru/?size=32", back: "/mfo" },
-      "/turbozaim": { name: "Турбозайм", logo: "https://favicon.yandex.net/favicon/v2/https://turbozaim.ru/?size=32", back: "/mfo" },
-      "/srochnodengi": { name: "СрочноДеньги", logo: "https://favicon.yandex.net/favicon/v2/https://srochnodengi.ru/?size=32", back: "/mfo" },
-      "/dengisrazy": { name: "Деньги сразу", logo: "https://favicon.yandex.net/favicon/v2/https://dengisrazy.ru/?size=32", back: "/mfo" },
-      "/skelamoney": { name: "SkelaMoney", logo: "https://i.ibb.co/d0G5YLSR/skela.png", back: "/mfo" },
-      "/dobrozaim": { name: "Доброзайм", logo: "https://favicon.yandex.net/favicon/v2/https://dobrozaim.ru/?size=32", back: "/mfo" },
-      "/finters": { name: "Finters", logo: "https://i.ibb.co/9HfZKCP8/images.png", back: "/mfo" },
-      "/denga": { name: "Деньга", logo: "https://i.ibb.co/Jj1Nxqc4/image.png", back: "/mfo" },
-      "/privetsosed": { name: "Привет, сосед!", logo: "https://i.ibb.co/nNz85wM3/image.png", back: "/mfo" },
-      "/beri-beru": { name: "Бери-Беру", logo: "https://i.ibb.co/kgxKPW45/2.png", back: "/mfo" },
-      "/krediska": { name: "Кредиска", logo: "https://favicon.yandex.net/favicon/v2/https://krediska.ru/?size=32", back: "/mfo" },
-      "/webbankir": { name: "Webbankir", logo: "https://favicon.yandex.net/favicon/v2/https://webbankir.com/?size=32", back: "/mfo" },
-      "/credit7": { name: "Credit7", logo: "https://favicon.yandex.net/favicon/v2/https://credit7.ru/?size=32", back: "/mfo" },
-      "/t-black": { name: "Т-Банк Black", logo: "https://favicon.yandex.net/favicon/v2/https://tbank.ru/?size=32", back: "/debit" },
-      "/vtb-mir": { name: "ВТБ МИР", logo: "https://favicon.yandex.net/favicon/v2/https://vtb.ru/?size=32", back: "/debit" },
-      "/gpb-mir": { name: "Газпромбанк", logo: "https://favicon.yandex.net/favicon/v2/https://gazprombank.ru/?size=32", back: "/debit" },
-      "/alfa-card": { name: "Альфа-Карта", logo: "https://favicon.yandex.net/favicon/v2/https://alfabank.ru/?size=32", back: "/debit" },
-      "/mts-money": { name: "МТС Деньги", logo: "https://favicon.yandex.net/favicon/v2/https://mtsbank.ru/?size=32", back: "/debit" },
-      "/t-platinum": { name: "Т-Платинум", logo: "https://favicon.yandex.net/favicon/v2/https://tbank.ru/?size=32", back: "/credit" },
-      "/eb-plus": { name: "CARD CREDIT+", logo: "https://favicon.yandex.net/favicon/v2/https://eurobank.ru/?size=32", back: "/credit" },
-      "/halva": { name: "Халва", logo: "https://favicon.yandex.net/favicon/v2/https://sovcombank.ru/?size=32", back: "/credit" },
-      "/uralsib-120": { name: "Уралсиб 120", logo: "https://favicon.yandex.net/favicon/v2/https://uralsib.ru/?size=32", back: "/credit" },
-      "/sber-120": { name: "Сбер 120 дней", logo: "https://favicon.yandex.net/favicon/v2/https://sberbank.ru/?size=32", back: "/credit" }
-    };
+    <!-- ШАГ 1 -->
+    <div class="step">
+      <b>Шаг 1.</b> Перейдите по кнопке ниже и откройте бота.
+    </div>
+    
+    <!-- КНОПКА ПЕРЕХОДА -->
+    <a href="https://ТВОЯ-ССЫЛКА.ru" class="btn" target="_blank">Перейти к выполнению →</a>
 
-    const mfoCards = [
-      { name: "Займер", logo: "https://favicon.yandex.net/favicon/v2/https://www.zaymer.ru/?size=32", href: "/zaymer", sum: "до 35 000 ₽", term: "до 30 дней", grace: "30 дней", rate: "0.8%", age: "от 18 лет" },
-      { name: "Moneyman", logo: "https://favicon.yandex.net/favicon/v2/https://moneyman.ru/?size=32", href: "/moneyman", sum: "до 30 000 ₽", term: "до 30 дней", grace: "21 день", rate: "0.8%", age: "от 20 лет" },
-      { name: "Web-Zaim", logo: "https://favicon.yandex.net/favicon/v2/https://web-zaim.ru/?size=32", href: "/web-zaim", sum: "до 30 000 ₽", term: "до 30 дней", grace: "14 дней", rate: "0.8%", age: "от 18 лет" },
-      { name: "еКапуста", logo: "https://favicon.yandex.net/favicon/v2/https://ekapusta.com/?size=32", href: "/ekapusta", sum: "до 30 000 ₽", term: "до 21 дня", grace: "21 день", rate: "0.8%", age: "от 18 лет" },
-      { name: "JoyMoney", logo: "https://favicon.yandex.net/favicon/v2/https://joymoney.ru/?size=32", href: "/joymoney", sum: "до 29 000 ₽", term: "до 30 дней", grace: "нет", rate: "0.8%", age: "от 21 года" },
-      { name: "До Зарплаты", logo: "https://favicon.yandex.net/favicon/v2/https://dozarplati.com/?size=32", href: "/dozarplati", sum: "до 100 000 ₽", term: "до 12 мес.", grace: "нет", rate: "0.8%", age: "от 18 лет" },
-      { name: "Finfive", logo: "https://favicon.yandex.net/favicon/v2/https://finfive.ru/?size=32", href: "/finfive", sum: "до 30 000 ₽", term: "до 30 дней", grace: "нет", rate: "0.8%", age: "от 18 лет" },
-      { name: "Умные наличные", logo: "https://favicon.yandex.net/favicon/v2/https://smartcash.ru/?size=32", href: "/smartcash", sum: "до 30 000 ₽", term: "до 30 дней", grace: "нет", rate: "0.8%", age: "от 18 лет" },
-      { name: "Турбозайм", logo: "https://favicon.yandex.net/favicon/v2/https://turbozaim.ru/?size=32", href: "/turbozaim", sum: "до 50 000 ₽", term: "до 30 дней", grace: "нет", rate: "0.8%", age: "от 21 года" },
-      { name: "СрочноДеньги", logo: "https://favicon.yandex.net/favicon/v2/https://srochnodengi.ru/?size=32", href: "/srochnodengi", sum: "до 100 000 ₽", term: "до 180 дней", grace: "10 дней", rate: "0.8%", age: "от 18 лет" },
-      { name: "Деньги сразу", logo: "https://favicon.yandex.net/favicon/v2/https://dengisrazy.ru/?size=32", href: "/dengisrazy", sum: "до 100 000 ₽", term: "до 180 дней", grace: "нет", rate: "0.8%", age: "от 18 лет" },
-      { name: "Скела мани", logo: "https://i.ibb.co/d0G5YLSR/skela.png", href: "/skelamoney", sum: "до 100 000 ₽", term: "до 1 года", grace: "7 дней", rate: "0.8%", age: "от 18 лет" },
-      { name: "Доброзайм", logo: "https://favicon.yandex.net/favicon/v2/https://dobrozaim.ru/?size=32", href: "/dobrozaim", sum: "до 100 000 ₽", term: "до 365 дней", grace: "7 дней", rate: "0.8%", age: "от 19 лет" },
-      { name: "Finters", logo: "https://i.ibb.co/9HfZKCP8/images.png", href: "/finters", sum: "до 30 000 ₽", term: "до 30 дней", grace: "нет", rate: "0.8%", age: "от 18 лет" },
-      { name: "Деньга", logo: "https://i.ibb.co/Jj1Nxqc4/image.png", href: "/denga", sum: "до 100 000 ₽", term: "до 365 дней", grace: "нет", rate: "0.8%", age: "от 18 лет" },
-      { name: "Привет, сосед!", logo: "https://i.ibb.co/nNz85wM3/image.png", href: "/privetsosed", sum: "до 30 000 ₽", term: "до 30 дней", grace: "нет", rate: "0.8%", age: "от 18 лет" },
-      { name: "Бери-Беру", logo: "https://i.ibb.co/kgxKPW45/2.png", href: "/beri-beru", sum: "до 30 000 ₽", term: "до 30 дней", grace: "нет", rate: "0.8%", age: "от 18 лет" },
-      { name: "Krediska", logo: "https://favicon.yandex.net/favicon/v2/https://krediska.ru/?size=32", href: "/krediska", sum: "до 30 000 ₽", term: "до 30 дней", grace: "нет", rate: "0.8%", age: "от 18 лет" }
-    ];
+    <!-- ШАГ 2 + КАРТИНКА -->
+    <div class="step">
+      <b>Шаг 2.</b> Нажмите кнопку «Старт» и сделайте скриншот, как показано на примере ниже:
+    </div>
+    
+    <!-- СКРИНШОТ (загрузи картинку в папку img/ и укажи имя) -->
+    <img src="img/screen1.jpg" alt="Скриншот шага 2">
 
-    const cardStyles = `
-      :root { --vzo-orange: #ff6e00; --border-color: #e2e8f0; --text-dark: #1e293b; --text-muted: #64748b; }
-      body { font-family: -apple-system, system-ui, sans-serif; background: #f8fafc; margin: 0; padding: 0; color: var(--text-dark); }
-      .container { max-width: 1000px; margin: 0 auto; padding: 10px; }
-      .top-content { padding: 20px 5px; text-align: left; }
-      .top-content h1 { font-size: 28px; font-weight: 800; margin: 0; color: #000; }
-      .top-content p { font-size: 15px; color: var(--text-muted); margin: 8px 0 15px 0; max-width: 600px; }
-      .offers-count { display: block; font-weight: 800; color: #000; font-size: 16px; margin-bottom: 10px; }
-      .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(165px, 1fr)); gap: 12px; }
-      @media (min-width: 768px) { .grid { grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 20px; } }
-      .card { background: #fff; border-radius: 12px; padding: 15px 12px; display: flex; flex-direction: column; border: 1px solid var(--border-color); box-sizing: border-box; }
-      .card-header { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
-      .mfo-logo { width: 32px; height: 32px; border-radius: 6px; object-fit: contain; flex-shrink: 0; }
-      .logo-name { font-size: 12px; font-weight: 800; text-transform: uppercase; color: #000; line-height: 1.1; }
-      .props-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; flex-grow: 1; }
-      .item { display: flex; flex-direction: column; padding-bottom: 4px; border-bottom: 1px solid #f1f5f9; }
-      .item:last-child { border-bottom: none; }
-      .label { font-size: 9px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; }
-      .value { font-size: 12px; font-weight: 700; color: #111; }
-      .btn { background: var(--vzo-orange); color: white; text-align: center; padding: 12px 2px; text-decoration: none; border-radius: 8px; font-weight: 700; font-size: 14px; margin-top: auto; transition: 0.2s; cursor: pointer; }
-      .btn:hover { filter: brightness(0.85); }
-      footer { text-align: center; padding: 40px 20px; margin-top: 20px; border-top: 1px solid var(--border-color); }
-      .home-link { color: var(--text-muted); text-decoration: none; font-weight: 600; font-size: 14px; }
-    `;
-
-    const vpnStyles = `
-      body { font-family: -apple-system, sans-serif; background: #f4f7f9; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; text-align: center; color: #333; }
-      .box { padding: 30px; max-width: 400px; width: 90%; border: 1px solid #f0f0f0; border-radius: 28px; box-shadow: 0 20px 40px rgba(0,0,0,0.08); background: #fff; position: relative; }
-      .mini-card { display: flex; align-items: center; gap: 15px; background: #f8fafc; padding: 15px; border-radius: 20px; margin-bottom: 25px; border: 1px solid #e2e8f0; text-align: left; }
-      .mini-logo { width: 45px; height: 45px; border-radius: 12px; object-fit: contain; background: #fff; border: 1px solid #eee; }
-      .mini-info { line-height: 1.3; }
-      .mini-name { font-weight: 800; font-size: 18px; color: #000; display: block; }
-      .mini-label { font-size: 12px; color: #64748b; font-weight: 500; }
-      .icon { font-size: 40px; margin-bottom: 10px; }
-      h1 { font-size: 22px; margin-bottom: 12px; color: #000; font-weight: 800; }
-      p { color: #666; line-height: 1.6; margin-bottom: 20px; font-size: 15px; }
-      .badge { background: #eb4d4b; color: white; padding: 4px 12px; border-radius: 8px; font-weight: bold; display: inline-flex; align-items: center; vertical-align: middle; }
-      .flag-circle { width: 18px; height: 18px; border-radius: 50%; object-fit: cover; margin-left: 8px; border: 1px solid rgba(255,255,255,0.3); }
-      .btn { display: block; background: #1a73e8; color: white; padding: 18px; text-decoration: none; border-radius: 15px; font-weight: bold; font-size: 18px; transition: 0.2s; box-shadow: 0 4px 12px rgba(26,115,232,0.2); margin-bottom: 20px; }
-      .btn:active { transform: scale(0.97); }
-      .secondary-link { display: inline-block; color: #64748b; text-decoration: none; font-weight: 600; font-size: 14px; padding: 10px; transition: 0.2s; }
-      .secondary-link:hover { color: #1a73e8; }
-    `;
-
-    function renderVpn(path, country) {
-      document.title = "Доступ ограничен";
-      document.getElementById("page-styles").textContent = vpnStyles;
-      const item = offerData[path] || { name: "выбранный сайт", logo: "", back: "/" };
-      document.getElementById("app").innerHTML = `
-        <div class="box">
-          <div class="mini-card">
-            <img src="${item.logo}" class="mini-logo" onerror="this.style.display='none'">
-            <div class="mini-info">
-              <span class="mini-label">Вы переходите в:</span>
-              <span class="mini-name">${item.name}</span>
-            </div>
-          </div>
-          <div class="icon">📍</div>
-          <h1>Нужно выключить VPN</h1>
-          <p>Ваш регион: <span class="badge">${country}<img class="flag-circle" src="https://flagcdn.com/w80/${country.toLowerCase()}.png" onerror="this.style.display='none'"></span></p>
-          <p>Сайт доступен только для жителей <b>России</b>. Пожалуйста, отключите VPN и нажмите кнопку ниже.</p>
-          <a href="javascript:location.reload();" class="btn">Я отключил VPN, продолжить</a>
-          <a href="${item.back}" class="secondary-link">← Назад</a>
-        </div>
-      `;
-    }
-
-    function renderMfo() {
-      document.title = "Микрозаймы";
-      document.getElementById("page-styles").textContent = cardStyles;
-      const cardsHtml = mfoCards.map(c => `
-        <div class="card">
-          <div class="card-header"><img src="${c.logo}" class="mfo-logo"><div class="logo-name">${c.name}</div></div>
-          <div class="props-list">
-            <div class="item"><span class="label">Сумма</span><span class="value">${c.sum}</span></div>
-            <div class="item"><span class="label">Срок</span><span class="value">${c.term}</span></div>
-            <div class="item"><span class="label">Срок без %</span><span class="value">${c.grace}</span></div>
-            <div class="item"><span class="label">Ставка</span><span class="value">${c.rate}</span></div>
-            <div class="item"><span class="label">Возраст</span><span class="value">${c.age}</span></div>
-          </div>
-          <a href="${c.href}" class="btn">Получить</a>
-        </div>
-      `).join("");
-
-      document.getElementById("app").innerHTML = `
-        <div class="container">
-          <div class="top-content">
-            <h1>Микрозаймы</h1>
-            <p>Выбирайте подходящие микрозаймы и оформляйте заявку для получения денег на карту онлайн</p>
-            <span class="offers-count"><span id="total-offers">${mfoCards.length}</span> предложений:</span>
-          </div>
-          <div class="grid">${cardsHtml}</div>
-          <footer><a href="/" class="home-link">← На главную</a></footer>
-        </div>
-      `;
-    }
-
-    function renderHome() {
-      document.title = "MFO1.Click — Финансовый маркетплейс";
-      document.getElementById("app").innerHTML = `
-        <div class="container">
-          <h1>MFO1.Click</h1>
-          <p>Выберите интересующий вас раздел:</p>
-          <div class="menu">
-            <a href="/mfo" class="menu-btn">💰 Микрозаймы <span>→</span></a>
-            <a href="/debit" class="menu-btn">💳 Дебетовые карты <span>→</span></a>
-            <a href="/credit" class="menu-btn">🏦 Кредитные карты <span>→</span></a>
-          </div>
-        </div>
-      `;
-    }
-
-    (async function init() {
-      const savedPath = sessionStorage.getItem("__gh_path");
-      if (savedPath) {
-        sessionStorage.removeItem("__gh_path");
-        history.replaceState(null, "", savedPath);
-      }
-      const path = window.location.pathname.replace(/\/+$/, "") || "/";
-
-      if (redirects[path]) {
-        let country = "Unknown";
-        try {
-          const res = await fetch("https://ipapi.co/json/", { cache: "no-store" });
-          if (res.ok) {
-            const data = await res.json();
-            if (data && data.country_code) country = data.country_code;
-          }
-        } catch (_) {}
-
-        if (country !== "RU") {
-          renderVpn(path, country);
-          return;
-        }
-        window.location.replace(redirects[path]);
-        return;
-      }
-
-      if (path === "/") renderHome();
-      else if (path === "/mfo") renderMfo();
-      else renderHome();
-    })();
-  </script>
+    <!-- ШАГ 3 -->
+    <div class="step">
+      <b>Шаг 3.</b> Отправьте полученный скриншот в отчет на Socpublic. Готово!
+    </div>
+  </div>
 </body>
 </html>
