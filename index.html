@@ -8,26 +8,19 @@
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       margin: 0;
-      padding: 40px 20px;
+      padding: 40px 20px 80px;
       color: #222;
       background: #fff;
     }
-    .container {
-      max-width: 730px;
-      margin: 0 auto;
-      position: relative;
-    }
+    .container { max-width: 730px; margin: 0 auto; position: relative; }
     .top-bar {
       display: flex;
       justify-content: space-between;
       align-items: center;
+      min-height: 36px;
       margin-bottom: 20px;
     }
-    .new-link {
-      font-size: 13px;
-      color: #999;
-      text-decoration: none;
-    }
+    .new-link { font-size: 13px; color: #999; text-decoration: none; }
     .new-link:hover { color: #222; }
     .publish-btn {
       background: #fff;
@@ -42,47 +35,27 @@
     }
     .publish-btn:hover { background: #222; color: #fff; }
     .publish-btn:disabled { opacity: 0.5; cursor: wait; }
-    .editable {
-      outline: none;
-      width: 100%;
-      box-sizing: border-box;
-      word-wrap: break-word;
-    }
+    .publish-btn[hidden] { display: none; }
+    .editable { outline: none; width: 100%; box-sizing: border-box; word-wrap: break-word; }
     .editable:empty:before {
       content: attr(data-placeholder);
       color: #999;
       pointer-events: none;
       display: block;
     }
-    #title {
-      font-family: Georgia, serif;
-      font-size: 34px;
-      font-weight: 700;
-      margin-bottom: 8px;
-    }
-    #author {
-      font-size: 15px;
-      color: #777;
-      margin-bottom: 24px;
-    }
+    #title { font-family: Georgia, serif; font-size: 34px; font-weight: 700; margin-bottom: 8px; }
+    #author { font-size: 15px; color: #777; margin-bottom: 24px; }
     #story {
       font-family: Georgia, serif;
       font-size: 19px;
       line-height: 1.65;
       min-height: 350px;
     }
-    #story img {
-      max-width: 100%;
-      height: auto;
-      display: block;
-      margin: 18px 0;
-      border-radius: 4px;
-    }
-    .toolbar {
-      margin-bottom: 15px;
-      display: flex;
-      gap: 8px;
-    }
+    #story p { margin: 0 0 1em; }
+    #story h3 { font-size: 24px; margin: 1.3em 0 .5em; }
+    #story blockquote { margin: 1em 0; padding-left: 16px; border-left: 3px solid #222; }
+    #story img { max-width: 100%; height: auto; display: block; margin: 18px 0; border-radius: 4px; }
+    .toolbar { margin-bottom: 15px; display: flex; gap: 8px; flex-wrap: wrap; }
     .tool-btn {
       background: none;
       border: 1px solid #e0e0e0;
@@ -93,19 +66,19 @@
       font-size: 13px;
     }
     .tool-btn:hover { border-color: #222; color: #222; }
-    .status {
-      font-size: 13px;
-      color: #d9534f;
-      margin-top: 10px;
-      font-weight: 500;
-    }
+    .status { font-size: 13px; color: #888; margin-top: 10px; font-weight: 500; min-height: 18px; }
+    .status.error { color: #d9534f; }
+    .status.ok { color: #28a745; }
+    .auth-bar { margin-top: 40px; font-size: 12px; color: #aaa; }
+    .auth-bar button { background: none; border: 0; padding: 0; font: inherit; color: #aaa; cursor: pointer; text-decoration: underline; }
+    .auth-bar button:hover { color: #222; }
   </style>
 </head>
 <body>
 
   <div class="container">
     <div class="top-bar">
-      <a href="/" class="new-link">+ Новая страница</a>
+      <a href="/" class="new-link" id="newLink">+ Новая страница</a>
       <button id="actionBtn" class="publish-btn" type="button">PUBLISH</button>
     </div>
 
@@ -113,23 +86,31 @@
     <div id="author" class="editable" contenteditable="true" data-placeholder="Your name"></div>
 
     <div id="toolbar" class="toolbar">
-      <button class="tool-btn" type="button" onclick="document.execCommand('bold')"><b>B</b></button>
-      <button class="tool-btn" type="button" onclick="document.execCommand('italic')"><i>I</i></button>
-      <button class="tool-btn" type="button" onclick="document.execCommand('formatBlock', false, 'H3')">H</button>
-      <button class="tool-btn" type="button" onclick="document.execCommand('formatBlock', false, 'BLOCKQUOTE')">”</button>
+      <button class="tool-btn" type="button" data-cmd="bold"><b>B</b></button>
+      <button class="tool-btn" type="button" data-cmd="italic"><i>I</i></button>
+      <button class="tool-btn" type="button" data-cmd="formatBlock" data-arg="H3">H</button>
+      <button class="tool-btn" type="button" data-cmd="formatBlock" data-arg="BLOCKQUOTE">”</button>
       <button id="photoBtn" class="tool-btn" type="button">📷 Фото</button>
       <input type="file" id="fileInput" accept="image/*" style="display:none">
     </div>
 
     <div id="story" class="editable" contenteditable="true" data-placeholder="Your story... (можно вставлять фото через Ctrl+V)"></div>
     <div id="status" class="status"></div>
+
+    <div class="auth-bar" id="authBar"></div>
   </div>
 
-  <!-- Подключаем Firebase через стабильный CDN jsDelivr -->
-  <script src="https://jsdelivr.net"></script>
-  <script src="https://jsdelivr.net"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 
   <script>
+    // ============================================================
+    // ВАЖНО: впишите сюда ваш Gmail, под которым будете входить.
+    // Тот же адрес должен быть в правилах Firestore.
+    // ============================================================
+    const OWNER_EMAIL = 'ВАШ@gmail.com';
+
     const titleEl = document.getElementById('title');
     const authorEl = document.getElementById('author');
     const storyEl = document.getElementById('story');
@@ -138,60 +119,114 @@
     const fileInput = document.getElementById('fileInput');
     const toolbar = document.getElementById('toolbar');
     const statusEl = document.getElementById('status');
+    const authBar = document.getElementById('authBar');
 
-    // Работа с фото (работает независимо от базы данных)
+    function setStatus(text, kind) {
+      statusEl.textContent = text || '';
+      statusEl.className = 'status' + (kind ? ' ' + kind : '');
+    }
+
+    /* ---------- Панель форматирования ---------- */
+
+    document.querySelectorAll('.tool-btn[data-cmd]').forEach(btn => {
+      btn.addEventListener('mousedown', e => e.preventDefault()); // не терять выделение
+      btn.addEventListener('click', () => {
+        storyEl.focus();
+        document.execCommand(btn.dataset.cmd, false, btn.dataset.arg || null);
+      });
+    });
+
+    document.execCommand('defaultParagraphSeparator', false, 'p');
+
+    /* ---------- Фото: кнопка, Ctrl+V, перетаскивание ---------- */
+
     photoBtn.addEventListener('click', () => fileInput.click());
-    fileInput.addEventListener('change', (e) => {
-      if (e.target.files && e.target.files[0]) {
-        compressAndInsertImage(e.target.files[0]);
+    fileInput.addEventListener('change', e => {
+      for (const f of e.target.files || []) compressAndInsertImage(f);
+      fileInput.value = '';
+    });
+
+    storyEl.addEventListener('paste', e => {
+      const cd = e.clipboardData || window.clipboardData;
+      const items = cd ? cd.items : [];
+      const images = [];
+      for (const item of items) {
+        if (item.kind === 'file' && item.type.indexOf('image') === 0) images.push(item.getAsFile());
+      }
+      e.preventDefault();
+      if (images.length) {
+        images.forEach(f => f && compressAndInsertImage(f));
+        return;
+      }
+      const text = cd.getData('text/plain');
+      if (text) document.execCommand('insertText', false, text);
+    });
+
+    storyEl.addEventListener('dragover', e => e.preventDefault());
+    storyEl.addEventListener('drop', e => {
+      const files = [...(e.dataTransfer?.files || [])].filter(f => f.type.startsWith('image/'));
+      if (files.length) {
+        e.preventDefault();
+        files.forEach(compressAndInsertImage);
       }
     });
 
-    storyEl.addEventListener('paste', (e) => {
-      const items = (e.clipboardData || e.originalEvent.clipboardData).items;
-      for (let item of items) {
-        if (item.type.indexOf('image') === 0) {
+    // Заголовок и имя — только простой текст
+    [titleEl, authorEl].forEach((el, i) => {
+      el.addEventListener('paste', e => {
+        e.preventDefault();
+        const t = (e.clipboardData.getData('text/plain') || '').replace(/\s+/g, ' ');
+        document.execCommand('insertText', false, t);
+      });
+      el.addEventListener('keydown', e => {
+        if (e.key === 'Enter') {
           e.preventDefault();
-          const file = item.getAsFile();
-          compressAndInsertImage(file);
+          (i === 0 ? authorEl : storyEl).focus();
         }
-      }
+      });
+      el.addEventListener('input', () => { if (el.textContent === '') el.innerHTML = ''; });
     });
 
     function compressAndInsertImage(file) {
       const reader = new FileReader();
-      reader.onload = (event) => {
+      reader.onload = event => {
         const img = new Image();
         img.onload = () => {
           const canvas = document.createElement('canvas');
-          const MAX_WIDTH = 900;
+          const MAX_WIDTH = 800; // Firestore: документ не больше 1 МБ
           let width = img.width;
           let height = img.height;
-
           if (width > MAX_WIDTH) {
-            height *= MAX_WIDTH / width;
+            height = Math.round(height * MAX_WIDTH / width);
             width = MAX_WIDTH;
           }
           canvas.width = width;
           canvas.height = height;
           const ctx = canvas.getContext('2d');
+          ctx.fillStyle = '#fff';            // чтобы прозрачный PNG не стал чёрным
+          ctx.fillRect(0, 0, width, height);
           ctx.drawImage(img, 0, 0, width, height);
 
-          const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.75);
           storyEl.focus();
           document.execCommand('insertHTML', false, `<img src="${dataUrl}"><br>`);
         };
+        img.onerror = () => setStatus('Не удалось прочитать изображение.', 'error');
         img.src = event.target.result;
       };
       reader.readAsDataURL(file);
     }
 
-    // Инициализация базы данных Firebase
+    /* ---------- Firebase ---------- */
+
     let db = null;
+    let auth = null;
+    let user = null;
+
     if (typeof firebase !== 'undefined') {
       const firebaseConfig = {
         apiKey: "AIzaSyAGZvMxxAZEsbech1evNe2aNwR6GfC0xhw",
-        authDomain: "://firebaseapp.com",
+        authDomain: "tgtype-a41aa.firebaseapp.com",
         projectId: "tgtype-a41aa",
         storageBucket: "tgtype-a41aa.firebasestorage.app",
         messagingSenderId: "967552866716",
@@ -200,42 +235,17 @@
       };
       firebase.initializeApp(firebaseConfig);
       db = firebase.firestore();
+      auth = firebase.auth();
     } else {
-      statusEl.textContent = 'Ошибка: скрипт Firebase не загрузился (проверьте интернет или VPN).';
+      setStatus('Ошибка: скрипт Firebase не загрузился (проверьте интернет или VPN).', 'error');
     }
 
-    const pathSlug = window.location.pathname.replace(/^\/+|\/+$/g, '');
-    let currentSlug = pathSlug;
+    const isOwner = () => !!user && user.email === OWNER_EMAIL;
+
+    /* ---------- Режимы: просмотр / редактирование ---------- */
+
     let isViewMode = false;
-
-    if (pathSlug && db) {
-      loadArticle(pathSlug);
-    }
-
-    async function loadArticle(slug) {
-      setEditable(false);
-      statusEl.style.color = '#888';
-      statusEl.textContent = 'Загрузка...';
-      try {
-        const snap = await db.collection('articles').doc(slug).get();
-        if (snap.exists) {
-          const data = snap.data();
-          titleEl.innerHTML = data.title;
-          authorEl.innerHTML = data.author;
-          storyEl.innerHTML = data.story;
-          document.title = titleEl.innerText || 'tgtype';
-          statusEl.textContent = '';
-          actionBtn.textContent = 'EDIT';
-          isViewMode = true;
-        } else {
-          statusEl.textContent = 'Страница не найдена. Можете создать её здесь!';
-          setEditable(true);
-        }
-      } catch (e) {
-        statusEl.style.color = '#d9534f';
-        statusEl.textContent = 'Ошибка загрузки: ' + e.message;
-      }
-    }
+    let currentSlug = '';
 
     function setEditable(canEdit) {
       titleEl.contentEditable = canEdit;
@@ -244,20 +254,102 @@
       toolbar.style.display = canEdit ? 'flex' : 'none';
     }
 
-    function slugify(text) {
-      const map = {'а':'a','б':'b','в':'v','г':'g','д':'d','е':'e','ё':'yo','ж':'zh','з':'z','и':'i','й':'y','к':'k','л':'l','м':'m','н':'n','о':'o','п':'p','р':'r','с':'s','т':'t','у':'u','ф':'f','х':'h','ц':'ts','ч':'ch','ш':'sh','щ':'sch','ъ':'','ы':'y','ь':'','э':'e','ю':'yu','я':'ya'};
-      return text.toLowerCase().split('').map(c => map[c] || c).join('')
-        .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'post-' + Date.now();
+    function refreshUI() {
+      // Кнопка в режиме просмотра видна только владельцу
+      if (isViewMode) {
+        actionBtn.textContent = 'EDIT';
+        actionBtn.hidden = !isOwner();
+      } else {
+        actionBtn.textContent = 'PUBLISH';
+        actionBtn.hidden = false;
+      }
+
+      authBar.innerHTML = '';
+      const b = document.createElement('button');
+      b.type = 'button';
+      if (user) {
+        b.textContent = 'Выйти (' + user.email + ')';
+        b.onclick = () => auth.signOut();
+      } else {
+        b.textContent = 'Вход';
+        b.onclick = () => login();
+      }
+      authBar.appendChild(b);
     }
 
-    function getSecret() {
-      let pass = localStorage.getItem('tgtype_secret');
-      if (!pass) {
-        pass = prompt('Введите ваш секретный пароль автора:');
-        if (pass) localStorage.setItem('tgtype_secret', pass);
+    async function login() {
+      if (!auth) return false;
+      if (user) return true;
+      try {
+        const res = await auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());
+        user = res.user;
+        refreshUI();
+        return true;
+      } catch (e) {
+        setStatus('Не удалось войти: ' + (e.code || e.message), 'error');
+        return false;
       }
-      return pass;
     }
+
+    if (auth) {
+      auth.onAuthStateChanged(u => { user = u; refreshUI(); });
+    }
+
+    /* ---------- Загрузка статьи по адресу ---------- */
+
+    function getSlugFromPath() {
+      let p = decodeURIComponent(window.location.pathname).replace(/^\/+|\/+$/g, '');
+      if (p === 'index.html' || p === '404.html') p = '';
+      return p;
+    }
+
+    async function loadArticle(slug) {
+      setEditable(false);
+      setStatus('Загрузка...');
+      try {
+        const snap = await db.collection('articles').doc(slug).get();
+        if (snap.exists) {
+          const data = snap.data();
+          titleEl.textContent = data.title || '';
+          authorEl.textContent = data.author || '';
+          storyEl.innerHTML = data.story || '';
+          document.title = titleEl.textContent || 'tgtype';
+          currentSlug = slug;
+          isViewMode = true;
+          setStatus('');
+        } else {
+          setStatus('Страница не найдена. Можете создать новую.');
+          currentSlug = '';
+          setEditable(true);
+        }
+      } catch (e) {
+        setStatus('Ошибка загрузки: ' + e.message, 'error');
+      }
+      refreshUI();
+    }
+
+    const pathSlug = getSlugFromPath();
+    if (pathSlug && db) {
+      if (/^[a-z0-9-]+$/.test(pathSlug)) {
+        loadArticle(pathSlug);
+      } else {
+        setStatus('Страница не найдена.');
+        refreshUI();
+      }
+    } else {
+      refreshUI();
+    }
+
+    /* ---------- Публикация ---------- */
+
+    function slugify(text) {
+      const map = {'а':'a','б':'b','в':'v','г':'g','д':'d','е':'e','ё':'yo','ж':'zh','з':'z','и':'i','й':'y','к':'k','л':'l','м':'m','н':'n','о':'o','п':'p','р':'r','с':'s','т':'t','у':'u','ф':'f','х':'h','ц':'ts','ч':'ch','ш':'sh','щ':'sch','ъ':'','ы':'y','ь':'','э':'e','ю':'yu','я':'ya'};
+      const s = text.toLowerCase().split('').map(c => map[c] ?? c).join('')
+        .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40);
+      return s || 'post-' + Date.now().toString(36);
+    }
+
+    const RESERVED = ['index', '404', 'index-html'];
 
     actionBtn.addEventListener('click', async () => {
       if (!db) {
@@ -265,44 +357,53 @@
         return;
       }
 
+      // Нажали EDIT — включаем редактирование
       if (isViewMode) {
-        const pass = getSecret();
-        if (!pass) return;
+        if (!isOwner()) return;
         isViewMode = false;
         setEditable(true);
-        actionBtn.textContent = 'PUBLISH';
+        refreshUI();
         return;
       }
 
-      const secret = getSecret();
-      if (!secret) return;
-
+      // Нажали PUBLISH
       const titleText = titleEl.innerText.trim();
       if (!titleText) {
-        alert('Введите заголовок (Title)!');
+        setStatus('Введите заголовок (Title).', 'error');
+        return;
+      }
+
+      if (!(await login())) return;
+      if (!isOwner()) {
+        setStatus('Этот аккаунт (' + user.email + ') не может публиковать. Войдите под ' + OWNER_EMAIL, 'error');
+        return;
+      }
+
+      const story = storyEl.innerHTML;
+      const approxBytes = new Blob([story]).size;
+      if (approxBytes > 950000) {
+        setStatus('Страница слишком большая (' + Math.round(approxBytes / 1024) + ' КБ). Лимит Firestore — 1 МБ: уберите часть фото.', 'error');
         return;
       }
 
       actionBtn.disabled = true;
-      statusEl.style.color = '#888';
-      statusEl.textContent = 'Публикация...';
-         try {
+      setStatus('Публикация...');
+      try {
         let targetSlug = currentSlug;
 
         if (!targetSlug) {
-          let baseSlug = slugify(titleText);
+          const baseSlug = slugify(titleText);
           targetSlug = baseSlug;
           let counter = 2;
-          while ((await db.collection('articles').doc(targetSlug).get()).exists) {
+          while (RESERVED.includes(targetSlug) || (await db.collection('articles').doc(targetSlug).get()).exists) {
             targetSlug = `${baseSlug}-${counter++}`;
           }
         }
 
         await db.collection('articles').doc(targetSlug).set({
-          title: titleEl.innerHTML,
-          author: authorEl.innerHTML,
-          story: storyEl.innerHTML,
-          secret: secret,
+          title: titleText,
+          author: authorEl.innerText.trim(),
+          story: story,
           updatedAt: Date.now()
         });
 
@@ -311,15 +412,15 @@
         document.title = titleText;
         isViewMode = true;
         setEditable(false);
-        actionBtn.textContent = 'EDIT';
-        statusEl.style.color = '#28a745';
-        statusEl.textContent = 'Опубликовано! Ссылка скопирована в буфер обмена.';
-        navigator.clipboard?.writeText(window.location.href);
+        refreshUI();
+        setStatus('Опубликовано! Ссылка скопирована в буфер обмена.', 'ok');
+        try { await navigator.clipboard.writeText(window.location.href); } catch (e) {}
       } catch (e) {
-        localStorage.removeItem('tgtype_secret');
-        statusEl.style.color = '#d9534f';
-        statusEl.textContent = 'Ошибка: ' + e.message;
-        alert('Ошибка публикации: неверный пароль в Rules Firebase или превышен размер фото.');
+        if (e.code === 'permission-denied') {
+          setStatus('Нет прав на запись. Проверьте, что в правилах Firestore стоит тот же Gmail, что и в OWNER_EMAIL.', 'error');
+        } else {
+          setStatus('Ошибка публикации: ' + e.message, 'error');
+        }
       } finally {
         actionBtn.disabled = false;
       }
@@ -327,4 +428,3 @@
   </script>
 </body>
 </html>
-      
