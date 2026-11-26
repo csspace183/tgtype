@@ -156,7 +156,7 @@
   <div id="authModal" class="modal-bg">
     <div class="modal-box">
       <h3>Вход / Регистрация</h3>
-      <input type="text" id="loginInput" placeholder="Логин (латиницей, например lordman)">
+      <input type="text" id="loginInput" placeholder="Логин (латиницей, например admin)">
       <input type="password" id="passInput" placeholder="Пароль (минимум 6 символов)">
       <div class="modal-btns">
         <button id="doLoginBtn" class="btn-primary" type="button">Войти</button>
@@ -405,7 +405,7 @@
       if (!currentUser || !isAdmin(currentUser)) {
         titleEl.textContent = 'Доступ запрещён';
         document.title = 'Доступ запрещён';
-        setStatus('Страница /blog доступна только администратору lordman.', 'error');
+        setStatus('Страница Блог сейчас доступна только администратору.', 'error');
         return;
       }
 
