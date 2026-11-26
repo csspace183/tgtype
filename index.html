@@ -598,8 +598,10 @@
           updatedAt: now
         };
 
-        if (isAdmin(currentUser)) {
+       if (isAdmin(currentUser)) {
           payload.customMeta = metaInfoEl.innerText.trim();
+        } else {
+          payload.customMeta = firebase.firestore.FieldValue.delete();
         }
 
         if (!currentArticleOwner) {
