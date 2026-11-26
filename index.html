@@ -286,8 +286,7 @@
       actionBtn.disabled = true;
       statusEl.style.color = '#888';
       statusEl.textContent = 'Публикация...';
-
-      try {
+         try {
         let targetSlug = currentSlug;
 
         if (!targetSlug) {
@@ -306,22 +305,26 @@
           secret: secret,
           updatedAt: Date.now()
         });
-        document.title = titleText;
-isViewMode = true;
-setEditable(false);
-actionBtn.textContent = 'EDIT';
-statusEl.style.color = '#28a745';
-statusEl.textContent = 'Опубликовано! Ссылка скопирована в буфер обмена.';
-navigator.clipboard?.writeText(window.location.href);
-} catch (e) {
-localStorage.removeItem('tgtype_secret');
-statusEl.style.color = '#d9534f';
-statusEl.textContent = 'Ошибка: ' + e.message;
-alert('Ошибка публикации: неверный пароль в Rules Firebase или превышен размер фото.');
-} finally {
-actionBtn.disabled = false;
-}
-});
 
         currentSlug = targetSlug;
         window.history.pushState({}, '', '/' + targetSlug);
+        document.title = titleText;
+        isViewMode = true;
+        setEditable(false);
+        actionBtn.textContent = 'EDIT';
+        statusEl.style.color = '#28a745';
+        statusEl.textContent = 'Опубликовано! Ссылка скопирована в буфер обмена.';
+        navigator.clipboard?.writeText(window.location.href);
+      } catch (e) {
+        localStorage.removeItem('tgtype_secret');
+        statusEl.style.color = '#d9534f';
+        statusEl.textContent = 'Ошибка: ' + e.message;
+        alert('Ошибка публикации: неверный пароль в Rules Firebase или превышен размер фото.');
+      } finally {
+        actionBtn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>
+      
