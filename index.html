@@ -95,8 +95,9 @@
     .tool-btn:hover { border-color: #222; color: #222; }
     .status {
       font-size: 13px;
-      color: #888;
+      color: #d9534f;
       margin-top: 10px;
+      font-weight: 500;
     }
   </style>
 </head>
@@ -105,63 +106,119 @@
   <div class="container">
     <div class="top-bar">
       <a href="/" class="new-link">+ Новая страница</a>
-      <button id="actionBtn" class="publish-btn" onclick="handleAction()">PUBLISH</button>
+      <button id="actionBtn" class="publish-btn" type="button">PUBLISH</button>
     </div>
 
     <div id="title" class="editable" contenteditable="true" data-placeholder="Title"></div>
     <div id="author" class="editable" contenteditable="true" data-placeholder="Your name"></div>
 
     <div id="toolbar" class="toolbar">
-      <button class="tool-btn" onclick="document.execCommand('bold')"><b>B</b></button>
-      <button class="tool-btn" onclick="document.execCommand('italic')"><i>I</i></button>
-      <button class="tool-btn" onclick="document.execCommand('formatBlock', false, 'H3')">H</button>
-      <button class="tool-btn" onclick="document.execCommand('formatBlock', false, 'BLOCKQUOTE')">”</button>
-      <button class="tool-btn" onclick="triggerFile()">📷 Фото</button>
-      <input type="file" id="fileInput" accept="image/*" style="display:none" onchange="handleFile(this.files[0])">
+      <button class="tool-btn" type="button" onclick="document.execCommand('bold')"><b>B</b></button>
+      <button class="tool-btn" type="button" onclick="document.execCommand('italic')"><i>I</i></button>
+      <button class="tool-btn" type="button" onclick="document.execCommand('formatBlock', false, 'H3')">H</button>
+      <button class="tool-btn" type="button" onclick="document.execCommand('formatBlock', false, 'BLOCKQUOTE')">”</button>
+      <button id="photoBtn" class="tool-btn" type="button">📷 Фото</button>
+      <input type="file" id="fileInput" accept="image/*" style="display:none">
     </div>
 
     <div id="story" class="editable" contenteditable="true" data-placeholder="Your story... (можно вставлять фото через Ctrl+V)"></div>
     <div id="status" class="status"></div>
   </div>
 
-  <script type="module">
-    import { initializeApp } from "https://gstatic.com";
-    import { getFirestore, doc, getDoc, setDoc } from "https://gstatic.com";
+  <!-- Подключаем Firebase через стабильный CDN jsDelivr -->
+  <script src="https://jsdelivr.net"></script>
+  <script src="https://jsdelivr.net"></script>
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyAGZvMxxAZEsbech1evNe2aNwR6GfC0xhw",
-      authDomain: "://firebaseapp.com",
-      projectId: "tgtype-a41aa",
-      storageBucket: "tgtype-a41aa.firebasestorage.app",
-      messagingSenderId: "967552866716",
-      appId: "1:967552866716:web:2d3dff00a96e83e151d059",
-      measurementId: "G-ZQ5XB5MD7V"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-
+  <script>
     const titleEl = document.getElementById('title');
     const authorEl = document.getElementById('author');
     const storyEl = document.getElementById('story');
     const actionBtn = document.getElementById('actionBtn');
+    const photoBtn = document.getElementById('photoBtn');
+    const fileInput = document.getElementById('fileInput');
     const toolbar = document.getElementById('toolbar');
     const statusEl = document.getElementById('status');
+
+    // Работа с фото (работает независимо от базы данных)
+    photoBtn.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', (e) => {
+      if (e.target.files && e.target.files[0]) {
+        compressAndInsertImage(e.target.files[0]);
+      }
+    });
+
+    storyEl.addEventListener('paste', (e) => {
+      const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+      for (let item of items) {
+        if (item.type.indexOf('image') === 0) {
+          e.preventDefault();
+          const file = item.getAsFile();
+          compressAndInsertImage(file);
+        }
+      }
+    });
+
+    function compressAndInsertImage(file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const MAX_WIDTH = 900;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > MAX_WIDTH) {
+            height *= MAX_WIDTH / width;
+            width = MAX_WIDTH;
+          }
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+          storyEl.focus();
+          document.execCommand('insertHTML', false, `<img src="${dataUrl}"><br>`);
+        };
+        img.src = event.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // Инициализация базы данных Firebase
+    let db = null;
+    if (typeof firebase !== 'undefined') {
+      const firebaseConfig = {
+        apiKey: "AIzaSyAGZvMxxAZEsbech1evNe2aNwR6GfC0xhw",
+        authDomain: "://firebaseapp.com",
+        projectId: "tgtype-a41aa",
+        storageBucket: "tgtype-a41aa.firebasestorage.app",
+        messagingSenderId: "967552866716",
+        appId: "1:967552866716:web:2d3dff00a96e83e151d059",
+        measurementId: "G-ZQ5XB5MD7V"
+      };
+      firebase.initializeApp(firebaseConfig);
+      db = firebase.firestore();
+    } else {
+      statusEl.textContent = 'Ошибка: скрипт Firebase не загрузился (проверьте интернет или VPN).';
+    }
 
     const pathSlug = window.location.pathname.replace(/^\/+|\/+$/g, '');
     let currentSlug = pathSlug;
     let isViewMode = false;
 
-    if (pathSlug) {
+    if (pathSlug && db) {
       loadArticle(pathSlug);
     }
 
     async function loadArticle(slug) {
       setEditable(false);
+      statusEl.style.color = '#888';
       statusEl.textContent = 'Загрузка...';
       try {
-        const snap = await getDoc(doc(db, 'articles', slug));
-        if (snap.exists()) {
+        const snap = await db.collection('articles').doc(slug).get();
+        if (snap.exists) {
           const data = snap.data();
           titleEl.innerHTML = data.title;
           authorEl.innerHTML = data.author;
@@ -175,6 +232,7 @@
           setEditable(true);
         }
       } catch (e) {
+        statusEl.style.color = '#d9534f';
         statusEl.textContent = 'Ошибка загрузки: ' + e.message;
       }
     }
@@ -201,7 +259,12 @@
       return pass;
     }
 
-    window.handleAction = async function() {
+    actionBtn.addEventListener('click', async () => {
+      if (!db) {
+        alert('База данных не подключена! Обновите страницу или проверьте соединение.');
+        return;
+      }
+
       if (isViewMode) {
         const pass = getSecret();
         if (!pass) return;
@@ -221,6 +284,7 @@
       }
 
       actionBtn.disabled = true;
+      statusEl.style.color = '#888';
       statusEl.textContent = 'Публикация...';
 
       try {
@@ -230,12 +294,12 @@
           let baseSlug = slugify(titleText);
           targetSlug = baseSlug;
           let counter = 2;
-          while ((await getDoc(doc(db, 'articles', targetSlug))).exists()) {
+          while ((await db.collection('articles').doc(targetSlug).get()).exists) {
             targetSlug = `${baseSlug}-${counter++}`;
           }
         }
 
-        await setDoc(doc(db, 'articles', targetSlug), {
+        await db.collection('articles').doc(targetSlug).set({
           title: titleEl.innerHTML,
           author: authorEl.innerHTML,
           story: storyEl.innerHTML,
@@ -245,61 +309,3 @@
 
         currentSlug = targetSlug;
         window.history.pushState({}, '', '/' + targetSlug);
-        document.title = titleText;
-        isViewMode = true;
-        setEditable(false);
-        actionBtn.textContent = 'EDIT';
-        statusEl.textContent = 'Опубликовано! Ссылка скопирована в буфер обмена.';
-        navigator.clipboard?.writeText(window.location.href);
-      } catch (e) {
-        localStorage.removeItem('tgtype_secret');
-        alert('Неверный пароль или превышен размер фото (макс. ~800 КБ на страницу).');
-        statusEl.textContent = '';
-      } finally {
-        actionBtn.disabled = false;
-      }
-    };
-
-    storyEl.addEventListener('paste', (e) => {
-      const items = (e.clipboardData || e.originalEvent.clipboardData).items;
-      for (let item of items) {
-        if (item.type.indexOf('image') === 0) {
-          e.preventDefault();
-          const file = item.getAsFile();
-          compressAndInsertImage(file);
-        }
-      }
-    });
-
-    window.triggerFile = () => document.getElementById('fileInput').click();
-    window.handleFile = (file) => { if (file) compressAndInsertImage(file); };
-
-    function compressAndInsertImage(file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const img = new Image();
-        img.onload = () => {
-          const canvas = document.createElement('canvas');
-          const MAX_WIDTH = 900;
-          let width = img.width;
-          let height = img.height;
-
-          if (width > MAX_WIDTH) {
-            height *= MAX_WIDTH / width;
-            width = MAX_WIDTH;
-          }
-          canvas.width = width;
-          canvas.height = height;
-          const ctx = canvas.getContext('2d');
-          ctx.drawImage(img, 0, 0, width, height);
-
-          const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
-          document.execCommand('insertHTML', false, `<img src="${dataUrl}"><br>`);
-        };
-        img.src = event.target.result;
-      };
-      reader.readAsDataURL(file);
-    }
-  </script>
-</body>
-</html>
