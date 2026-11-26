@@ -20,6 +20,7 @@
       min-height: 36px;
       margin-bottom: 20px;
     }
+    .top-left { display: flex; align-items: center; gap: 16px; }
     .new-link { font-size: 13px; color: #999; text-decoration: none; }
     .new-link:hover { color: #222; }
     .publish-btn {
@@ -72,13 +73,61 @@
     .auth-bar { margin-top: 40px; font-size: 12px; color: #aaa; }
     .auth-bar button { background: none; border: 0; padding: 0; font: inherit; color: #aaa; cursor: pointer; text-decoration: underline; }
     .auth-bar button:hover { color: #222; }
+
+    /* Админ-список /blog */
+    .blog-search {
+      width: 100%; box-sizing: border-box; padding: 9px 14px; margin: 10px 0 15px;
+      border: 1px solid #ddd; border-radius: 20px; font-size: 14px; outline: none;
+    }
+    .blog-search:focus { border-color: #222; }
+    .posts-list { list-style: none; padding: 0; margin: 0; }
+    .post-item {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 14px 0; border-bottom: 1px solid #eee; gap: 15px;
+    }
+    .post-info a { font-family: Georgia, serif; font-size: 20px; font-weight: 700; color: #222; text-decoration: none; }
+    .post-info a:hover { color: #0066cc; }
+    .post-meta { font-size: 12px; color: #888; margin-top: 4px; }
+    .post-actions { display: flex; gap: 6px; flex-shrink: 0; }
+    .mini-btn {
+      background: #fff; border: 1px solid #ddd; border-radius: 15px;
+      padding: 5px 11px; font-size: 12px; cursor: pointer; color: #333;
+    }
+    .mini-btn:hover { border-color: #222; }
+    .mini-btn.del:hover { border-color: #d9534f; color: #d9534f; }
+
+    /* Модальное окно входа/регистрации */
+    .modal-bg {
+      display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45);
+      justify-content: center; align-items: center; z-index: 100;
+    }
+    .modal-box {
+      background: #fff; padding: 24px; border-radius: 12px; width: 100%; max-width: 310px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    }
+    .modal-box h3 { margin: 0 0 14px; font-size: 18px; }
+    .modal-box input {
+      width: 100%; box-sizing: border-box; padding: 9px 12px; margin-bottom: 10px;
+      border: 1px solid #ddd; border-radius: 6px; font-size: 14px; outline: none;
+    }
+    .modal-box input:focus { border-color: #222; }
+    .modal-btns { display: flex; gap: 8px; margin-top: 4px; }
+    .modal-btns button {
+      flex: 1; padding: 9px; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 13px;
+    }
+    .btn-primary { background: #222; color: #fff; border: none; }
+    .btn-secondary { background: #fff; color: #222; border: 1px solid #222; }
+    .modal-close { display: block; width: 100%; margin-top: 10px; background: none; border: none; color: #999; font-size: 12px; cursor: pointer; }
   </style>
 </head>
 <body>
 
   <div class="container">
     <div class="top-bar">
-      <a href="/" class="new-link">+ Новая страница</a>
+      <div class="top-left">
+        <a href="/" class="new-link">+ Новая страница</a>
+        <a href="/blog" id="adminBlogLink" class="new-link" style="display:none;">Все статьи (/blog)</a>
+      </div>
       <button id="actionBtn" class="publish-btn" type="button">PUBLISH</button>
     </div>
 
@@ -99,65 +148,79 @@
     <div id="status" class="status"></div>
 
     <div class="auth-bar">
-      <button id="passBtn" type="button"></button>
+      <button id="authBtn" type="button">Войти</button>
+    </div>
+  </div>
+
+  <!-- Окно входа и регистрации -->
+  <div id="authModal" class="modal-bg">
+    <div class="modal-box">
+      <h3>Вход / Регистрация</h3>
+      <input type="text" id="loginInput" placeholder="Логин (латиницей, например lordman)">
+      <input type="password" id="passInput" placeholder="Пароль (минимум 6 символов)">
+      <div class="modal-btns">
+        <button id="doLoginBtn" class="btn-primary" type="button">Войти</button>
+        <button id="doRegBtn" class="btn-secondary" type="button">Регистрация</button>
+      </div>
+      <button id="closeModalBtn" class="modal-close" type="button">Закрыть</button>
     </div>
   </div>
 
   <script src="/firebase-app-compat.js"></script>
+  <script src="/firebase-auth-compat.js"></script>
   <script src="/firebase-firestore-compat.js"></script>
+<script>
+    const ADMIN_LOGIN = 'lordman';
 
-  <script>
     const titleEl = document.getElementById('title');
     const authorEl = document.getElementById('author');
     const storyEl = document.getElementById('story');
     const actionBtn = document.getElementById('actionBtn');
     const photoBtn = document.getElementById('photoBtn');
+    const linkBtn = document.getElementById('linkBtn');
     const fileInput = document.getElementById('fileInput');
     const toolbar = document.getElementById('toolbar');
     const statusEl = document.getElementById('status');
-    const passBtn = document.getElementById('passBtn');
+    const authBtn = document.getElementById('authBtn');
+    const adminBlogLink = document.getElementById('adminBlogLink');
+    const authModal = document.getElementById('authModal');
+    const loginInput = document.getElementById('loginInput');
+    const passInput = document.getElementById('passInput');
+
+    let currentUser = null;
+    let currentArticleOwner = null;
+    const pathSlug = window.location.pathname.replace(/^\/+|\/+$/g, '');
+    let currentSlug = pathSlug;
+    let isViewMode = false;
 
     function setStatus(text, kind) {
       statusEl.textContent = text || '';
       statusEl.className = 'status' + (kind ? ' ' + kind : '');
     }
 
-    function updatePassBtn() {
-      const saved = localStorage.getItem('tgtype_secret');
-      passBtn.textContent = saved ? 'Выйти (сбросить пароль)' : 'Ввести пароль автора';
+    function getLoginName(user) {
+      return user && user.email ? user.email.split('@') : '';
     }
-    updatePassBtn();
 
-    passBtn.addEventListener('click', () => {
-      if (localStorage.getItem('tgtype_secret')) {
-        localStorage.removeItem('tgtype_secret');
-        setStatus('Пароль сброшен.', '');
-      } else {
-        const p = prompt('Введите ваш пароль автора:');
-        if (p) {
-          localStorage.setItem('tgtype_secret', p);
-          setStatus('Пароль сохранён в браузере.', 'ok');
-        }
-      }
-      updatePassBtn();
-    });
-document.querySelectorAll('.tool-btn[data-cmd]').forEach(btn => {
+    function isAdmin(user) {
+      return getLoginName(user) === ADMIN_LOGIN;
+    }
+
+    document.querySelectorAll('.tool-btn[data-cmd]').forEach(btn => {
       btn.addEventListener('mousedown', e => e.preventDefault());
       btn.addEventListener('click', () => {
         storyEl.focus();
         document.execCommand(btn.dataset.cmd, false, btn.dataset.arg || null);
       });
     });
-      const linkBtn = document.getElementById('linkBtn');
+
     linkBtn.addEventListener('mousedown', e => e.preventDefault());
     linkBtn.addEventListener('click', () => {
       const sel = window.getSelection();
       if (!sel || !sel.rangeCount) return;
 
-      // Проверяем, находится ли выделение или курсор внутри существующей ссылки
       const anchor = sel.anchorNode?.parentElement?.closest('a') || sel.focusNode?.parentElement?.closest('a');
       if (anchor) {
-        // Если текст не выделен, выделяем всю ссылку целиком, чтобы снять её полностью
         if (sel.isCollapsed) {
           const range = document.createRange();
           range.selectNodeContents(anchor);
@@ -185,7 +248,7 @@ document.querySelectorAll('.tool-btn[data-cmd]').forEach(btn => {
       const newAnchor = sel.anchorNode?.parentElement?.closest('a') || sel.focusNode?.parentElement?.closest('a');
       if (newAnchor) newAnchor.target = '_blank';
     });
-    
+
     photoBtn.addEventListener('click', () => fileInput.click());
     fileInput.addEventListener('change', e => {
       for (const f of e.target.files || []) compressAndInsertImage(f);
@@ -235,6 +298,7 @@ document.querySelectorAll('.tool-btn[data-cmd]').forEach(btn => {
     }
 
     let db = null;
+    let auth = null;
     if (typeof firebase !== 'undefined') {
       firebase.initializeApp({
         apiKey: "AIzaSyAGZvMxxAZEsbech1evNe2aNwR6GfC0xhw",
@@ -245,16 +309,195 @@ document.querySelectorAll('.tool-btn[data-cmd]').forEach(btn => {
         appId: "1:967552866716:web:2d3dff00a96e83e151d059"
       });
       db = firebase.firestore();
+      auth = firebase.auth();
     } else {
-      setStatus('Ошибка: файлы firebase-app-compat.js не найдены.', 'error');
+      setStatus('Ошибка: файлы Firebase не загрузились.', 'error');
+    }
+ authBtn.addEventListener('click', () => {
+      if (currentUser) {
+        auth.signOut();
+      } else {
+        authModal.style.display = 'flex';
+        loginInput.focus();
+      }
+    });
+
+    document.getElementById('closeModalBtn').addEventListener('click', () => {
+      authModal.style.display = 'none';
+    });
+
+    function cleanLogin(raw) {
+      return raw.trim().toLowerCase().replace(/[^a-z0-9_-]/g, '');
     }
 
-    const pathSlug = window.location.pathname.replace(/^\/+|\/+$/g, '');
-    let currentSlug = pathSlug;
-    let isViewMode = false;
+    document.getElementById('doLoginBtn').addEventListener('click', async () => {
+      const login = cleanLogin(loginInput.value);
+      const pass = passInput.value;
+      if (!login || !pass) return alert('Введите логин и пароль!');
+      try {
+        await auth.signInWithEmailAndPassword(`${login}@tgtype.local`, pass);
+        authModal.style.display = 'none';
+        setStatus(`Вход выполнен: ${login}`, 'ok');
+      } catch (e) {
+        alert('Неверный логин или пароль!');
+      }
+    });
 
-    if (pathSlug && db) {
-      loadArticle(pathSlug);
+    document.getElementById('doRegBtn').addEventListener('click', async () => {
+      const login = cleanLogin(loginInput.value);
+      const pass = passInput.value;
+      if (!login || login.length < 3) return alert('Логин: минимум 3 латинских символа (a-z, 0-9)');
+      if (!pass || pass.length < 6) return alert('Пароль: минимум 6 символов');
+      try {
+        await auth.createUserWithEmailAndPassword(`${login}@tgtype.local`, pass);
+        authModal.style.display = 'none';
+        setStatus(`Аккаунт ${login} зарегистрирован!`, 'ok');
+      } catch (e) {
+        if (e.code === 'auth/email-already-in-use') {
+          alert('Этот логин уже занят! Придумайте другой.');
+        } else {
+          alert('Ошибка регистрации: ' + e.message);
+        }
+      }
+    });
+
+    let initialLoaded = false;
+    if (auth) {
+      auth.onAuthStateChanged(user => {
+        currentUser = user;
+        const login = getLoginName(user);
+
+        if (user) {
+          authBtn.textContent = `Выйти (${login})`;
+          adminBlogLink.style.display = isAdmin(user) ? 'inline' : 'none';
+        } else {
+          authBtn.textContent = 'Войти';
+          adminBlogLink.style.display = 'none';
+        }
+
+        updateEditVisibility();
+
+        if (!initialLoaded) {
+          initialLoaded = true;
+          if (pathSlug === 'blog') {
+            loadAdminBlog();
+          } else if (pathSlug) {
+            loadArticle(pathSlug);
+          }
+        }
+      });
+    }
+
+    function updateEditVisibility() {
+      if (!isViewMode) {
+        actionBtn.style.display = 'inline-block';
+        return;
+      }
+      const canEdit = currentUser && (currentUser.uid === currentArticleOwner || isAdmin(currentUser));
+      actionBtn.style.display = canEdit ? 'inline-block' : 'none';
+    }
+
+    async function loadAdminBlog() {
+      authorEl.style.display = 'none';
+      toolbar.style.display = 'none';
+      storyEl.style.display = 'none';
+      actionBtn.style.display = 'none';
+      titleEl.contentEditable = false;
+
+      if (!currentUser || !isAdmin(currentUser)) {
+        titleEl.textContent = 'Доступ запрещён';
+        document.title = 'Доступ запрещён';
+        setStatus('Страница /blog доступна только администратору lordman.', 'error');
+        return;
+      }
+
+      titleEl.textContent = 'Все публикации (/blog)';
+      document.title = 'Админ-панель — tgtype';
+      setStatus('Загрузка публикаций...');
+
+      try {
+        const snap = await db.collection('articles').get();
+        if (snap.empty) {
+          setStatus('Пока нет ни одной статьи.');
+          return;
+        }
+
+        const posts = [];
+        snap.forEach(doc => posts.push({ id: doc.id, ...doc.data() }));
+        posts.sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+
+        const searchInput = document.createElement('input');
+        searchInput.type = 'text';
+        searchInput.className = 'blog-search';
+        searchInput.placeholder = 'Поиск по заголовку, ссылке или логину автора...';
+
+        const ul = document.createElement('ul');
+        ul.className = 'posts-list';
+
+        function renderList(filterText = '') {
+          ul.innerHTML = '';
+          const q = filterText.toLowerCase().trim();
+          let count = 0;
+
+          posts.forEach(post => {
+            const temp = document.createElement('div');
+            temp.innerHTML = post.title || post.id;
+            const cleanTitle = temp.innerText.trim() || post.id;
+            const ownerName = post.ownerLogin || 'неизвестен (старая запись)';
+
+            if (q && !cleanTitle.toLowerCase().includes(q) && !post.id.toLowerCase().includes(q) && !ownerName.toLowerCase().includes(q)) {
+              return;
+            }
+            count++;
+
+            const dateStr = post.updatedAt ? new Date(post.updatedAt).toLocaleString('ru-RU', {
+              day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
+            }) : '—';
+            const fullUrl = `${window.location.origin}/${post.id}`;
+
+            const li = document.createElement('li');
+            li.className = 'post-item';
+            li.innerHTML = `
+              <div class="post-info">
+                <a href="/${post.id}">${cleanTitle}</a>
+                <div class="post-meta">/${post.id} • Автор: <b>${ownerName}</b> • Изменено: ${dateStr}</div>
+              </div>
+              <div class="post-actions">
+                <button class="mini-btn copy-btn" type="button">Копировать</button>
+                <button class="mini-btn del del-btn" type="button">Удалить</button>
+              </div>
+            `;
+
+            li.querySelector('.copy-btn').addEventListener('click', (e) => {
+              navigator.clipboard?.writeText(fullUrl);
+              e.target.textContent = 'Скопировано!';
+              setTimeout(() => e.target.textContent = 'Копировать', 1500);
+            });
+
+            li.querySelector('.del-btn').addEventListener('click', async () => {
+              if (!confirm(`Точно удалить статью «${cleanTitle}» (/${post.id})?`)) return;
+              try {
+                await db.collection('articles').doc(post.id).delete();
+                const idx = posts.indexOf(post);
+                if (idx > -1) posts.splice(idx, 1);
+                renderList(searchInput.value);
+              } catch (err) {
+                alert('Ошибка удаления: ' + err.message);
+              }
+            });
+
+            ul.appendChild(li);
+          });
+
+          setStatus(`Показано статей: ${count} из ${posts.length}`);
+        }
+
+        searchInput.addEventListener('input', () => renderList(searchInput.value));
+        storyEl.after(searchInput, ul);
+        renderList();
+      } catch (e) {
+        setStatus('Ошибка загрузки списка: ' + e.message, 'error');
+      }
     }
 
     async function loadArticle(slug) {
@@ -267,10 +510,12 @@ document.querySelectorAll('.tool-btn[data-cmd]').forEach(btn => {
           titleEl.innerHTML = data.title;
           authorEl.innerHTML = data.author;
           storyEl.innerHTML = data.story;
+          currentArticleOwner = data.ownerUid || null;
           document.title = titleEl.innerText || 'tgtype';
           setStatus('');
           actionBtn.textContent = 'EDIT';
           isViewMode = true;
+          updateEditVisibility();
         } else {
           setStatus('Страница не найдена. Можете создать её здесь!');
           setEditable(true);
@@ -293,32 +538,21 @@ document.querySelectorAll('.tool-btn[data-cmd]').forEach(btn => {
         .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'post-' + Date.now();
     }
 
-    function getSecret() {
-      let pass = localStorage.getItem('tgtype_secret');
-      if (!pass) {
-        pass = prompt('Введите ваш пароль автора:');
-        if (pass) {
-          localStorage.setItem('tgtype_secret', pass);
-          updatePassBtn();
-        }
-      }
-      return pass;
-    }
-
     actionBtn.addEventListener('click', async () => {
-      if (!db) return;
+      if (!db || !auth) return;
+
+      if (!currentUser) {
+        authModal.style.display = 'flex';
+        loginInput.focus();
+        return;
+      }
 
       if (isViewMode) {
-        const pass = getSecret();
-        if (!pass) return;
         isViewMode = false;
         setEditable(true);
         actionBtn.textContent = 'PUBLISH';
         return;
       }
-
-      const secret = getSecret();
-      if (!secret) return;
 
       const titleText = titleEl.innerText.trim();
       if (!titleText) {
@@ -334,19 +568,26 @@ document.querySelectorAll('.tool-btn[data-cmd]').forEach(btn => {
         if (!targetSlug) {
           let baseSlug = slugify(titleText);
           targetSlug = baseSlug;
-          let counter = 2;
+          let counter = 1;
           while ((await db.collection('articles').doc(targetSlug).get()).exists) {
-            targetSlug = `${baseSlug}-${counter++}`;
+            targetSlug = `${baseSlug}${counter++}`;
           }
         }
 
-        await db.collection('articles').doc(targetSlug).set({
+        const payload = {
           title: titleEl.innerHTML,
           author: authorEl.innerHTML,
           story: storyEl.innerHTML,
-          secret: secret,
           updatedAt: Date.now()
-        });
+        };
+
+        if (!currentArticleOwner) {
+          payload.ownerUid = currentUser.uid;
+          payload.ownerLogin = getLoginName(currentUser);
+          currentArticleOwner = currentUser.uid;
+        }
+
+        await db.collection('articles').doc(targetSlug).set(payload, { merge: true });
 
         currentSlug = targetSlug;
         window.history.pushState({}, '', '/' + targetSlug);
@@ -354,12 +595,11 @@ document.querySelectorAll('.tool-btn[data-cmd]').forEach(btn => {
         isViewMode = true;
         setEditable(false);
         actionBtn.textContent = 'EDIT';
+        updateEditVisibility();
         setStatus('Опубликовано! Ссылка скопирована в буфер.', 'ok');
         navigator.clipboard?.writeText(window.location.href);
       } catch (e) {
-        localStorage.removeItem('tgtype_secret');
-        updatePassBtn();
-        setStatus('Ошибка: неверный пароль или слишком большой объём фото.', 'error');
+        setStatus('Ошибка публикации: ' + e.message, 'error');
       } finally {
         actionBtn.disabled = false;
       }
@@ -368,6 +608,4 @@ document.querySelectorAll('.tool-btn[data-cmd]').forEach(btn => {
 </body>
 </html>
 
-
-
-    
+  
