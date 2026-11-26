@@ -54,6 +54,7 @@
     #story h3 { font-size: 24px; margin: 1.3em 0 .5em; }
     #story blockquote { margin: 1em 0; padding-left: 16px; border-left: 3px solid #222; }
     #story img { max-width: 100%; height: auto; display: block; margin: 18px 0; border-radius: 4px; }
+    #story a { color: #0066cc; text-decoration: underline; cursor: pointer; }
     .toolbar { margin-bottom: 15px; display: flex; gap: 8px; flex-wrap: wrap; }
     .tool-btn {
       background: none;
@@ -89,6 +90,7 @@
       <button class="tool-btn" type="button" data-cmd="italic"><i>I</i></button>
       <button class="tool-btn" type="button" data-cmd="formatBlock" data-arg="H3">H</button>
       <button class="tool-btn" type="button" data-cmd="formatBlock" data-arg="BLOCKQUOTE">”</button>
+      <button id="linkBtn" class="tool-btn" type="button">🔗 Ссылка</button>
       <button id="photoBtn" class="tool-btn" type="button">📷 Фото</button>
       <input type="file" id="fileInput" accept="image/*" style="display:none">
     </div>
@@ -146,7 +148,28 @@ document.querySelectorAll('.tool-btn[data-cmd]').forEach(btn => {
         document.execCommand(btn.dataset.cmd, false, btn.dataset.arg || null);
       });
     });
+     const linkBtn = document.getElementById('linkBtn');
+    linkBtn.addEventListener('mousedown', e => e.preventDefault());
+    linkBtn.addEventListener('click', () => {
+      const sel = window.getSelection();
+      if (!sel || sel.isCollapsed) {
+        alert('Сначала выделите мышкой слово или текст, который нужно сделать ссылкой!');
+        return;
+      }
+      const range = sel.getRangeAt(0);
+      let url = prompt('Вставьте ссылку (например, https://google.com):', 'https://');
+      if (!url) return;
+      if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
 
+      sel.removeAllRanges();
+      sel.addRange(range);
+      document.execCommand('createLink', false, url);
+
+      // Делаем так, чтобы ссылка открывалась в новой вкладке
+      const anchor = sel.anchorNode?.parentElement?.closest('a') || sel.focusNode?.parentElement?.closest('a');
+      if (anchor) anchor.target = '_blank';
+    });
+    
     photoBtn.addEventListener('click', () => fileInput.click());
     fileInput.addEventListener('change', e => {
       for (const f of e.target.files || []) compressAndInsertImage(f);
@@ -330,5 +353,3 @@ document.querySelectorAll('.tool-btn[data-cmd]').forEach(btn => {
 </html>
 
 
-
-    
