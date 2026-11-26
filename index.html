@@ -270,10 +270,10 @@
       }
       return pass;
     }
-
     actionBtn.addEventListener('click', async () => {
       if (!db) return;
-      const pass = getSecret();
+  if (isViewMode) {
+const pass = getSecret();
 if (!pass) return;
 isViewMode = false;
 setEditable(true);
@@ -296,7 +296,7 @@ let baseSlug = slugify(titleText);
 targetSlug = baseSlug;
 let counter = 2;
 while ((await db.collection('articles').doc(targetSlug).get()).exists) {
-targetSlug = ${baseSlug}-${counter++};
+targetSlug = `${baseSlug}-${counter++}`;
 }
 }
 await db.collection('articles').doc(targetSlug).set({
@@ -322,5 +322,3 @@ setStatus('Ошибка: неверный пароль или слишком б�
 actionBtn.disabled = false;
 }
 });
-
-      if (isViewMode) {
