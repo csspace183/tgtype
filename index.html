@@ -520,8 +520,12 @@
           storyEl.innerHTML = data.story;
           currentArticleOwner = data.ownerUid || null;
           
-          const authorDisplay = data.ownerLogin || (data.author ? data.author.replace(/<[^>]*>/g, '').trim() : '');
-          renderMeta(authorDisplay, data.updatedAt);
+          if (data.customMeta !== undefined) {
+            metaInfoEl.textContent = data.customMeta;
+          } else {
+            const authorDisplay = data.ownerLogin || (data.author ? data.author.replace(/<[^>]*>/g, '').trim() : '');
+            renderMeta(authorDisplay, data.updatedAt);
+          }
 
           document.title = titleEl.innerText || 'tgtype';
           setStatus('');
@@ -594,6 +598,10 @@
           updatedAt: now
         };
 
+        if (isAdmin(currentUser)) {
+          payload.customMeta = metaInfoEl.innerText.trim();
+        }
+
         if (!currentArticleOwner) {
           payload.ownerUid = currentUser.uid;
           payload.ownerLogin = getLoginName(currentUser);
@@ -602,7 +610,11 @@
 
         await db.collection('articles').doc(targetSlug).set(payload, { merge: true });
 
-        renderMeta(payload.ownerLogin || getLoginName(currentUser), now);
+        if (isAdmin(currentUser)) {
+          metaInfoEl.textContent = payload.customMeta;
+        } else {
+          renderMeta(payload.ownerLogin || getLoginName(currentUser), now);
+        }
 
         currentSlug = targetSlug;
         window.history.pushState({}, '', '/' + targetSlug);
