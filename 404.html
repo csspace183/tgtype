@@ -417,7 +417,7 @@
       if (!currentUser || !isAdmin(currentUser)) {
         titleEl.textContent = 'Доступ запрещён';
         document.title = 'Доступ запрещён';
-        setStatus('Страница Блог сейчас доступна только администратору.', 'error');
+        setStatus('У вас нет прав для просмотра этой страницы. Запросите доступ у администратора.', 'error');
         return;
       }
 
