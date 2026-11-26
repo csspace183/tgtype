@@ -120,7 +120,6 @@
       statusEl.className = 'status' + (kind ? ' ' + kind : '');
     }
 
-    // Кнопка статуса пароля внизу
     function updatePassBtn() {
       const saved = localStorage.getItem('tgtype_secret');
       passBtn.textContent = saved ? 'Выйти (сбросить пароль)' : 'Ввести пароль автора';
@@ -140,9 +139,7 @@
       }
       updatePassBtn();
     });
-
-    // Форматирование текста
-    document.querySelectorAll('.tool-btn[data-cmd]').forEach(btn => {
+document.querySelectorAll('.tool-btn[data-cmd]').forEach(btn => {
       btn.addEventListener('mousedown', e => e.preventDefault());
       btn.addEventListener('click', () => {
         storyEl.focus();
@@ -150,7 +147,6 @@
       });
     });
 
-    // Фото: кнопка и Ctrl + V
     photoBtn.addEventListener('click', () => fileInput.click());
     fileInput.addEventListener('change', e => {
       for (const f of e.target.files || []) compressAndInsertImage(f);
@@ -199,7 +195,6 @@
       reader.readAsDataURL(file);
     }
 
-    // Инициализация Firestore
     let db = null;
     if (typeof firebase !== 'undefined') {
       firebase.initializeApp({
@@ -270,55 +265,70 @@
       }
       return pass;
     }
+
     actionBtn.addEventListener('click', async () => {
       if (!db) return;
-  if (isViewMode) {
-const pass = getSecret();
-if (!pass) return;
-isViewMode = false;
-setEditable(true);
-actionBtn.textContent = 'PUBLISH';
-return;
-}
-const secret = getSecret();
-if (!secret) return;
-const titleText = titleEl.innerText.trim();
-if (!titleText) {
-alert('Введите заголовок (Title)!');
-return;
-}
-actionBtn.disabled = true;
-setStatus('Публикация...');
-try {
-let targetSlug = currentSlug;
-if (!targetSlug) {
-let baseSlug = slugify(titleText);
-targetSlug = baseSlug;
-let counter = 2;
-while ((await db.collection('articles').doc(targetSlug).get()).exists) {
-targetSlug = `${baseSlug}-${counter++}`;
-}
-}
-await db.collection('articles').doc(targetSlug).set({
-title: titleEl.innerHTML,
-author: authorEl.innerHTML,
-story: storyEl.innerHTML,
-secret: secret,
-updatedAt: Date.now()
-});
-currentSlug = targetSlug;
-window.history.pushState({}, '', '/' + targetSlug);
-document.title = titleText;
-isViewMode = true;
-setEditable(false);
-actionBtn.textContent = 'EDIT';
-setStatus('Опубликовано! Ссылка скопирована в буфер.', 'ok');
-navigator.clipboard?.writeText(window.location.href);
-} catch (e) {
-localStorage.removeItem('tgtype_secret');
-updatePassBtn();
-setStatus('Ошибка: неверный пароль или слишком большой объём фото.', 'error');
-} finally {
-actionBtn.disabled = false;
-}
-});
+
+      if (isViewMode) {
+        const pass = getSecret();
+        if (!pass) return;
+        isViewMode = false;
+        setEditable(true);
+        actionBtn.textContent = 'PUBLISH';
+        return;
+      }
+
+      const secret = getSecret();
+      if (!secret) return;
+
+      const titleText = titleEl.innerText.trim();
+      if (!titleText) {
+        alert('Введите заголовок (Title)!');
+        return;
+      }
+
+      actionBtn.disabled = true;
+      setStatus('Публикация...');
+
+      try {
+        let targetSlug = currentSlug;
+        if (!targetSlug) {
+          let baseSlug = slugify(titleText);
+          targetSlug = baseSlug;
+          let counter = 2;
+          while ((await db.collection('articles').doc(targetSlug).get()).exists) {
+            targetSlug = `${baseSlug}-${counter++}`;
+          }
+        }
+
+        await db.collection('articles').doc(targetSlug).set({
+          title: titleEl.innerHTML,
+          author: authorEl.innerHTML,
+          story: storyEl.innerHTML,
+          secret: secret,
+          updatedAt: Date.now()
+        });
+
+        currentSlug = targetSlug;
+        window.history.pushState({}, '', '/' + targetSlug);
+        document.title = titleText;
+        isViewMode = true;
+        setEditable(false);
+        actionBtn.textContent = 'EDIT';
+        setStatus('Опубликовано! Ссылка скопирована в буфер.', 'ok');
+        navigator.clipboard?.writeText(window.location.href);
+      } catch (e) {
+        localStorage.removeItem('tgtype_secret');
+        updatePassBtn();
+        setStatus('Ошибка: неверный пароль или слишком большой объём фото.', 'error');
+      } finally {
+        actionBtn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>
+
+
+
+    
