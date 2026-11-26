@@ -173,7 +173,7 @@
     const ADMIN_LOGIN = 'lordman';
 
     const titleEl = document.getElementById('title');
-    const authorEl = document.getElementById('author');
+    const metaInfoEl = document.getElementById('metaInfo');
     const storyEl = document.getElementById('story');
     const actionBtn = document.getElementById('actionBtn');
     const photoBtn = document.getElementById('photoBtn');
@@ -192,6 +192,18 @@
     const pathSlug = window.location.pathname.replace(/^\/+|\/+$/g, '');
     let currentSlug = pathSlug;
     let isViewMode = false;
+
+   function renderMeta(login, timestamp) {
+  const parts = [];
+  if (login) parts.push(login);
+  if (timestamp) {
+    const dateStr = new Date(timestamp).toLocaleDateString('ru-RU', {
+      day: 'numeric', month: 'long', year: 'numeric'
+    });
+    parts.push(dateStr);
+    }
+  metaInfoEl.textContent = parts.join(' • ');
+    }
 
     function setStatus(text, kind) {
       statusEl.textContent = text || '';
