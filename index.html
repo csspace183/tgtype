@@ -106,60 +106,58 @@
   <script src="/firebase-app-compat.js"></script>
   <script src="/firebase-firestore-compat.js"></script>
 
-<script>
-    const ADMIN_LOGIN = 'lordman';
-
+  <script>
     const titleEl = document.getElementById('title');
     const authorEl = document.getElementById('author');
     const storyEl = document.getElementById('story');
     const actionBtn = document.getElementById('actionBtn');
     const photoBtn = document.getElementById('photoBtn');
-    const linkBtn = document.getElementById('linkBtn');
     const fileInput = document.getElementById('fileInput');
     const toolbar = document.getElementById('toolbar');
     const statusEl = document.getElementById('status');
-
-    const myPostsLink = document.getElementById('myPostsLink');
-    const userBadge = document.getElementById('userBadge');
-    const authBtn = document.getElementById('authBtn');
-    const authModal = document.getElementById('authModal');
-    const loginInput = document.getElementById('loginInput');
-    const passInput = document.getElementById('passInput');
-
-    let currentUser = null;
-    let currentArticleOwner = null;
-    const pathSlug = window.location.pathname.replace(/^\/+|\/+$/g, '');
-    let currentSlug = pathSlug;
-    let isViewMode = false;
+    const passBtn = document.getElementById('passBtn');
 
     function setStatus(text, kind) {
       statusEl.textContent = text || '';
       statusEl.className = 'status' + (kind ? ' ' + kind : '');
     }
 
-    function getLoginName(user) {
-      return user?.email ? user.email.split('@') : '';
+    function updatePassBtn() {
+      const saved = localStorage.getItem('tgtype_secret');
+      passBtn.textContent = saved ? 'Выйти (сбросить пароль)' : 'Ввести пароль автора';
     }
+    updatePassBtn();
 
-    function isAdmin(user) {
-      return getLoginName(user) === ADMIN_LOGIN;
-    }
-
-    document.querySelectorAll('.tool-btn[data-cmd]').forEach(btn => {
+    passBtn.addEventListener('click', () => {
+      if (localStorage.getItem('tgtype_secret')) {
+        localStorage.removeItem('tgtype_secret');
+        setStatus('Пароль сброшен.', '');
+      } else {
+        const p = prompt('Введите ваш пароль автора:');
+        if (p) {
+          localStorage.setItem('tgtype_secret', p);
+          setStatus('Пароль сохранён в браузере.', 'ok');
+        }
+      }
+      updatePassBtn();
+    });
+document.querySelectorAll('.tool-btn[data-cmd]').forEach(btn => {
       btn.addEventListener('mousedown', e => e.preventDefault());
       btn.addEventListener('click', () => {
         storyEl.focus();
         document.execCommand(btn.dataset.cmd, false, btn.dataset.arg || null);
       });
     });
-
+      const linkBtn = document.getElementById('linkBtn');
     linkBtn.addEventListener('mousedown', e => e.preventDefault());
     linkBtn.addEventListener('click', () => {
       const sel = window.getSelection();
       if (!sel || !sel.rangeCount) return;
 
+      // Проверяем, находится ли выделение или курсор внутри существующей ссылки
       const anchor = sel.anchorNode?.parentElement?.closest('a') || sel.focusNode?.parentElement?.closest('a');
       if (anchor) {
+        // Если текст не выделен, выделяем всю ссылку целиком, чтобы снять её полностью
         if (sel.isCollapsed) {
           const range = document.createRange();
           range.selectNodeContents(anchor);
@@ -187,7 +185,7 @@
       const newAnchor = sel.anchorNode?.parentElement?.closest('a') || sel.focusNode?.parentElement?.closest('a');
       if (newAnchor) newAnchor.target = '_blank';
     });
-
+    
     photoBtn.addEventListener('click', () => fileInput.click());
     fileInput.addEventListener('change', e => {
       for (const f of e.target.files || []) compressAndInsertImage(f);
@@ -237,7 +235,6 @@
     }
 
     let db = null;
-    let auth = null;
     if (typeof firebase !== 'undefined') {
       firebase.initializeApp({
         apiKey: "AIzaSyAGZvMxxAZEsbech1evNe2aNwR6GfC0xhw",
@@ -248,170 +245,16 @@
         appId: "1:967552866716:web:2d3dff00a96e83e151d059"
       });
       db = firebase.firestore();
-      auth = firebase.auth();
     } else {
-      setStatus('Ошибка: файлы Firebase не загрузились.', 'error');
-    }
-  authBtn.addEventListener('click', () => {
-      if (currentUser) {
-        auth.signOut();
-      } else {
-        authModal.style.display = 'flex';
-        loginInput.focus();
-      }
-    });
-
-    document.getElementById('closeModalBtn').addEventListener('click', () => {
-      authModal.style.display = 'none';
-    });
-
-    function cleanLogin(raw) {
-      return raw.trim().toLowerCase().replace(/[^a-z0-9_-]/g, '');
+      setStatus('Ошибка: файлы firebase-app-compat.js не найдены.', 'error');
     }
 
-    document.getElementById('doLoginBtn').addEventListener('click', async () => {
-      const login = cleanLogin(loginInput.value);
-      const pass = passInput.value;
-      if (!login || !pass) return alert('Введите логин и пароль');
-      try {
-        await auth.signInWithEmailAndPassword(`${login}@tgtype.local`, pass);
-        authModal.style.display = 'none';
-        setStatus(`Добро пожаловать, ${login}!`, 'ok');
-      } catch (e) {
-        alert('Неверный логин или пароль!');
-      }
-    });
+    const pathSlug = window.location.pathname.replace(/^\/+|\/+$/g, '');
+    let currentSlug = pathSlug;
+    let isViewMode = false;
 
-    document.getElementById('doRegBtn').addEventListener('click', async () => {
-      const login = cleanLogin(loginInput.value);
-      const pass = passInput.value;
-      if (!login || login.length < 3) return alert('Логин должен быть минимум 3 латинских символа (a-z, 0-9)');
-      if (!pass || pass.length < 6) return alert('Пароль должен быть минимум 6 символов');
-      try {
-        await auth.createUserWithEmailAndPassword(`${login}@tgtype.local`, pass);
-        authModal.style.display = 'none';
-        setStatus(`Аккаунт ${login} успешно создан!`, 'ok');
-      } catch (e) {
-        if (e.code === 'auth/email-already-in-use') {
-          alert('Этот логин уже занят! Выберите другой.');
-        } else {
-          alert('Ошибка регистрации: ' + e.message);
-        }
-      }
-    });
-
-    let initialLoaded = false;
-    if (auth) {
-      auth.onAuthStateChanged(user => {
-        currentUser = user;
-        const login = getLoginName(user);
-
-        if (user) {
-          userBadge.style.display = 'inline-block';
-          userBadge.textContent = isAdmin(user) ? `👑 ${login}` : `👤 ${login}`;
-          userBadge.className = isAdmin(user) ? 'user-badge admin-badge' : 'user-badge';
-          myPostsLink.style.display = 'inline';
-          myPostsLink.textContent = isAdmin(user) ? 'Все статьи (Админ)' : 'Мои статьи';
-          authBtn.textContent = 'Выйти';
-        } else {
-          userBadge.style.display = 'none';
-          myPostsLink.style.display = 'none';
-          authBtn.textContent = 'Войти / Регистрация';
-        }
-
-        updateEditVisibility();
-
-        if (!initialLoaded) {
-          initialLoaded = true;
-          if (pathSlug === 'my-posts') {
-            loadPostsList();
-          } else if (pathSlug) {
-            loadArticle(pathSlug);
-          }
-        }
-      });
-    }
-
-    function updateEditVisibility() {
-      if (!isViewMode) {
-        actionBtn.style.display = 'inline-block';
-        return;
-      }
-      const canEdit = currentUser && (currentUser.uid === currentArticleOwner || isAdmin(currentUser));
-      actionBtn.style.display = canEdit ? 'inline-block' : 'none';
-    }
-
-    async function loadPostsList() {
-      authorEl.style.display = 'none';
-      toolbar.style.display = 'none';
-      storyEl.style.display = 'none';
-      actionBtn.style.display = 'none';
-      titleEl.contentEditable = false;
-
-      if (!currentUser) {
-        titleEl.textContent = 'Личный кабинет';
-        setStatus('Войдите в аккаунт, чтобы увидеть свои статьи.', 'error');
-        authModal.style.display = 'flex';
-        return;
-      }
-
-      const adminMode = isAdmin(currentUser);
-      titleEl.textContent = adminMode ? 'Все статьи на сайте (Админ)' : 'Мои статьи';
-      document.title = titleEl.textContent;
-      setStatus('Загрузка списка...');
-
-      try {
-        let query = db.collection('articles');
-        if (!adminMode) {
-          query = query.where('ownerUid', '==', currentUser.uid);
-        }
-        const snap = await query.get();
-
-        if (snap.empty) {
-          setStatus('Пока нет ни одной публикации.');
-          return;
-        }
-
-        const posts = [];
-        snap.forEach(doc => posts.push({ id: doc.id, ...doc.data() }));
-        posts.sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
-
-        const ul = document.createElement('ul');
-        ul.className = 'posts-list';
-
-        posts.forEach(post => {
-          const li = document.createElement('li');
-          li.className = 'post-item';
-
-          const temp = document.createElement('div');
-          temp.innerHTML = post.title || post.id;
-          const cleanTitle = temp.innerText.trim() || post.id;
-          const dateStr = post.updatedAt ? new Date(post.updatedAt).toLocaleDateString('ru-RU') : '';
-          const authorTag = adminMode && post.ownerLogin ? ` • Автор: @${post.ownerLogin}` : '';
-          const fullUrl = `${window.location.origin}/${post.id}`;
-
-          li.innerHTML = `
-            <div class="post-info">
-              <a href="/${post.id}">${cleanTitle}</a>
-              <div class="post-meta">/${post.id} ${dateStr ? '• ' + dateStr : ''}${authorTag}</div>
-            </div>
-            <button class="copy-btn" type="button">Копировать</button>
-          `;
-
-          li.querySelector('.copy-btn').addEventListener('click', (e) => {
-            navigator.clipboard?.writeText(fullUrl);
-            e.target.textContent = 'Скопировано!';
-            setTimeout(() => e.target.textContent = 'Копировать', 1500);
-          });
-
-          ul.appendChild(li);
-        });
-
-        storyEl.after(ul);
-        setStatus(`Всего статей: ${posts.length}`);
-      } catch (e) {
-        setStatus('Ошибка загрузки списка: ' + e.message, 'error');
-      }
+    if (pathSlug && db) {
+      loadArticle(pathSlug);
     }
 
     async function loadArticle(slug) {
@@ -424,12 +267,10 @@
           titleEl.innerHTML = data.title;
           authorEl.innerHTML = data.author;
           storyEl.innerHTML = data.story;
-          currentArticleOwner = data.ownerUid || null;
           document.title = titleEl.innerText || 'tgtype';
           setStatus('');
           actionBtn.textContent = 'EDIT';
           isViewMode = true;
-          updateEditVisibility();
         } else {
           setStatus('Страница не найдена. Можете создать её здесь!');
           setEditable(true);
@@ -452,21 +293,32 @@
         .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'post-' + Date.now();
     }
 
-    actionBtn.addEventListener('click', async () => {
-      if (!db || !auth) return;
-
-      if (!currentUser) {
-        authModal.style.display = 'flex';
-        loginInput.focus();
-        return;
+    function getSecret() {
+      let pass = localStorage.getItem('tgtype_secret');
+      if (!pass) {
+        pass = prompt('Введите ваш пароль автора:');
+        if (pass) {
+          localStorage.setItem('tgtype_secret', pass);
+          updatePassBtn();
+        }
       }
+      return pass;
+    }
+
+    actionBtn.addEventListener('click', async () => {
+      if (!db) return;
 
       if (isViewMode) {
+        const pass = getSecret();
+        if (!pass) return;
         isViewMode = false;
         setEditable(true);
         actionBtn.textContent = 'PUBLISH';
         return;
       }
+
+      const secret = getSecret();
+      if (!secret) return;
 
       const titleText = titleEl.innerText.trim();
       if (!titleText) {
@@ -488,20 +340,13 @@
           }
         }
 
-        const payload = {
+        await db.collection('articles').doc(targetSlug).set({
           title: titleEl.innerHTML,
           author: authorEl.innerHTML,
           story: storyEl.innerHTML,
+          secret: secret,
           updatedAt: Date.now()
-        };
-
-        if (!currentArticleOwner) {
-          payload.ownerUid = currentUser.uid;
-          payload.ownerLogin = getLoginName(currentUser);
-          currentArticleOwner = currentUser.uid;
-        }
-
-        await db.collection('articles').doc(targetSlug).set(payload, { merge: true });
+        });
 
         currentSlug = targetSlug;
         window.history.pushState({}, '', '/' + targetSlug);
@@ -509,11 +354,12 @@
         isViewMode = true;
         setEditable(false);
         actionBtn.textContent = 'EDIT';
-        updateEditVisibility();
         setStatus('Опубликовано! Ссылка скопирована в буфер.', 'ok');
         navigator.clipboard?.writeText(window.location.href);
       } catch (e) {
-        setStatus('Ошибка публикации: ' + e.message, 'error');
+        localStorage.removeItem('tgtype_secret');
+        updatePassBtn();
+        setStatus('Ошибка: неверный пароль или слишком большой объём фото.', 'error');
       } finally {
         actionBtn.disabled = false;
       }
