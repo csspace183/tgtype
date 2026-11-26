@@ -148,14 +148,31 @@ document.querySelectorAll('.tool-btn[data-cmd]').forEach(btn => {
         document.execCommand(btn.dataset.cmd, false, btn.dataset.arg || null);
       });
     });
-     const linkBtn = document.getElementById('linkBtn');
+      const linkBtn = document.getElementById('linkBtn');
     linkBtn.addEventListener('mousedown', e => e.preventDefault());
     linkBtn.addEventListener('click', () => {
       const sel = window.getSelection();
-      if (!sel || sel.isCollapsed) {
+      if (!sel || !sel.rangeCount) return;
+
+      // Проверяем, находится ли выделение или курсор внутри существующей ссылки
+      const anchor = sel.anchorNode?.parentElement?.closest('a') || sel.focusNode?.parentElement?.closest('a');
+      if (anchor) {
+        // Если текст не выделен, выделяем всю ссылку целиком, чтобы снять её полностью
+        if (sel.isCollapsed) {
+          const range = document.createRange();
+          range.selectNodeContents(anchor);
+          sel.removeAllRanges();
+          sel.addRange(range);
+        }
+        document.execCommand('unlink', false, null);
+        return;
+      }
+
+      if (sel.isCollapsed) {
         alert('Сначала выделите мышкой слово или текст, который нужно сделать ссылкой!');
         return;
       }
+
       const range = sel.getRangeAt(0);
       let url = prompt('Вставьте ссылку (например, https://google.com):', 'https://');
       if (!url) return;
@@ -165,9 +182,8 @@ document.querySelectorAll('.tool-btn[data-cmd]').forEach(btn => {
       sel.addRange(range);
       document.execCommand('createLink', false, url);
 
-      // Делаем так, чтобы ссылка открывалась в новой вкладке
-      const anchor = sel.anchorNode?.parentElement?.closest('a') || sel.focusNode?.parentElement?.closest('a');
-      if (anchor) anchor.target = '_blank';
+      const newAnchor = sel.anchorNode?.parentElement?.closest('a') || sel.focusNode?.parentElement?.closest('a');
+      if (newAnchor) newAnchor.target = '_blank';
     });
     
     photoBtn.addEventListener('click', () => fileInput.click());
