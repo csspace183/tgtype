@@ -1,149 +1,441 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Мой Telegraph</title>
-  <style>
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      margin: 0;
-      padding: 40px 20px;
-      color: #222;
-      background: #fff;
-    }
-    .container {
-      max-width: 730px;
-      margin: 0 auto;
-      position: relative;
-    }
-    .publish-btn {
-      position: absolute;
-      right: 0;
-      top: 0;
-      background: #fff;
-      border: 2px solid #222;
-      border-radius: 20px;
-      padding: 6px 18px;
-      font-weight: 700;
-      font-size: 13px;
-      letter-spacing: 0.5px;
-      cursor: pointer;
-      transition: 0.2s;
-    }
-    .publish-btn:hover {
-      background: #222;
-      color: #fff;
-    }
-    .editable {
-      outline: none;
-      width: 100%;
-      box-sizing: border-box;
-    }
-    /* Плейсхолдеры для пустых блоков */
-    .editable:empty:before {
-      content: attr(data-placeholder);
-      color: #999;
-      pointer-events: none;
-      display: block;
-    }
-    #title {
-      font-size: 32px;
-      font-weight: 700;
-      margin-bottom: 8px;
-      padding-right: 120px; /* место под кнопку */
-    }
-    #author {
-      font-size: 15px;
-      color: #777;
-      margin-bottom: 24px;
-    }
-    #story {
-      font-size: 18px;
-      line-height: 1.6;
-      min-height: 300px;
-    }
-    .toolbar {
-      margin-bottom: 15px;
-      display: flex;
-      gap: 10px;
-    }
-    .tool-btn {
-      background: none;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      padding: 4px 8px;
-      cursor: pointer;
-      color: #555;
-      font-size: 14px;
-    }
-    .tool-btn:hover {
-      border-color: #222;
-      color: #222;
-    }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Новая страница</title>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-  <div class="container">
-    <button class="publish-btn" onclick="publishPage()">PUBLISH</button>
+<main class="page">
+  <div id="title" class="title" contenteditable="true" spellcheck="true" data-ph="Заголовок"></div>
+  <div id="author" class="author" contenteditable="true" data-ph="Ваше имя"></div>
+  <div id="body" class="content" contenteditable="true" spellcheck="true" data-ph="Ваш текст… (картинки можно вставлять через Ctrl+V)"></div>
+  <button id="publish" class="pill" type="button">Опубликовать</button>
+</main>
 
-    <div id="title" class="editable" contenteditable="true" data-placeholder="Title"></div>
-    <div id="author" class="editable" contenteditable="true" data-placeholder="Your name"></div>
+<div id="status" hidden></div>
+<button id="settingsLink" type="button">Настройки доступа</button>
 
-    <div class="toolbar">
-      <button class="tool-btn" onclick="format('bold')" title="Жирный"><b>B</b></button>
-      <button class="tool-btn" onclick="format('italic')" title="Курсив"><i>I</i></button>
-      <button class="tool-btn" onclick="addImage()" title="Вставить фото по ссылке">📷</button>
-      <button class="tool-btn" onclick="addEmbed()" title="Вставить код">&lt; &gt;</button>
-    </div>
-
-    <div id="story" class="editable" contenteditable="true" data-placeholder="Your story..."></div>
+<dialog id="settings">
+  <h2>Доступ к GitHub</h2>
+  <p>Публиковать и редактировать страницы можно только с токеном. Он хранится только в этом браузере и никуда, кроме GitHub, не отправляется.</p>
+  <label for="cfgRepo">Репозиторий (владелец/название)</label>
+  <input id="cfgRepo" placeholder="myname/tgtype" autocomplete="off">
+  <label for="cfgToken">Токен GitHub (fine-grained, Contents: Read and write)</label>
+  <input id="cfgToken" type="password" placeholder="github_pat_..." autocomplete="off">
+  <div class="row">
+    <button id="cfgForget" class="link" type="button">Забыть токен</button>
+    <button id="cfgCancel" class="pill" type="button" style="font-size:15px;padding:6px 16px">Отмена</button>
+    <button id="cfgSave" class="pill" type="button" style="font-size:15px;padding:6px 16px">Сохранить</button>
   </div>
+</dialog>
 
-  <script>
-    const fields = ['title', 'author', 'story'];
+<script>
+(() => {
+  const $ = s => document.querySelector(s);
+  const titleEl = $('#title'), authorEl = $('#author'), bodyEl = $('#body');
+  const publishBtn = $('#publish'), statusEl = $('#status'), dlg = $('#settings');
 
-    // Загрузка сохранённого черновика при открытии
-    fields.forEach(id => {
-      const el = document.getElementById(id);
-      el.innerHTML = localStorage.getItem('draft_' + id) || '';
-      el.addEventListener('input', () => {
-        localStorage.setItem('draft_' + id, el.innerHTML);
-      });
+  // Папка, в которой лежит сайт (работает и на своём домене, и на user.github.io/repo/)
+  const BASE = location.pathname.replace(/[^/]*$/, '');
+
+  const store = {
+    get: k => { try { return localStorage.getItem(k); } catch (e) { return null; } },
+    set: (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} },
+    del: k => { try { localStorage.removeItem(k); } catch (e) {} }
+  };
+
+  let editingSlug = null;
+
+  /* ---------------- вспомогательные ---------------- */
+
+  const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const escA = s => esc(s).replace(/"/g, '&quot;');
+
+  const RU = {а:'a',б:'b',в:'v',г:'g',д:'d',е:'e',ё:'e',ж:'zh',з:'z',и:'i',й:'y',к:'k',л:'l',м:'m',н:'n',о:'o',п:'p',р:'r',с:'s',т:'t',у:'u',ф:'f',х:'h',ц:'ts',ч:'ch',ш:'sh',щ:'sch',ъ:'',ы:'y',ь:'',э:'e',ю:'yu',я:'ya'};
+  const slugify = t => t.toLowerCase().split('').map(c => RU[c] ?? c).join('')
+    .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40);
+  const rand = n => {
+    const abc = 'abcdefghjkmnpqrstuvwxyz23456789';
+    return [...crypto.getRandomValues(new Uint8Array(n))].map(x => abc[x % abc.length]).join('');
+  };
+
+  function status(msg, isError) {
+    if (!msg) { statusEl.hidden = true; return; }
+    statusEl.textContent = msg;
+    statusEl.className = isError ? 'error' : '';
+    statusEl.hidden = false;
+  }
+
+  const cfg = () => ({ token: store.get('tg_token'), repo: store.get('tg_repo') });
+
+  /* ---------------- поля ввода ---------------- */
+
+  function keepEmpty(el) {
+    el.addEventListener('input', () => {
+      if (!el.querySelector('img') && el.textContent === '') el.innerHTML = '';
     });
+  }
+  [titleEl, authorEl, bodyEl].forEach(keepEmpty);
 
-    function format(cmd) {
-      document.execCommand(cmd, false, null);
+  // В заголовке и имени — только простой текст, без переносов
+  [titleEl, authorEl].forEach((el, i) => {
+    el.addEventListener('paste', e => {
+      e.preventDefault();
+      const t = (e.clipboardData.getData('text/plain') || '').replace(/\s+/g, ' ');
+      document.execCommand('insertText', false, t);
+    });
+    el.addEventListener('keydown', e => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        (i === 0 ? authorEl : bodyEl).focus();
+      }
+    });
+  });
+
+  document.execCommand('defaultParagraphSeparator', false, 'p');
+
+  /* ---------------- картинки: Ctrl+V и перетаскивание ---------------- */
+
+  function fileToDataURL(file) {
+    return new Promise((resolve, reject) => {
+      const MAX = 1600;
+      const url = URL.createObjectURL(file);
+      const im = new Image();
+      im.onload = () => {
+        URL.revokeObjectURL(url);
+        let w = im.naturalWidth, h = im.naturalHeight;
+        if (w <= MAX || file.type === 'image/gif' || file.type === 'image/svg+xml') {
+          const r = new FileReader();
+          r.onload = () => resolve(r.result);
+          r.onerror = reject;
+          r.readAsDataURL(file);
+        } else {
+          h = Math.round(h * MAX / w); w = MAX;
+          const c = document.createElement('canvas');
+          c.width = w; c.height = h;
+          c.getContext('2d').drawImage(im, 0, 0, w, h);
+          resolve(c.toDataURL(file.type === 'image/png' ? 'image/png' : 'image/jpeg', 0.9));
+        }
+      };
+      im.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Не удалось прочитать изображение')); };
+      im.src = url;
+    });
+  }
+
+  function insertImage(src) {
+    const img = new Image();
+    img.src = src;
+    const figure = document.createElement('p');
+    figure.appendChild(img);
+    const after = document.createElement('p');
+    after.innerHTML = '<br>';
+
+    let blk = null;
+    const sel = getSelection();
+    if (sel.rangeCount && bodyEl.contains(sel.anchorNode) && sel.anchorNode !== bodyEl) {
+      blk = sel.anchorNode;
+      while (blk && blk.parentNode !== bodyEl) blk = blk.parentNode;
     }
+    if (blk && blk.nodeType === 1 && !blk.textContent.trim() && !blk.querySelector('img')) {
+      bodyEl.replaceChild(figure, blk);
+    } else if (blk) {
+      blk.after(figure);
+    } else {
+      bodyEl.appendChild(figure);
+    }
+    figure.after(after);
 
-    function addImage() {
-      const url = prompt('Вставьте ссылку на изображение:');
-      if (url) {
-        document.execCommand('insertHTML', false, `<img src="${url}" style="max-width:100%; margin: 15px 0; border-radius: 4px;"><br>`);
+    const r = document.createRange();
+    r.setStart(after, 0);
+    r.collapse(true);
+    sel.removeAllRanges();
+    sel.addRange(r);
+  }
+
+  async function handleFiles(files) {
+    for (const f of files) {
+      try { insertImage(await fileToDataURL(f)); }
+      catch (e) { status(e.message, true); }
+    }
+  }
+
+  bodyEl.addEventListener('paste', e => {
+    const files = [...(e.clipboardData?.items || [])]
+      .filter(i => i.kind === 'file' && i.type.startsWith('image/'))
+      .map(i => i.getAsFile()).filter(Boolean);
+    e.preventDefault();
+    if (files.length) { handleFiles(files); return; }
+    const t = e.clipboardData.getData('text/plain');
+    if (t) document.execCommand('insertText', false, t);
+  });
+
+  bodyEl.addEventListener('dragover', e => e.preventDefault());
+  bodyEl.addEventListener('drop', e => {
+    const files = [...(e.dataTransfer?.files || [])].filter(f => f.type.startsWith('image/'));
+    if (files.length) { e.preventDefault(); handleFiles(files); }
+  });
+
+  /* ---------------- очистка HTML ---------------- */
+
+  const INLINE_OK = new Set(['B', 'STRONG', 'I', 'EM', 'A']);
+
+  function clean(node) {
+    let out = '';
+    for (const n of node.childNodes) {
+      if (n.nodeType === 3) { out += esc(n.nodeValue); continue; }
+      if (n.nodeType !== 1) continue;
+      const t = n.tagName;
+      if (t === 'IMG') {
+        const src = n.getAttribute('src') || '';
+        if (src) out += `<img src="${escA(src)}" alt="">`;
+      } else if (t === 'BR') {
+        out += '<br>';
+      } else if (INLINE_OK.has(t)) {
+        const tag = t === 'B' ? 'strong' : t === 'I' ? 'em' : t.toLowerCase();
+        let attr = '';
+        if (t === 'A') {
+          const h = n.getAttribute('href') || '';
+          if (/^(https?:|mailto:|\/)/i.test(h)) attr = ` href="${escA(h)}" rel="noopener"`;
+        }
+        out += `<${tag}${attr}>${clean(n)}</${tag}>`;
+      } else {
+        out += clean(n);
       }
     }
+    return out;
+  }
 
-    function addEmbed() {
-      const code = prompt('Вставьте HTML-код (например, iframe видео):');
-      if (code) {
-        document.execCommand('insertHTML', false, code + '<br>');
+  const hasContent = h => h.replace(/<br>/g, '').trim() !== '' || h.includes('<img');
+
+  function serialize(root) {
+    let html = '', buf = '';
+    const flush = () => { if (hasContent(buf)) html += '<p>' + buf + '</p>'; buf = ''; };
+    for (const n of root.childNodes) {
+      const block = n.nodeType === 1 && ['P', 'DIV', 'H3', 'BLOCKQUOTE'].includes(n.tagName);
+      if (block) {
+        flush();
+        const tag = n.tagName === 'DIV' ? 'p' : n.tagName.toLowerCase();
+        const inner = clean(n);
+        if (hasContent(inner)) html += `<${tag}>${inner}</${tag}>`;
+      } else {
+        buf += clean({ childNodes: [n] });
       }
     }
+    flush();
+    return html;
+  }
 
-    function publishPage() {
-      const isEditing = document.getElementById('story').isContentEditable;
-      const btn = document.querySelector('.publish-btn');
-      
-      fields.forEach(id => {
-        document.getElementById(id).contentEditable = !isEditing;
+  /* ---------------- шаблон опубликованной страницы ---------------- */
+
+  function pageHTML({ slug, title, author, content, stamp }) {
+    const firstImg = (content.match(/<img src="([^"]+)"/) || [])[1];
+    return `<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>${esc(title || 'Без названия')}</title>
+<meta name="author" content="${escA(author)}">
+<meta name="version" content="${stamp}">
+<meta property="og:title" content="${escA(title)}">
+${firstImg ? `<meta property="og:image" content="${escA(firstImg)}">\n` : ''}<link rel="stylesheet" href="${BASE}style.css">
+</head>
+<body>
+<main class="page">
+<article>
+<h1>${esc(title)}</h1>
+<address>${esc(author)}</address>
+<div class="content">${content}</div>
+</article>
+<div id="owner" class="owner-bar" hidden>
+<a class="pill" href="${BASE}?edit=${slug}">Изменить</a>
+<a class="pill" href="${BASE}">Новая</a>
+</div>
+</main>
+<script>try{if(localStorage.getItem('tg_token'))document.getElementById('owner').hidden=false}catch(e){}</script>
+</body>
+</html>
+`;
+  }
+
+  /* ---------------- GitHub API ---------------- */
+
+  async function gh(path, opt = {}) {
+    const { token, repo } = cfg();
+    const r = await fetch('https://api.github.com/repos/' + repo + path, {
+      ...opt,
+      headers: {
+        Authorization: 'Bearer ' + token,
+        Accept: 'application/vnd.github+json',
+        'Content-Type': 'application/json'
+      }
+    });
+    if (!r.ok) {
+      let m = '';
+      try { m = (await r.json()).message; } catch (e) {}
+      if (r.status === 401) throw new Error('Токен не подходит или истёк. Откройте «Настройки доступа».');
+      if (r.status === 403 || r.status === 404) throw new Error('Нет доступа к репозиторию (' + r.status + '). Проверьте название репозитория и права токена: Contents → Read and write.');
+      throw new Error('GitHub: ' + r.status + ' ' + (m || ''));
+    }
+    return r.json();
+  }
+
+  async function commitFiles(files, message) {
+    const repo = await gh('');
+    const br = repo.default_branch;
+    const ref = await gh('/git/ref/heads/' + br);
+    const parentSha = ref.object.sha;
+    const parent = await gh('/git/commits/' + parentSha);
+
+    const tree = [];
+    for (const f of files) {
+      const blob = await gh('/git/blobs', {
+        method: 'POST',
+        body: JSON.stringify({ content: f.content, encoding: f.encoding })
       });
-      
-      document.querySelector('.toolbar').style.display = isEditing ? 'none' : 'flex';
-      btn.textContent = isEditing ? 'EDIT' : 'PUBLISH';
-      alert(isEditing ? 'Режим просмотра включён!' : 'Режим редактирования!');
+      tree.push({ path: f.path, mode: '100644', type: 'blob', sha: blob.sha });
     }
-  </script>
+    const nt = await gh('/git/trees', { method: 'POST', body: JSON.stringify({ base_tree: parent.tree.sha, tree }) });
+    const c = await gh('/git/commits', { method: 'POST', body: JSON.stringify({ message, tree: nt.sha, parents: [parentSha] }) });
+    await gh('/git/refs/heads/' + br, { method: 'PATCH', body: JSON.stringify({ sha: c.sha }) });
+  }
 
+  async function waitUntilLive(slug, stamp) {
+    const url = BASE + slug + '/';
+    const until = Date.now() + 180000;
+    while (Date.now() < until) {
+      try {
+        const r = await fetch(url + '?_=' + Date.now(), { cache: 'no-store' });
+        if (r.ok && (await r.text()).includes(`content="${stamp}"`)) return true;
+      } catch (e) {}
+      await new Promise(r => setTimeout(r, 4000));
+    }
+    return false;
+  }
+
+  /* ---------------- публикация ---------------- */
+
+  async function publish() {
+    const { token, repo } = cfg();
+    if (!token || !repo) { openSettings(); return; }
+
+    const title = titleEl.textContent.trim();
+    const author = authorEl.textContent.trim();
+    if (!title && !bodyEl.textContent.trim() && !bodyEl.querySelector('img')) {
+      status('Напишите заголовок или текст.', true);
+      return;
+    }
+
+    publishBtn.disabled = true;
+    try {
+      status('Подготавливаю страницу…');
+      const slug = editingSlug || ((slugify(title) || 'page') + '-' + rand(4));
+      let content = serialize(bodyEl);
+      const files = [];
+
+      // Новые картинки (data:) → отдельные файлы в images/
+      content = content.replace(/<img src="(data:image\/([a-z0-9.+-]+);base64,([^"]+))"/gi, (m, full, type, b64) => {
+        const ext = type.startsWith('jpeg') ? 'jpg' : type.startsWith('svg') ? 'svg' : type;
+        const name = 'images/' + rand(10) + '.' + ext;
+        files.push({ path: name, content: b64, encoding: 'base64' });
+        return `<img src="${BASE}${name}"`;
+      });
+
+      const stamp = Date.now();
+      files.push({
+        path: slug + '/index.html',
+        content: pageHTML({ slug, title, author, content, stamp }),
+        encoding: 'utf-8'
+      });
+
+      status('Отправляю на GitHub…');
+      await commitFiles(files, (editingSlug ? 'edit ' : 'publish ') + slug);
+
+      status('Опубликовано. Жду, пока GitHub Pages обновит сайт (обычно 30–60 сек)…');
+      const live = await waitUntilLive(slug, stamp);
+      if (!live) status('Страница отправлена, но сайт ещё обновляется. Откройте ' + BASE + slug + '/ через минуту.');
+      location.href = BASE + slug + '/';
+    } catch (e) {
+      status(e.message || String(e), true);
+      publishBtn.disabled = false;
+    }
+  }
+
+  publishBtn.addEventListener('click', publish);
+
+  /* ---------------- редактирование своей страницы ---------------- */
+
+  async function loadForEdit(slug) {
+    status('Загружаю страницу…');
+    try {
+      const r = await fetch(BASE + slug + '/?_=' + Date.now(), { cache: 'no-store' });
+      if (!r.ok) throw new Error('Страница не найдена: ' + slug);
+      const doc = new DOMParser().parseFromString(await r.text(), 'text/html');
+      titleEl.textContent = doc.querySelector('article h1')?.textContent || '';
+      authorEl.textContent = doc.querySelector('article address')?.textContent || '';
+      bodyEl.innerHTML = doc.querySelector('article .content')?.innerHTML || '';
+      document.title = 'Изменить: ' + (titleEl.textContent || slug);
+      editingSlug = slug;
+      publishBtn.textContent = 'Сохранить';
+      status('');
+    } catch (e) {
+      status(e.message, true);
+    }
+  }
+
+  /* ---------------- настройки ---------------- */
+
+  function openSettings() {
+    let repo = store.get('tg_repo') || '';
+    if (!repo && /\.github\.io$/.test(location.hostname)) {
+      const owner = location.hostname.replace('.github.io', '');
+      const name = location.pathname.split('/')[1];
+      repo = owner + '/' + (name || location.hostname);
+    }
+    $('#cfgRepo').value = repo;
+    $('#cfgToken').value = store.get('tg_token') || '';
+    dlg.showModal();
+  }
+
+  $('#settingsLink').addEventListener('click', openSettings);
+  $('#cfgCancel').addEventListener('click', () => dlg.close());
+  $('#cfgForget').addEventListener('click', () => {
+    store.del('tg_token');
+    $('#cfgToken').value = '';
+    dlg.close();
+    status('Токен удалён из этого браузера.');
+    setTimeout(() => status(''), 2500);
+  });
+  $('#cfgSave').addEventListener('click', async () => {
+    const repo = $('#cfgRepo').value.trim().replace(/^https?:\/\/github\.com\//, '').replace(/\/$/, '');
+    const token = $('#cfgToken').value.trim();
+    if (!/^[\w.-]+\/[\w.-]+$/.test(repo) || !token) {
+      status('Укажите репозиторий в формате владелец/название и токен.', true);
+      return;
+    }
+    store.set('tg_repo', repo);
+    store.set('tg_token', token);
+    dlg.close();
+    status('Проверяю доступ…');
+    try {
+      await gh('');
+      status('Доступ работает. Можно публиковать.');
+    } catch (e) {
+      status(e.message, true);
+      return;
+    }
+    setTimeout(() => status(''), 2500);
+  });
+
+  /* ---------------- старт ---------------- */
+
+  const editParam = new URLSearchParams(location.search).get('edit');
+  if (editParam && /^[a-z0-9-]+$/.test(editParam)) loadForEdit(editParam);
+  else titleEl.focus();
+})();
+</script>
 </body>
 </html>
