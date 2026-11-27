@@ -89,10 +89,11 @@
     .post-info a:hover { color: #0066cc; }
     .post-meta { font-size: 12px; color: #888; margin-top: 4px; }
     .post-actions { display: flex; gap: 6px; flex-shrink: 0; }
-    .mini-btn {
-      background: #fff; border: 1px solid #ddd; border-radius: 15px;
-      padding: 5px 11px; font-size: 12px; cursor: pointer; color: #333;
-    }
+     .mini-btn {
+     background: #fff; border: 1px solid #ddd; border-radius: 15px;
+     padding: 5px 11px; font-size: 12px; cursor: pointer; color: #333;
+     white-space: nowrap;
+     }
     .mini-btn:hover { border-color: #222; }
     .mini-btn.del:hover { border-color: #d9534f; color: #d9534f; }
 
@@ -577,22 +578,22 @@
 
             const li = document.createElement('li');
             li.className = 'post-item';
-            li.innerHTML = `
-              <div class="post-info">
-                <a href="/${post.id}">${cleanTitle}</a>
-                <div class="post-meta">/${post.id}${authorPart} • Изменено: ${dateStr}</div>
-              </div>
-              <div class="post-actions">
-                <button class="mini-btn copy-btn" type="button">Копировать</button>
-                <button class="mini-btn del del-btn" type="button">Удалить</button>
-              </div>
-            `;
+           li.innerHTML = `
+           <div class="post-info">
+             <a href="/${post.id}">${cleanTitle}</a>
+             <div class="post-meta">/${post.id}${authorPart} • Изменено: ${dateStr}</div>
+           </div>
+           <div class="post-actions">
+             <button class="mini-btn copy-btn" type="button">Копировать ссылку</button>
+             <button class="mini-btn del del-btn" type="button">Удалить</button>
+           </div>
+         `;
 
-            li.querySelector('.copy-btn').addEventListener('click', (e) => {
-              navigator.clipboard?.writeText(fullUrl);
-              e.target.textContent = 'Скопировано!';
-              setTimeout(() => e.target.textContent = 'Копировать', 1500);
-            });
+         li.querySelector('.copy-btn').addEventListener('click', (e) => {
+           navigator.clipboard?.writeText(fullUrl);
+           e.target.textContent = 'Скопировано!';
+           setTimeout(() => e.target.textContent = 'Копировать ссылку', 1500);
+         });
 
             li.querySelector('.del-btn').addEventListener('click', async () => {
               if (!confirm(`Точно удалить статью «${cleanTitle}» (/${post.id})?`)) return;
