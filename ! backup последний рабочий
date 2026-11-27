@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>tgtype</title>
+  <link rel="preconnect" href="https://googleapis.com" crossorigin>
+  
   <style>
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -58,7 +60,7 @@
       align-items: center;
       justify-content: center;
       gap: 14px;
-      transition: opacity 0.2s ease;
+      transition: opacity 0.15s ease;
     }
     .page-loader.hidden {
       opacity: 0;
@@ -346,8 +348,8 @@
     .post-info a { font-family: Georgia, serif; font-size: 20px; font-weight: 700; color: #222; text-decoration: none; }
     .post-info a:hover { color: #0066cc; }
     .post-meta { font-size: 12px; color: #888; margin-top: 4px; }
-    .post-actions { display: flex; gap: 6px; flex-shrink: 0; }
- .mini-btn {
+.post-actions { display: flex; gap: 6px; flex-shrink: 0; }
+    .mini-btn {
       background: #fff; border: 1px solid #ddd; border-radius: 15px;
       padding: 5px 11px; font-size: 12px; cursor: pointer; color: #333;
       white-space: nowrap;
@@ -520,10 +522,11 @@
       <button id="closeModalBtn" class="modal-close" type="button">Закрыть</button>
     </div>
   </div>
-   <script src="/firebase-app-compat.js"></script>
-  <script src="/firebase-auth-compat.js"></script>
-  <script src="/firebase-firestore-compat.js"></script>
-  <script>
+
+  <script src="/firebase-app-compat.js" defer></script>
+  <script src="/firebase-auth-compat.js" defer></script>
+  <script src="/firebase-firestore-compat.js" defer></script>
+<script>
     const ADMIN_LOGIN = 'lordman';
     const DEFAULT_RAINBOW = 'linear-gradient(90deg, #ff3b30, #ff9500, #ffcc00, #34c759, #007aff, #af52de)';
 
@@ -563,7 +566,7 @@
     function hideLoader() {
       if (pageLoader && pageLoader.style.display !== 'none') {
         pageLoader.classList.add('hidden');
-        setTimeout(() => { pageLoader.style.display = 'none'; }, 200);
+        setTimeout(() => { pageLoader.style.display = 'none'; }, 150);
       }
     }
 
@@ -720,7 +723,7 @@
         colorPopover.classList.remove('open');
       }
     });
-document.querySelectorAll('.tool-btn[data-cmd]').forEach(btn => {
+ document.querySelectorAll('.tool-btn[data-cmd]').forEach(btn => {
       btn.addEventListener('mousedown', e => e.preventDefault());
       btn.addEventListener('click', () => {
         colorPopover.classList.remove('open');
@@ -1137,28 +1140,56 @@ document.querySelectorAll('.tool-btn[data-cmd]').forEach(btn => {
 
     let db = null;
     let auth = null;
-    if (typeof firebase !== 'undefined') {
-      firebase.initializeApp({
-        apiKey: "AIzaSyAGZvMxxAZEsbech1evNe2aNwR6GfC0xhw",
-        authDomain: "://firebaseapp.com",
-        projectId: "tgtype-a41aa",
-        storageBucket: "tgtype-a41aa.firebasestorage.app",
-        messagingSenderId: "967552866716",
-        appId: "1:967552866716:web:2d3dff00a96e83e151d059"
-      });
-      db = firebase.firestore();
-      auth = firebase.auth();
-    } else {
-      hideLoader();
-      setStatus('Ошибка: файлы Firebase не загрузились.', 'error');
-      const reloadBtn = document.createElement('button');
-      reloadBtn.type = 'button';
-      reloadBtn.textContent = 'Обновить';
-      reloadBtn.className = 'mini-btn';
-      reloadBtn.style.marginTop = '8px';
-      reloadBtn.addEventListener('click', () => window.location.reload());
-      statusEl.after(reloadBtn);
+
+    if (pathSlug && pathSlug !== 'blog') {
+      loadArticle(pathSlug);
     }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      if (typeof firebase !== 'undefined') {
+        firebase.initializeApp({
+          apiKey: "AIzaSyAGZvMxxAZEsbech1evNe2aNwR6GfC0xhw",
+          authDomain: "tgtype-a41aa." + "firebaseapp.com",
+          projectId: "tgtype-a41aa",
+          storageBucket: "tgtype-a41aa.firebasestorage.app",
+          messagingSenderId: "967552866716",
+          appId: "1:967552866716:web:2d3dff00a96e83e151d059"
+        });
+        db = firebase.firestore();
+        auth = firebase.auth();
+
+        auth.onAuthStateChanged(user => {
+          currentUser = user;
+          const login = getLoginName(user);
+
+          if (user) {
+            authBtn.textContent = `Выйти (${login})`;
+          } else {
+            authBtn.textContent = 'Войти';
+          }
+
+          updateEditVisibility();
+          if (!isViewMode) {
+            metaInfoEl.contentEditable = Boolean(user && isAdmin(user));
+            updatePublishState();
+          }
+
+          if (pathSlug === 'blog') {
+            loadBlogPage();
+          }
+        });
+      } else {
+        hideLoader();
+        setStatus('Ошибка: файлы Firebase не загрузились.', 'error');
+        const reloadBtn = document.createElement('button');
+        reloadBtn.type = 'button';
+        reloadBtn.textContent = 'Обновить';
+        reloadBtn.className = 'mini-btn';
+        reloadBtn.style.marginTop = '8px';
+        reloadBtn.addEventListener('click', () => window.location.reload());
+        statusEl.after(reloadBtn);
+      }
+    });
 
     const modalTitle = document.getElementById('modalTitle');
     const authForm = document.getElementById('authForm');
@@ -1246,7 +1277,7 @@ document.querySelectorAll('.tool-btn[data-cmd]').forEach(btn => {
         try {
           await auth.createUserWithEmailAndPassword(`${login}@tgtype.local`, pass);
           localStorage.setItem('tgtype_last_reg', String(Date.now()));
-          authModal.style.display = 'none';
+ authModal.style.display = 'none';
           setStatus(`Аккаунт ${login} зарегистрирован!`, 'ok');
         } catch (err) {
           if (err.code === 'auth/email-already-in-use') {
@@ -1263,7 +1294,7 @@ document.querySelectorAll('.tool-btn[data-cmd]').forEach(btn => {
           modalMsg.textContent = 'Слишком много неудачных попыток. Повторите попытку позже.';
           return;
         } else if (lockUntil > 0) {
- localStorage.removeItem('tgtype_login_lock');
+          localStorage.removeItem('tgtype_login_lock');
           localStorage.removeItem('tgtype_login_fails');
         }
 
@@ -1299,33 +1330,6 @@ document.querySelectorAll('.tool-btn[data-cmd]').forEach(btn => {
         }
       }
     });
-
-    let initialLoaded = false;
-    if (auth) {
-      auth.onAuthStateChanged(user => {
-        currentUser = user;
-        const login = getLoginName(user);
-
-        if (user) {
-          authBtn.textContent = `Выйти (${login})`;
-        } else {
-          authBtn.textContent = 'Войти';
-        }
-
-        updateEditVisibility();
-        if (!isViewMode) {
-          metaInfoEl.contentEditable = Boolean(user && isAdmin(user));
-          updatePublishState();
-        }
-
-        if (pathSlug === 'blog') {
-          loadBlogPage();
-        } else if (!initialLoaded) {
-          initialLoaded = true;
-          if (pathSlug) loadArticle(pathSlug);
-        }
-      });
-    }
 
     function updateEditVisibility() {
       if (!isViewMode) {
@@ -1473,20 +1477,59 @@ document.querySelectorAll('.tool-btn[data-cmd]').forEach(btn => {
       }
     }
 
+    function parseFirestoreRestDoc(fields) {
+      if (!fields) return {};
+      const readVal = v => {
+        if (!v) return undefined;
+        if ('stringValue' in v) return v.stringValue;
+        if ('integerValue' in v) return Number(v.integerValue);
+        if ('doubleValue' in v) return Number(v.doubleValue);
+        if ('booleanValue' in v) return Boolean(v.booleanValue);
+        if ('arrayValue' in v) return (v.arrayValue.values || []).map(readVal);
+        return undefined;
+      };
+      const out = {};
+      for (const k of Object.keys(fields)) {
+        out[k] = readVal(fields[k]);
+      }
+      return out;
+    }
+
     async function loadArticle(slug) {
       setEditable(false);
       setStatus('Загрузка...');
       try {
-        const snap = await db.collection('articles').doc(slug).get();
-        if (snap.exists) {
-          const data = snap.data();
-          titleEl.innerHTML = data.title;
-          storyEl.innerHTML = data.story;
+        let exists = false;
+        let data = null;
+
+        try {
+          const restHost = 'https://firestore.' + 'googleapis.com';
+          const restUrl = `${restHost}/v1/projects/tgtype-a41aa/databases/(default)/documents/articles/${encodeURIComponent(slug)}`;
+          const res = await fetch(restUrl);
+          if (res.status === 200) {
+            const json = await res.json();
+            exists = true;
+            data = parseFirestoreRestDoc(json.fields);
+          } else if (res.status === 404) {
+            exists = false;
+          } else {
+            throw new Error('HTTP ' + res.status);
+          }
+        } catch (restErr) {
+          if (!db) throw restErr;
+          const snap = await db.collection('articles').doc(slug).get();
+          exists = snap.exists;
+          data = exists ? snap.data() : null;
+        }
+
+        if (exists && data) {
+          titleEl.innerHTML = data.title || '';
+          storyEl.innerHTML = data.story || '';
           currentArticleOwner = data.ownerUid || null;
           if (data.customMeta !== undefined) {
             metaInfoEl.textContent = data.customMeta;
           } else {
-            const rawAuthor = Array.isArray(data.ownerLogin) ? data.ownerLogin.at(0) : (data.ownerLogin || '');
+const rawAuthor = Array.isArray(data.ownerLogin) ? data.ownerLogin.at(0) : (data.ownerLogin || '');
             const authorDisplay = rawAuthor || (data.author ? data.author.replace(/<[^>]*>/g, '').trim() : '');
             renderMeta(authorDisplay, data.updatedAt);
           }
@@ -1627,27 +1670,6 @@ document.querySelectorAll('.tool-btn[data-cmd]').forEach(btn => {
 </body>
 </html>
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  
 
 
 
