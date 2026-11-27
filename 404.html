@@ -27,60 +27,17 @@
       background: #fff;
       border: 2px solid #222;
       border-radius: 20px;
-      padding: 5px 18px;
+      padding: 6px 18px;
       font-weight: 700;
       font-size: 13px;
       letter-spacing: 0.5px;
       cursor: pointer;
       transition: 0.2s;
-      margin-left: auto;
+      white-space: nowrap;
       flex-shrink: 0;
     }
     .publish-btn:hover { background: #222; color: #fff; }
     .publish-btn:disabled { opacity: 0.5; cursor: wait; }
-
-    /* Шапка редактора */
-    .editor-header {
-      background: #fff;
-      position: relative;
-      z-index: 50;
-    }
-    .editor-header.is-fixed {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      width: 100%;
-      box-sizing: border-box;
-      padding: 12px 20px 10px;
-      background: #fff;
-      border-bottom: 1px solid #eee;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
-    }
-    .editor-header.is-fixed .editor-header-inner {
-      max-width: 730px;
-      margin: 0 auto;
-    }
-    .editor-header.is-fixed .top-bar {
-      margin-bottom: 8px;
-      min-height: 20px;
-    }
-    .editor-header.is-fixed #title {
-      font-size: 20px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .editor-header.is-fixed .side-label {
-      font-size: 18px;
-    }
-    .editor-header.is-fixed #metaInfo {
-      margin-bottom: 10px;
-    }
-    .editor-header.is-fixed .toolbar-row {
-      margin-bottom: 0;
-    }
-
     .editable { outline: none; width: 100%; box-sizing: border-box; word-wrap: break-word; }
     .editable:empty:before {
       content: attr(data-placeholder);
@@ -88,6 +45,50 @@
       pointer-events: none;
       display: block;
     }
+
+    /* Шапка редактора */
+    .editor-header {
+      background: #fff;
+      transition: box-shadow 0.15s ease;
+    }
+    .editor-header-inner {
+      max-width: 730px;
+      margin: 0 auto;
+    }
+    .editor-header.is-fixed {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 80;
+      background: #fff;
+      padding: 12px 20px 10px;
+      border-bottom: 1px solid #eee;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+    }
+    .editor-header.is-fixed .top-bar {
+      margin-bottom: 8px;
+    }
+    .editor-header.is-fixed .title-wrap {
+      margin-bottom: 4px;
+    }
+    .editor-header.is-fixed #title {
+      font-size: 20px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .editor-header.is-fixed #metaInfo {
+      margin-bottom: 10px;
+      font-size: 12px;
+    }
+    .editor-header.is-fixed .toolbar-row {
+      margin-bottom: 0;
+    }
+    .editor-header.is-fixed .side-label {
+      font-size: 18px;
+    }
+
     .title-wrap {
       position: relative;
       margin-bottom: 10px;
@@ -120,47 +121,26 @@
     @media (max-width: 900px) {
       .side-label { display: none; }
     }
-    #metaInfo { font-size: 14px; color: #888; margin-bottom: 18px; min-height: 18px; }
-    #story {
-      font-family: Georgia, "Times New Roman", Times, serif;
-      font-size: 18px;
-      line-height: 1.58;
-      min-height: 350px;
-    }
-    #story p, #story div { margin: 0; line-height: 1.58; }
-    #story h3 {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      font-size: 24px;
-      font-weight: 700;
-      line-height: 1.3;
-      margin: 18px 0 8px;
-    }
-    #story blockquote { margin: 12px 0; padding-left: 16px; border-left: 3px solid #222; }
-    #story ul {
-      margin: 10px 0 12px;
-      padding-left: 24px;
-      list-style-type: disc;
-    }
-    #story li {
-      margin: 0 0 9px;
-      line-height: 1.55;
-      padding-left: 6px;
-    }
-    #story li:last-child { margin-bottom: 0; }
-    #story img { max-width: 100%; height: auto; display: block; margin: 18px 0; border-radius: 4px; }
-    #story a { color: #0066cc; text-decoration: underline; cursor: pointer; }
+    #metaInfo { font-size: 14px; color: #888; margin-bottom: 20px; min-height: 18px; }
 
     /* Строка с панелью инструментов и кнопкой PUBLISH вровень */
     .toolbar-row {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      gap: 10px;
-      flex-wrap: wrap;
-      margin-bottom: 15px;
-      min-height: 32px;
+      gap: 12px;
+      margin-bottom: 18px;
+      min-height: 34px;
     }
-    .toolbar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .toolbar-row.view-mode {
+      justify-content: flex-end;
+    }
+    .toolbar {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
     .tool-sep {
       width: 1px;
       height: 18px;
@@ -181,6 +161,28 @@
       min-height: 28px;
     }
     .tool-btn:hover { border-color: #222; color: #222; }
+
+    #story {
+      font-family: Georgia, "Times New Roman", Times, serif;
+      font-size: 18px;
+      line-height: 1.58;
+      min-height: 350px;
+    }
+    #story p, #story div { margin: 0; line-height: 1.58; }
+    #story h3 {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-size: 24px;
+      font-weight: 700;
+      line-height: 1.3;
+      margin: 18px 0 8px;
+    }
+    #story blockquote { margin: 12px 0; padding-left: 16px; border-left: 3px solid #222; }
+    #story ul { margin: 12px 0; padding-left: 24px; }
+    #story li { margin: 0 0 9px; padding-left: 6px; line-height: 1.55; }
+    #story li:last-child { margin-bottom: 0; }
+    #story img { max-width: 100%; height: auto; display: block; margin: 18px 0; border-radius: 4px; }
+    #story a { color: #0066cc; text-decoration: underline; cursor: pointer; }
+
     .status { font-size: 13px; color: #888; margin-top: 10px; font-weight: 500; min-height: 18px; }
     .status.error { color: #d9534f; }
     .status.ok { color: #28a745; }
@@ -271,6 +273,7 @@
 <body>
 
   <div class="container">
+    <div id="headerSpacer" style="display:none;"></div>
     <div id="editorHeader" class="editor-header is-editing">
       <div class="editor-header-inner">
         <div class="top-bar">
@@ -300,14 +303,14 @@
             <button class="tool-btn" type="button" data-cmd="formatBlock" data-arg="H3" title="Подзаголовок">H</button>
             <button class="tool-btn" type="button" data-cmd="formatBlock" data-arg="BLOCKQUOTE" title="Цитата">”</button>
             <button class="tool-btn" type="button" data-cmd="insertUnorderedList" title="Список">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="9" y1="6" x2="20" y2="6"/><line x1="9" y1="12" x2="20" y2="12"/><line x1="9" y1="18" x2="20" y2="18"/><circle cx="4.5" cy="6" r="1.2" fill="currentColor" stroke="none"/><circle cx="4.5" cy="12" r="1.2" fill="currentColor" stroke="none"/><circle cx="4.5" cy="18" r="1.2" fill="currentColor" stroke="none"/></svg>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
             </button>
             <span class="tool-sep"></span>
             <button class="tool-btn" type="button" data-cmd="justifyCenter" title="По центру">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="7" y1="12" x2="17" y2="12"/><line x1="5" y1="18" x2="19" y2="18"/></svg>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="6"/><line x1="21" y1="12" x2="3" y2="12"/><line x1="18" y1="18" x2="6" y2="18"/></svg>
             </button>
             <button class="tool-btn" type="button" data-cmd="justifyRight" title="По правому краю">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="10" y1="12" x2="20" y2="12"/><line x1="7" y1="18" x2="20" y2="18"/></svg>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="12" x2="9" y2="12"/><line x1="21" y1="18" x2="3" y2="18"/></svg>
             </button>
             <span class="tool-sep"></span>
             <button id="linkBtn" class="tool-btn" type="button">🔗 Ссылка</button>
@@ -318,7 +321,6 @@
         </div>
       </div>
     </div>
-    <div id="headerSpacer" style="display:none;"></div>
 
     <div id="story" class="editable" contenteditable="true" data-placeholder="Your story... (можно вставлять фото через Ctrl+V)"></div>
     <div id="status" class="status"></div>
@@ -362,6 +364,7 @@
 
     const editorHeader = document.getElementById('editorHeader');
     const headerSpacer = document.getElementById('headerSpacer');
+    const toolbarRow = document.getElementById('toolbarRow');
     const titleEl = document.getElementById('title');
     const titleSideLabel = document.getElementById('titleSideLabel');
     const metaInfoEl = document.getElementById('metaInfo');
@@ -374,7 +377,6 @@
     const closeLinkPopover = document.getElementById('closeLinkPopover');
     const fileInput = document.getElementById('fileInput');
     const toolbar = document.getElementById('toolbar');
-    const toolbarRow = document.getElementById('toolbarRow');
     const statusEl = document.getElementById('status');
     const authBtn = document.getElementById('authBtn');
     const adminBlogLink = document.getElementById('adminBlogLink');
@@ -391,32 +393,28 @@
 
     function updateFixedHeader() {
       if (!editorHeader.classList.contains('is-editing')) {
-        if (editorHeader.classList.contains('is-fixed')) {
-          editorHeader.classList.remove('is-fixed');
-          headerSpacer.style.display = 'none';
-        }
+        editorHeader.classList.remove('is-fixed');
+        headerSpacer.style.display = 'none';
         return;
       }
-
-      const scrollY = window.scrollY || window.pageYOffset;
-      const shouldFix = scrollY > 40;
-
-      if (shouldFix && !editorHeader.classList.contains('is-fixed')) {
-        headerSpacer.style.height = editorHeader.offsetHeight + 'px';
-        headerSpacer.style.display = 'block';
-        editorHeader.classList.add('is-fixed');
-      } else if (!shouldFix && editorHeader.classList.contains('is-fixed')) {
+      const triggerY = 28;
+      if (window.scrollY > triggerY) {
+        if (!editorHeader.classList.contains('is-fixed')) {
+          headerSpacer.style.height = editorHeader.offsetHeight + 'px';
+          headerSpacer.style.display = 'block';
+          editorHeader.classList.add('is-fixed');
+        }
+      } else {
         editorHeader.classList.remove('is-fixed');
         headerSpacer.style.display = 'none';
       }
     }
-
     window.addEventListener('scroll', updateFixedHeader, { passive: true });
     window.addEventListener('resize', () => {
       if (editorHeader.classList.contains('is-fixed')) {
         editorHeader.classList.remove('is-fixed');
-        headerSpacer.style.display = 'none';
-        updateFixedHeader();
+        headerSpacer.style.height = editorHeader.offsetHeight + 'px';
+        editorHeader.classList.add('is-fixed');
       }
     });
 
@@ -482,25 +480,22 @@
           }
         }
 
-        if (cmd === 'justifyCenter' || cmd === 'justifyRight') {
-          if (document.queryCommandState(cmd)) {
-            document.execCommand('justifyLeft', false, null);
-            return;
-          }
+        if ((cmd === 'justifyCenter' || cmd === 'justifyRight') && document.queryCommandState(cmd)) {
+          document.execCommand('justifyLeft', false, null);
+          return;
         }
 
         if (cmd === 'insertUnorderedList') {
           const sel = window.getSelection();
-          const wasCollapsed = !sel || sel.isCollapsed;
-          document.execCommand('insertUnorderedList', false, null);
-          const afterSel = window.getSelection();
-          const node = afterSel?.anchorNode;
-          const el = node?.nodeType === 3 ? node.parentElement : node;
-          const li = el?.closest('li');
-          if (li && wasCollapsed) {
-            placeCaretAtEnd(li);
-          } else if (afterSel && afterSel.rangeCount) {
-            afterSel.collapseToEnd();
+          const wasCollapsed = sel && sel.isCollapsed;
+          document.execCommand(cmd, false, arg);
+          if (wasCollapsed) {
+            const curNode = window.getSelection()?.anchorNode;
+            const curEl = curNode?.nodeType === 3 ? curNode.parentElement : curNode;
+            const li = curEl?.closest('li');
+            if (li && storyEl.contains(li)) {
+              placeCaretAtEnd(li);
+            }
           }
           return;
         }
@@ -670,9 +665,7 @@
     // Вставка в заголовок строго чистым текстом в одну строку
     titleEl.addEventListener('paste', e => {
       e.preventDefault();
-      const text = (e.clipboardData || window.clipboardData).getData('text/plain').replace(/
-?
-/g, ' ');
+      const text = (e.clipboardData || window.clipboardData).getData('text/plain').replace(/\r?\n/g, ' ');
       document.execCommand('insertText', false, text);
       updateTitleSideLabel();
     });
@@ -731,7 +724,7 @@
     if (typeof firebase !== 'undefined') {
       firebase.initializeApp({
         apiKey: "AIzaSyAGZvMxxAZEsbech1evNe2aNwR6GfC0xhw",
-        authDomain: "://firebaseapp.com",
+        authDomain: "tgtype-a41aa.firebaseapp.com",
         projectId: "tgtype-a41aa",
         storageBucket: "tgtype-a41aa.firebasestorage.app",
         messagingSenderId: "967552866716",
@@ -909,17 +902,14 @@
     function updateEditVisibility() {
       if (!isViewMode) {
         actionBtn.style.display = 'inline-block';
-        toolbarRow.style.display = 'flex';
         return;
       }
       const canEdit = currentUser && (currentUser.uid === currentArticleOwner || isAdmin(currentUser));
       actionBtn.style.display = canEdit ? 'inline-block' : 'none';
-      toolbarRow.style.display = canEdit ? 'flex' : 'none';
     }
 
     async function loadBlogPage() {
       metaInfoEl.style.display = 'none';
-      toolbar.style.display = 'none';
       toolbarRow.style.display = 'none';
       storyEl.style.display = 'none';
       actionBtn.style.display = 'none';
@@ -1080,9 +1070,10 @@
       titleEl.contentEditable = canEdit;
       storyEl.contentEditable = canEdit;
       toolbar.style.display = canEdit ? 'flex' : 'none';
+      toolbarRow.classList.toggle('view-mode', !canEdit);
+      metaInfoEl.contentEditable = (canEdit && currentUser && isAdmin(currentUser));
       editorHeader.classList.toggle('is-editing', canEdit);
       updateFixedHeader();
-      metaInfoEl.contentEditable = (canEdit && currentUser && isAdmin(currentUser));
       updateTitleSideLabel();
     }
 
