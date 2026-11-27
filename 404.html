@@ -641,7 +641,8 @@
           if (data.customMeta !== undefined) {
             metaInfoEl.textContent = data.customMeta;
           } else {
-            const authorDisplay = data.ownerLogin || (data.author ? data.author.replace(/<[^>]*>/g, '').trim() : '');
+            const rawAuthor = Array.isArray(data.ownerLogin) ? data.ownerLogin[0] : (data.ownerLogin || '');
+            const authorDisplay = rawAuthor || (data.author ? data.author.replace(/<[^>]*>/g, '').trim() : '');
             renderMeta(authorDisplay, data.updatedAt);
           }
 
@@ -753,3 +754,4 @@
   </script>
 </body>
 </html>
+
