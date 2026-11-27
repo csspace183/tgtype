@@ -4,8 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>tgtype</title>
-    <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
-  
+  <link rel="preconnect" href="https://googleapis.com" crossorigin>
   <style>
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -330,9 +329,23 @@
     .status { font-size: 13px; color: #888; margin-top: 10px; font-weight: 500; min-height: 18px; }
     .status.error { color: #d9534f; }
     .status.ok { color: #28a745; }
-    .auth-bar { margin-top: 40px; font-size: 12px; color: #aaa; display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
+    .footer-bar {
+      margin-top: 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+    .auth-bar { font-size: 12px; color: #aaa; display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
     .auth-bar button, .auth-bar a { background: none; border: 0; padding: 0; font: inherit; color: #aaa; cursor: pointer; text-decoration: underline; }
     .auth-bar button:hover, .auth-bar a:hover { color: #222; }
+    .views-badge {
+      display: none;
+      align-items: center;
+      gap: 5px;
+      font-size: 12px;
+      color: #aaa;
+      user-select: none;
+    }
 
     /* Список /blog */
     .blog-search {
@@ -345,10 +358,10 @@
       display: flex; justify-content: space-between; align-items: center;
       padding: 14px 0; border-bottom: 1px solid #eee; gap: 15px;
     }
-    .post-info a { font-family: Georgia, serif; font-size: 20px; font-weight: 700; color: #222; text-decoration: none; }
+ .post-info a { font-family: Georgia, serif; font-size: 20px; font-weight: 700; color: #222; text-decoration: none; }
     .post-info a:hover { color: #0066cc; }
     .post-meta { font-size: 12px; color: #888; margin-top: 4px; }
-.post-actions { display: flex; gap: 6px; flex-shrink: 0; }
+    .post-actions { display: flex; gap: 6px; flex-shrink: 0; }
     .mini-btn {
       background: #fff; border: 1px solid #ddd; border-radius: 15px;
       padding: 5px 11px; font-size: 12px; cursor: pointer; color: #333;
@@ -491,9 +504,15 @@
     <div id="story" class="editable" contenteditable="true" data-placeholder="Your story... (можно вставлять фото и HTML/ссылки Яндекс Музыки через Ctrl+V)"></div>
     <div id="status" class="status"></div>
 
-    <div class="auth-bar">
-      <button id="authBtn" type="button">Войти</button>
-      <a href="/start" id="faqLink">FAQ</a>
+    <div class="footer-bar">
+      <div class="auth-bar">
+        <button id="authBtn" type="button">Войти</button>
+        <a href="/start" id="faqLink">FAQ</a>
+      </div>
+      <div id="viewsBadge" class="views-badge" title="Уникальные просмотры">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        <span id="viewsCount">0</span>
+      </div>
     </div>
   </div>
 
@@ -517,7 +536,7 @@
       </form>
       <div style="text-align:center; margin-top:12px; font-size:12px; color:#777;">
         <span id="switchHint">Нет аккаунта?</span>
-        <button id="switchModeBtn" type="button" style="background:none; border:none; color:#222; font-weight:600; cursor:pointer; text-decoration:underline; padding:0; font-size:12px;">Регистрация</button>
+ <button id="switchModeBtn" type="button" style="background:none; border:none; color:#222; font-weight:600; cursor:pointer; text-decoration:underline; padding:0; font-size:12px;">Регистрация</button>
       </div>
       <button id="closeModalBtn" class="modal-close" type="button">Закрыть</button>
     </div>
@@ -526,7 +545,7 @@
   <script src="/firebase-app-compat.js" defer></script>
   <script src="/firebase-auth-compat.js" defer></script>
   <script src="/firebase-firestore-compat.js" defer></script>
-<script>
+  <script>
     const ADMIN_LOGIN = 'lordman';
     const DEFAULT_RAINBOW = 'linear-gradient(90deg, #ff3b30, #ff9500, #ffcc00, #34c759, #007aff, #af52de)';
 
@@ -552,6 +571,8 @@
     const toolbar = document.getElementById('toolbar');
     const statusEl = document.getElementById('status');
     const authBtn = document.getElementById('authBtn');
+    const viewsBadge = document.getElementById('viewsBadge');
+    const viewsCountEl = document.getElementById('viewsCount');
     const adminBlogLink = document.getElementById('adminBlogLink');
     const authModal = document.getElementById('authModal');
     const loginInput = document.getElementById('loginInput');
@@ -572,6 +593,8 @@
 
     let currentUser = null;
     let currentArticleOwner = null;
+    let currentArticleViews = 0;
+    let viewCountedForSlug = false;
     let savedLinkRange = null;
     const pathSlug = window.location.pathname.replace(/^\/+|\/+$/g, '');
     let currentSlug = pathSlug;
@@ -723,7 +746,7 @@
         colorPopover.classList.remove('open');
       }
     });
- document.querySelectorAll('.tool-btn[data-cmd]').forEach(btn => {
+document.querySelectorAll('.tool-btn[data-cmd]').forEach(btn => {
       btn.addEventListener('mousedown', e => e.preventDefault());
       btn.addEventListener('click', () => {
         colorPopover.classList.remove('open');
@@ -982,7 +1005,7 @@
       }
 
       const newRange = document.createRange();
- newRange.setStart(afterP, 0);
+newRange.setStart(afterP, 0);
       newRange.collapse(true);
       const sel = window.getSelection();
       sel.removeAllRanges();
@@ -1118,7 +1141,6 @@
 
         const el = document.createElement(targetTag);
 
-        // Сохраняем выравнивание для блочных элементов
         if (['P', 'DIV', 'H1', 'H2', 'H3', 'H4', 'BLOCKQUOTE'].includes(tag)) {
           const align = (node.style && node.style.textAlign) || node.getAttribute('align');
           if (align && ['center', 'right', 'left', 'justify'].includes(align.toLowerCase())) {
@@ -1126,13 +1148,11 @@
           }
         }
 
-        // Сохраняем только цвет текста (игнорируя background / background-color)
         const textColor = (node.style && node.style.color) || node.getAttribute('color');
         if (textColor) {
           el.style.color = textColor;
         }
 
-        // Сохраняем безопасные ссылки
         if (tag === 'A') {
           const href = node.getAttribute('href');
           if (href && /^https?:\/\//i.test(href.trim())) {
@@ -1231,6 +1251,36 @@
       loadArticle(pathSlug);
     }
 
+    function updateViewsBadge() {
+      if (isViewMode && currentUser && isAdmin(currentUser)) {
+        viewsCountEl.textContent = currentArticleViews;
+        viewsBadge.style.display = 'inline-flex';
+      } else {
+        viewsBadge.style.display = 'none';
+      }
+    }
+
+    async function trackArticleView(slug) {
+      if (!db || !slug || viewCountedForSlug || !isViewMode) return;
+      if (currentUser && (currentUser.uid === currentArticleOwner || isAdmin(currentUser))) return;
+
+      const key = 'tgtype_v_' + slug;
+      if (localStorage.getItem(key)) return;
+
+      viewCountedForSlug = true;
+      localStorage.setItem(key, '1');
+      try {
+        await db.collection('articles').doc(slug).update({
+          views: firebase.firestore.FieldValue.increment(1)
+        });
+        currentArticleViews += 1;
+        updateViewsBadge();
+      } catch (e) {
+        localStorage.removeItem(key);
+        viewCountedForSlug = false;
+      }
+    }
+
     window.addEventListener('DOMContentLoaded', () => {
       if (typeof firebase !== 'undefined') {
         firebase.initializeApp({
@@ -1251,10 +1301,11 @@
           if (user) {
             authBtn.textContent = `Выйти (${login})`;
           } else {
-            authBtn.textContent = 'Войти';
+  authBtn.textContent = 'Войти';
           }
 
           updateEditVisibility();
+          updateViewsBadge();
           if (!isViewMode) {
             metaInfoEl.contentEditable = Boolean(user && isAdmin(user));
             updatePublishState();
@@ -1262,6 +1313,8 @@
 
           if (pathSlug === 'blog') {
             loadBlogPage();
+          } else if (isViewMode && currentSlug) {
+            trackArticleView(currentSlug);
           }
         });
       } else {
@@ -1363,7 +1416,7 @@
         try {
           await auth.createUserWithEmailAndPassword(`${login}@tgtype.local`, pass);
           localStorage.setItem('tgtype_last_reg', String(Date.now()));
- authModal.style.display = 'none';
+          authModal.style.display = 'none';
           setStatus(`Аккаунт ${login} зарегистрирован!`, 'ok');
         } catch (err) {
           if (err.code === 'auth/email-already-in-use') {
@@ -1509,13 +1562,14 @@
             }) : '—';
             const fullUrl = `${window.location.origin}/${post.id}`;
             const authorPart = adminMode ? ` • Автор: <b>${ownerName}</b>` : '';
+ const viewsPart = adminMode ? ` • 👁 ${Number(post.views) || 0}` : '';
 
             const li = document.createElement('li');
             li.className = 'post-item';
             li.innerHTML = `
               <div class="post-info">
                 <a href="/${post.id}">${cleanTitle}</a>
-                <div class="post-meta">/${post.id}${authorPart} • Изменено: ${dateStr}</div>
+                <div class="post-meta">/${post.id}${authorPart} • Изменено: ${dateStr}${viewsPart}</div>
               </div>
               <div class="post-actions">
                 <button class="mini-btn copy-btn" type="button">Копировать ссылку</button>
@@ -1612,10 +1666,11 @@
           titleEl.innerHTML = data.title || '';
           storyEl.innerHTML = data.story || '';
           currentArticleOwner = data.ownerUid || null;
+          currentArticleViews = Number(data.views) || 0;
           if (data.customMeta !== undefined) {
             metaInfoEl.textContent = data.customMeta;
           } else {
-const rawAuthor = Array.isArray(data.ownerLogin) ? data.ownerLogin.at(0) : (data.ownerLogin || '');
+            const rawAuthor = Array.isArray(data.ownerLogin) ? data.ownerLogin.at(0) : (data.ownerLogin || '');
             const authorDisplay = rawAuthor || (data.author ? data.author.replace(/<[^>]*>/g, '').trim() : '');
             renderMeta(authorDisplay, data.updatedAt);
           }
@@ -1626,6 +1681,8 @@ const rawAuthor = Array.isArray(data.ownerLogin) ? data.ownerLogin.at(0) : (data
           isViewMode = true;
           captureInitialSnapshot();
           updateEditVisibility();
+          updateViewsBadge();
+          if (auth) trackArticleView(slug);
         } else {
           metaInfoEl.style.display = 'none';
           toolbarRow.style.display = 'none';
@@ -1744,6 +1801,7 @@ const rawAuthor = Array.isArray(data.ownerLogin) ? data.ownerLogin.at(0) : (data
         setEditable(false);
         actionBtn.textContent = 'EDIT';
         updateEditVisibility();
+        updateViewsBadge();
         setStatus('Опубликовано!', 'ok');
       } catch (e) {
         setStatus('Ошибка публикации: ' + e.message, 'error');
@@ -1755,6 +1813,14 @@ const rawAuthor = Array.isArray(data.ownerLogin) ? data.ownerLogin.at(0) : (data
   </script>
 </body>
 </html>
+
+
+
+
+
+
+
+
 
 
 
