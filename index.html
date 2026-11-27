@@ -36,8 +36,15 @@
     }
     .publish-btn:hover { background: #222; color: #fff; }
     .publish-btn:disabled { opacity: 0.5; cursor: wait; }
+    .editable { outline: none; width: 100%; box-sizing: border-box; word-wrap: break-word; }
+    .editable:empty:before {
+      content: attr(data-placeholder);
+      color: #999;
+      pointer-events: none;
+      display: block;
+    }
 
-    /* Закрепляемая шапка редактора */
+    /* Закрепляемая шапка редактора (включая top-bar, Title, Author и тулбар) */
     #editorHeader {
       background: #fff;
     }
@@ -48,15 +55,19 @@
       right: 0;
       width: 100%;
       box-sizing: border-box;
-      z-index: 60;
-      padding: 12px 20px 10px;
+      z-index: 80;
       background: #fff;
+      padding: 12px 20px 10px;
       border-bottom: 1px solid #eee;
-      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
     }
     #editorHeader.is-fixed .header-inner {
       max-width: 730px;
       margin: 0 auto;
+    }
+    #editorHeader.is-fixed .top-bar {
+      margin-bottom: 10px;
+      min-height: 32px;
     }
     #editorHeader.is-fixed .title-wrap {
       margin-bottom: 4px;
@@ -67,6 +78,9 @@
       overflow: hidden;
       text-overflow: ellipsis;
     }
+    #editorHeader.is-fixed .side-label {
+      font-size: 20px;
+    }
     #editorHeader.is-fixed #metaInfo {
       margin-bottom: 10px;
       font-size: 13px;
@@ -74,17 +88,7 @@
     #editorHeader.is-fixed .toolbar {
       margin-bottom: 0;
     }
-    #editorHeader.is-fixed .side-label {
-      font-size: 18px;
-    }
 
-    .editable { outline: none; width: 100%; box-sizing: border-box; word-wrap: break-word; }
-    .editable:empty:before {
-      content: attr(data-placeholder);
-      color: #999;
-      pointer-events: none;
-      display: block;
-    }
     .title-wrap {
       position: relative;
       margin-bottom: 10px;
@@ -134,7 +138,7 @@
     }
     #story blockquote { margin: 12px 0; padding-left: 16px; border-left: 3px solid #222; }
     #story ul {
-      margin: 10px 0;
+      margin: 8px 0 12px;
       padding-left: 22px;
     }
     #story li {
@@ -147,13 +151,8 @@
     }
     #story img { max-width: 100%; height: auto; display: block; margin: 18px 0; border-radius: 4px; }
     #story a { color: #0066cc; text-decoration: underline; cursor: pointer; }
-    .toolbar { margin-bottom: 15px; display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
-    .tool-sep {
-      width: 1px;
-      height: 18px;
-      background: #e0e0e0;
-      margin: 0 3px;
-    }
+    .toolbar { margin-bottom: 15px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .tool-sep { width: 1px; height: 20px; background: #e0e0e0; margin: 0 2px; }
     .tool-btn {
       background: none;
       border: 1px solid #e0e0e0;
@@ -258,17 +257,17 @@
 <body>
 
   <div class="container">
-    <div class="top-bar">
-      <div class="top-left">
-        <a href="/" class="new-link">+ Новая запись</a>
-        <a href="/blog" id="adminBlogLink" class="new-link">Блог</a>
-      </div>
-      <button id="actionBtn" class="publish-btn" type="button">PUBLISH</button>
-    </div>
-
-    <div id="headerSpacer" style="display:none;"></div>
-    <div id="editorHeader">
+    <div id="headerSpacer"></div>
+    <div id="editorHeader" class="is-editing">
       <div class="header-inner">
+        <div class="top-bar">
+          <div class="top-left">
+            <a href="/" class="new-link">+ Новая запись</a>
+            <a href="/blog" id="adminBlogLink" class="new-link">Блог</a>
+          </div>
+          <button id="actionBtn" class="publish-btn" type="button">PUBLISH</button>
+        </div>
+
         <div class="title-wrap">
           <span id="titleSideLabel" class="side-label">Title</span>
           <div id="title" class="editable" contenteditable="true" data-placeholder="Title"></div>
@@ -288,20 +287,16 @@
           <button class="tool-btn" type="button" data-cmd="formatBlock" data-arg="H3" title="Заголовок">H</button>
           <button class="tool-btn" type="button" data-cmd="formatBlock" data-arg="BLOCKQUOTE" title="Цитата">”</button>
           <button class="tool-btn" type="button" data-cmd="insertUnorderedList" title="Список">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="9" y1="6" x2="20" y2="6"/><line x1="9" y1="12" x2="20" y2="12"/><line x1="9" y1="18" x2="20" y2="18"/><circle cx="4" cy="6" r="1.2" fill="currentColor"/><circle cx="4" cy="12" r="1.2" fill="currentColor"/><circle cx="4" cy="18" r="1.2" fill="currentColor"/></svg>
           </button>
-
           <span class="tool-sep"></span>
-
           <button class="tool-btn" type="button" data-cmd="justifyCenter" title="По центру">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="10" x2="6" y2="10"/><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="14" x2="3" y2="14"/><line x1="18" y1="18" x2="6" y2="18"/></svg>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="7" y1="12" x2="17" y2="12"/><line x1="5" y1="18" x2="19" y2="18"/></svg>
           </button>
           <button class="tool-btn" type="button" data-cmd="justifyRight" title="По правому краю">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="21" y1="10" x2="7" y2="10"/><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="14" x2="3" y2="14"/><line x1="21" y1="18" x2="7" y2="18"/></svg>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="9" y1="12" x2="21" y2="12"/><line x1="6" y1="18" x2="21" y2="18"/></svg>
           </button>
-
           <span class="tool-sep"></span>
-
           <button id="linkBtn" class="tool-btn" type="button">🔗 Ссылка</button>
           <button id="photoBtn" class="tool-btn" type="button">📷 Фото</button>
           <input type="file" id="fileInput" accept="image/*" style="display:none">
@@ -378,28 +373,23 @@
     let isViewMode = false;
 
     function updateFixedHeader() {
-      const isEditing = !isViewMode && pathSlug !== 'blog' && toolbar.style.display !== 'none';
-      if (!isEditing) {
-        if (editorHeader.classList.contains('is-fixed')) {
-          editorHeader.classList.remove('is-fixed');
-          headerSpacer.style.display = 'none';
-        }
+      if (!editorHeader.classList.contains('is-editing')) {
+        editorHeader.classList.remove('is-fixed');
+        headerSpacer.style.height = '0px';
         return;
       }
 
-      const anchorEl = editorHeader.classList.contains('is-fixed') ? headerSpacer : editorHeader;
-      const triggerTop = anchorEl.getBoundingClientRect().top + window.scrollY;
-
-      if (window.scrollY > triggerTop) {
-        if (!editorHeader.classList.contains('is-fixed')) {
+      if (!editorHeader.classList.contains('is-fixed')) {
+        const rect = editorHeader.getBoundingClientRect();
+        if (rect.top <= 0) {
           headerSpacer.style.height = editorHeader.offsetHeight + 'px';
-          headerSpacer.style.display = 'block';
           editorHeader.classList.add('is-fixed');
         }
       } else {
-        if (editorHeader.classList.contains('is-fixed')) {
+        const spacerRect = headerSpacer.getBoundingClientRect();
+        if (spacerRect.top > 0) {
           editorHeader.classList.remove('is-fixed');
-          headerSpacer.style.display = 'none';
+          headerSpacer.style.height = '0px';
         }
       }
     }
@@ -408,7 +398,7 @@
     window.addEventListener('resize', () => {
       if (editorHeader.classList.contains('is-fixed')) {
         editorHeader.classList.remove('is-fixed');
-        headerSpacer.style.display = 'none';
+        headerSpacer.style.height = '0px';
       }
       updateFixedHeader();
     });
@@ -448,6 +438,16 @@
       return getLoginName(user) === ADMIN_LOGIN;
     }
 
+    function moveCaretToEnd(el) {
+      if (!el) return;
+      const range = document.createRange();
+      range.selectNodeContents(el);
+      range.collapse(false);
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+    }
+
     document.querySelectorAll('.tool-btn[data-cmd]').forEach(btn => {
       btn.addEventListener('mousedown', e => e.preventDefault());
       btn.addEventListener('click', () => {
@@ -463,6 +463,22 @@
             document.execCommand('formatBlock', false, 'P');
             return;
           }
+        }
+
+        if (cmd === 'insertUnorderedList') {
+          const selBefore = window.getSelection();
+          const hadSelection = selBefore && !selBefore.isCollapsed;
+          document.execCommand(cmd, false, arg);
+          if (!hadSelection) {
+            const selAfter = window.getSelection();
+            const nodeAfter = selAfter?.anchorNode;
+            const elAfter = nodeAfter?.nodeType === 3 ? nodeAfter.parentElement : nodeAfter;
+            const li = elAfter?.closest('li');
+            if (li && storyEl.contains(li)) {
+              moveCaretToEnd(li);
+            }
+          }
+          return;
         }
 
         if ((cmd === 'justifyCenter' || cmd === 'justifyRight') && document.queryCommandState(cmd)) {
@@ -694,7 +710,7 @@
     if (typeof firebase !== 'undefined') {
       firebase.initializeApp({
         apiKey: "AIzaSyAGZvMxxAZEsbech1evNe2aNwR6GfC0xhw",
-        authDomain: "tgtype-a41aa.firebaseapp.com",
+        authDomain: "://firebaseapp.com",
         projectId: "tgtype-a41aa",
         storageBucket: "tgtype-a41aa.firebasestorage.app",
         messagingSenderId: "967552866716",
@@ -879,13 +895,14 @@
     }
 
     async function loadBlogPage() {
+      editorHeader.classList.remove('is-editing', 'is-fixed');
+      headerSpacer.style.height = '0px';
       metaInfoEl.style.display = 'none';
       toolbar.style.display = 'none';
       storyEl.style.display = 'none';
       actionBtn.style.display = 'none';
       titleEl.contentEditable = false;
       updateTitleSideLabel();
-      updateFixedHeader();
 
       document.querySelector('.blog-search')?.remove();
       document.querySelector('.posts-list')?.remove();
@@ -1026,7 +1043,6 @@
           actionBtn.textContent = 'EDIT';
           isViewMode = true;
           updateEditVisibility();
-          updateFixedHeader();
         } else {
           setStatus('Страница не найдена. Можете создать её здесь!');
           setEditable(true);
@@ -1041,8 +1057,9 @@
       storyEl.contentEditable = canEdit;
       toolbar.style.display = canEdit ? 'flex' : 'none';
       metaInfoEl.contentEditable = (canEdit && currentUser && isAdmin(currentUser));
-      updateTitleSideLabel();
+      editorHeader.classList.toggle('is-editing', canEdit);
       updateFixedHeader();
+      updateTitleSideLabel();
     }
 
     function slugify(text) {
