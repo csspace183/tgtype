@@ -675,9 +675,7 @@
     // Вставка в заголовок строго чистым текстом в одну строку
     titleEl.addEventListener('paste', e => {
       e.preventDefault();
-      const text = (e.clipboardData || window.clipboardData).getData('text/plain').replace(/
-?
-/g, ' ');
+      const text = (e.clipboardData || window.clipboardData).getData('text/plain').replace(/\r?\n/g, ' ');
       document.execCommand('insertText', false, text);
       updateTitleSideLabel();
     });
