@@ -823,27 +823,27 @@
       updatePublishState();
     }
 
-    // Встраивание плеера Яндекс Музыки
+     // Встраивание плеера Яндекс Музыки
     function parseYandexMusicUrl(text) {
       const trimmed = (text || '').trim();
       const trackWithAlbum = trimmed.match(/^https?:\/\/music\.yandex\.(?:ru|by|kz|uz|com)\/album\/(\d+)\/track\/(\d+)(?:[?/#].*)?$/i);
       if (trackWithAlbum) {
         return {
-          src: `https://yandex.ru{trackWithAlbum.at(2)}/${trackWithAlbum.at(1)}`,
+          src: 'https://yandex.ru' + trackWithAlbum.at(2) + '/' + trackWithAlbum.at(1),
           isAlbum: false
         };
       }
       const trackOnly = trimmed.match(/^https?:\/\/music\.yandex\.(?:ru|by|kz|uz|com)\/track\/(\d+)(?:[?/#].*)?$/i);
       if (trackOnly) {
         return {
-          src: `https://yandex.ru{trackOnly.at(1)}`,
+          src: 'https://yandex.ru' + trackOnly.at(1),
           isAlbum: false
         };
       }
       const albumOnly = trimmed.match(/^https?:\/\/music\.yandex\.(?:ru|by|kz|uz|com)\/album\/(\d+)(?:[?/#].*)?$/i);
       if (albumOnly) {
         return {
-          src: `https://yandex.ru{albumOnly.at(1)}`,
+          src: 'https://yandex.ru' + albumOnly.at(1),
           isAlbum: true
         };
       }
