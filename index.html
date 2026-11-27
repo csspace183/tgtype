@@ -37,11 +37,8 @@
       flex-shrink: 0;
     }
     .publish-btn:hover:not(:disabled) { background: #222; color: #fff; }
-    .publish-btn:disabled {
-      opacity: 0.35;
-      cursor: default;
-      pointer-events: none;
-    }
+    .publish-btn:disabled { opacity: 0.35; cursor: default; }
+    .publish-btn.is-saving { opacity: 0.5; cursor: wait; }
     .editable { outline: none; width: 100%; box-sizing: border-box; word-wrap: break-word; }
     .editable:empty:before {
       content: attr(data-placeholder);
@@ -178,7 +175,7 @@
     }
     .tool-btn:hover { border-color: #222; color: #222; }
 
-    /* Кнопка цвета и палитра */
+    /* Палитра цветов текста */
     .color-wrap {
       position: relative;
       display: inline-flex;
@@ -192,11 +189,11 @@
       font-size: 13px;
     }
     .color-bar {
-      width: 14px;
+      width: 13px;
       height: 2.5px;
-      background: linear-gradient(90deg, #ff3b30, #34c759, #007aff);
+      background: #222;
       margin-top: 2px;
-      border-radius: 2px;
+      border-radius: 1px;
     }
     .color-popover {
       display: none;
@@ -207,27 +204,25 @@
       background: #fff;
       border: 1px solid #e0e0e0;
       border-radius: 8px;
-      padding: 8px;
-      gap: 7px;
-      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.14);
+      padding: 7px 8px;
+      gap: 6px;
       align-items: center;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
     }
     .color-popover.open {
       display: flex;
     }
     .color-swatch {
-      width: 22px;
-      height: 22px;
+      width: 20px;
+      height: 20px;
       border-radius: 50%;
-      border: 1.5px solid rgba(0, 0, 0, 0.14);
+      border: 1px solid rgba(0, 0, 0, 0.15);
       cursor: pointer;
       padding: 0;
       transition: transform 0.12s ease;
-      flex-shrink: 0;
     }
     .color-swatch:hover {
       transform: scale(1.18);
-      border-color: #222;
     }
 
     #story {
@@ -373,14 +368,14 @@
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4H9a3 3 0 0 0-2.83 4"/><path d="M14 12a4 4 0 0 1 0 8H6"/><line x1="4" y1="12" x2="20" y2="12"/></svg>
             </button>
             <div class="color-wrap" id="colorWrap">
-              <button id="colorBtn" class="tool-btn" type="button" title="Цвет текста">
+              <button class="tool-btn" type="button" id="colorBtn" title="Цвет текста">
                 <span class="color-btn-inner">
                   <span>A</span>
-                  <span class="color-bar"></span>
+                  <span class="color-bar" id="colorBar"></span>
                 </span>
               </button>
-              <div id="colorPopover" class="color-popover">
-                <button type="button" class="color-swatch" data-color="default" style="background:#222222;" title="Обычный (сбросить цвет)"></button>
+              <div class="color-popover" id="colorPopover">
+                <button type="button" class="color-swatch" data-color="#222222" style="background:#222222;" title="Чёрный (по умолчанию)"></button>
                 <button type="button" class="color-swatch" data-color="#888888" style="background:#888888;" title="Серый"></button>
                 <button type="button" class="color-swatch" data-color="#d93025" style="background:#d93025;" title="Красный"></button>
                 <button type="button" class="color-swatch" data-color="#e37400" style="background:#e37400;" title="Оранжевый"></button>
@@ -467,6 +462,7 @@
     const closeLinkPopover = document.getElementById('closeLinkPopover');
     const colorWrap = document.getElementById('colorWrap');
     const colorBtn = document.getElementById('colorBtn');
+    const colorBar = document.getElementById('colorBar');
     const colorPopover = document.getElementById('colorPopover');
     const fileInput = document.getElementById('fileInput');
     const toolbar = document.getElementById('toolbar');
@@ -480,31 +476,31 @@
     let currentUser = null;
     let currentArticleOwner = null;
     let savedLinkRange = null;
-    let savedColorRange = null;
     const pathSlug = window.location.pathname.replace(/^\/+|\/+$/g, '');
     let currentSlug = pathSlug;
     let isViewMode = false;
 
-    let savedSnapshot = { title: '', story: '', meta: '' };
+    let initialSnapshot = { title: '', story: '', meta: '' };
 
     function getCurrentSnapshot() {
       return {
-        title: titleEl.innerHTML.trim(),
-        story: storyEl.innerHTML.trim(),
+        title: titleEl.innerHTML,
+        story: storyEl.innerHTML,
         meta: metaInfoEl.innerText.trim()
       };
     }
 
-    function captureSnapshot() {
-      savedSnapshot = getCurrentSnapshot();
+    function captureInitialSnapshot() {
+      initialSnapshot = getCurrentSnapshot();
       updatePublishState();
     }
 
     function hasUnsavedChanges() {
       const cur = getCurrentSnapshot();
-      return cur.title !== savedSnapshot.title ||
-             cur.story !== savedSnapshot.story ||
-             cur.meta !== savedSnapshot.meta;
+      if (cur.title !== initialSnapshot.title) return true;
+      if (cur.story !== initialSnapshot.story) return true;
+      if (currentUser && isAdmin(currentUser) && cur.meta !== initialSnapshot.meta) return true;
+      return false;
     }
 
     function updatePublishState() {
@@ -515,9 +511,7 @@
       actionBtn.disabled = !hasUnsavedChanges();
     }
 
-    titleEl.addEventListener('input', updatePublishState);
-    storyEl.addEventListener('input', updatePublishState);
-    metaInfoEl.addEventListener('input', updatePublishState);
+    captureInitialSnapshot();
 
     function updateFixedHeader() {
       if (!editorHeader.classList.contains('is-editing')) {
@@ -554,7 +548,11 @@
       const canEdit = titleEl.isContentEditable;
       titleSideLabel.classList.toggle('visible', hasText && canEdit);
     }
-    titleEl.addEventListener('input', updateTitleSideLabel);
+    titleEl.addEventListener('input', () => {
+      updateTitleSideLabel();
+      updatePublishState();
+    });
+    metaInfoEl.addEventListener('input', updatePublishState);
 
     function renderMeta(login, timestamp) {
       const parts = [];
@@ -591,101 +589,38 @@
       sel.addRange(range);
     }
 
-    // Цвет текста: применяется строго к выделенному тексту, а курсор выносится за пределы тега цвета
+    // Палитра цветов текста
     colorBtn.addEventListener('mousedown', e => e.preventDefault());
-    colorBtn.addEventListener('click', (e) => {
+    colorBtn.addEventListener('click', e => {
       e.stopPropagation();
-      if (colorPopover.classList.contains('open')) {
-        colorPopover.classList.remove('open');
-        savedColorRange = null;
-        return;
-      }
-
-      const sel = window.getSelection();
-      if (!sel || !sel.rangeCount || sel.isCollapsed) {
-        alert('Сначала выделите мышкой или пальцем слово или текст, который нужно покрасить!');
-        return;
-      }
-
-      const range = sel.getRangeAt(0);
-      if (!storyEl.contains(range.commonAncestorContainer)) {
-        alert('Выделите текст внутри самой статьи!');
-        return;
-      }
-
-      savedColorRange = range.cloneRange();
-      colorPopover.classList.add('open');
+      colorPopover.classList.toggle('open');
     });
 
     document.querySelectorAll('.color-swatch').forEach(swatch => {
       swatch.addEventListener('mousedown', e => e.preventDefault());
-      swatch.addEventListener('click', (e) => {
+      swatch.addEventListener('click', e => {
         e.stopPropagation();
-        if (!savedColorRange) {
-          colorPopover.classList.remove('open');
-          return;
-        }
-
         const color = swatch.dataset.color;
-        const sel = window.getSelection();
-        sel.removeAllRanges();
-        sel.addRange(savedColorRange);
-
-        const fragment = savedColorRange.extractContents();
-        fragment.querySelectorAll('span[style*="color"], font[color]').forEach(el => {
-          el.style.color = '';
-          el.removeAttribute('color');
-          if (!el.getAttribute('style') && el.tagName === 'SPAN') {
-            el.replaceWith(...el.childNodes);
-          }
-        });
-
-        let lastInserted = null;
-        if (color === 'default') {
-          const children = Array.from(fragment.childNodes);
-          lastInserted = children[children.length - 1] || null;
-          savedColorRange.insertNode(fragment);
-        } else {
-          const span = document.createElement('span');
-          span.style.color = color;
-          span.appendChild(fragment);
-          savedColorRange.insertNode(span);
-          lastInserted = span;
-        }
-
-        // Выносим курсор за пределы цветного <span> и вставляем невидимый разделитель,
-        // чтобы при дальнейшем наборе или нажатии Enter текст печатался базовым цветом
-        if (lastInserted && lastInserted.parentNode) {
-          const afterRange = document.createRange();
-          const nextNode = lastInserted.nextSibling;
-          if (nextNode && nextNode.nodeType === 3 && nextNode.nodeValue.startsWith('\u200B')) {
-            afterRange.setStart(nextNode, 1);
-          } else {
-            const zws = document.createTextNode('\u200B');
-            lastInserted.parentNode.insertBefore(zws, lastInserted.nextSibling);
-            afterRange.setStart(zws, 1);
-          }
-          afterRange.collapse(true);
-          sel.removeAllRanges();
-          sel.addRange(afterRange);
-        }
-
+        storyEl.focus();
+        document.execCommand('styleWithCSS', false, true);
+        document.execCommand('foreColor', false, color);
+        document.execCommand('styleWithCSS', false, false);
+        colorBar.style.background = color;
         colorPopover.classList.remove('open');
-        savedColorRange = null;
         updatePublishState();
       });
     });
 
-    document.addEventListener('click', (e) => {
+    document.addEventListener('click', e => {
       if (!colorWrap.contains(e.target)) {
         colorPopover.classList.remove('open');
-        savedColorRange = null;
       }
     });
 
     document.querySelectorAll('.tool-btn[data-cmd]').forEach(btn => {
       btn.addEventListener('mousedown', e => e.preventDefault());
       btn.addEventListener('click', () => {
+        colorPopover.classList.remove('open');
         storyEl.focus();
         const cmd = btn.dataset.cmd;
         const arg = btn.dataset.arg || null;
@@ -736,6 +671,7 @@
 
     linkBtn.addEventListener('mousedown', e => e.preventDefault());
     linkBtn.addEventListener('click', () => {
+      colorPopover.classList.remove('open');
       const sel = window.getSelection();
       if (!sel || !sel.rangeCount) return;
 
@@ -800,7 +736,10 @@
 
     closeLinkPopover.addEventListener('click', hideLinkPopover);
 
-    photoBtn.addEventListener('click', () => fileInput.click());
+    photoBtn.addEventListener('click', () => {
+      colorPopover.classList.remove('open');
+      fileInput.click();
+    });
     fileInput.addEventListener('change', e => {
       for (const f of e.target.files || []) compressAndInsertImage(f);
       fileInput.value = '';
@@ -859,37 +798,39 @@
     });
 
     storyEl.addEventListener('input', () => {
-      if (!resetAfterBlockBreak) return;
-      resetAfterBlockBreak = false;
+      if (resetAfterBlockBreak) {
+        resetAfterBlockBreak = false;
 
-      const sel = window.getSelection();
-      const node = sel?.anchorNode;
-      const el = node?.nodeType === 3 ? node.parentElement : node;
-      const block = el?.closest('blockquote, h3');
+        const sel = window.getSelection();
+        const node = sel?.anchorNode;
+        const el = node?.nodeType === 3 ? node.parentElement : node;
+        const block = el?.closest('blockquote, h3');
 
-      if (block && storyEl.contains(block)) {
-        document.execCommand('formatBlock', false, 'P');
-      }
-      if (document.queryCommandState('bold')) {
-        document.execCommand('bold', false, null);
-      }
-      const curNode = window.getSelection()?.anchorNode;
-      const curEl = curNode?.nodeType === 3 ? curNode.parentElement : curNode;
-      const bTag = curEl?.closest('b, strong');
-      if (bTag && storyEl.contains(bTag) && bTag.textContent.trim() === '') {
-        const p = document.createElement('p');
-        p.innerHTML = '<br>';
-        bTag.replaceWith(p);
-        const range = document.createRange();
-        range.setStart(p, 0);
-        range.collapse(true);
-        const s = window.getSelection();
-        s.removeAllRanges();
-        s.addRange(range);
+        if (block && storyEl.contains(block)) {
+          document.execCommand('formatBlock', false, 'P');
+        }
+        if (document.queryCommandState('bold')) {
+          document.execCommand('bold', false, null);
+        }
+        const curNode = window.getSelection()?.anchorNode;
+        const curEl = curNode?.nodeType === 3 ? curNode.parentElement : curNode;
+        const bTag = curEl?.closest('b, strong');
+        if (bTag && storyEl.contains(bTag) && bTag.textContent.trim() === '') {
+          const p = document.createElement('p');
+          p.innerHTML = '<br>';
+          bTag.replaceWith(p);
+          const range = document.createRange();
+          range.setStart(p, 0);
+          range.collapse(true);
+          const s = window.getSelection();
+          s.removeAllRanges();
+          s.addRange(range);
+        }
       }
       updatePublishState();
     });
 
+    // Вставка в заголовок строго чистым текстом в одну строку
     titleEl.addEventListener('paste', e => {
       e.preventDefault();
       const text = (e.clipboardData || window.clipboardData).getData('text/plain').replace(/\r?\n/g, ' ');
@@ -898,6 +839,7 @@
       updatePublishState();
     });
 
+    // Вставка в основной текст: картинки сжимаем, любой текст вставляем без чужого фона и шрифтов
     storyEl.addEventListener('paste', e => {
       const cd = e.clipboardData || window.clipboardData;
       const items = cd ? cd.items : [];
@@ -1118,6 +1060,10 @@
         }
 
         updateEditVisibility();
+        if (!isViewMode) {
+          metaInfoEl.contentEditable = Boolean(user && isAdmin(user));
+          updatePublishState();
+        }
 
         if (pathSlug === 'blog') {
           loadBlogPage();
@@ -1293,12 +1239,12 @@
           setStatus('');
           actionBtn.textContent = 'EDIT';
           isViewMode = true;
-          captureSnapshot();
+          captureInitialSnapshot();
           updateEditVisibility();
         } else {
           setStatus('Страница не найдена. Можете создать её здесь!');
           setEditable(true);
-          captureSnapshot();
+          captureInitialSnapshot();
         }
       } catch (e) {
         setStatus('Ошибка загрузки: ' + e.message, 'error');
@@ -1339,10 +1285,9 @@
 
       if (isViewMode) {
         isViewMode = false;
-        captureSnapshot();
         setEditable(true);
         actionBtn.textContent = 'PUBLISH';
-        updatePublishState();
+        captureInitialSnapshot();
         return;
       }
 
@@ -1355,6 +1300,7 @@
       }
 
       actionBtn.disabled = true;
+      actionBtn.classList.add('is-saving');
       setStatus('Публикация...');
 
       try {
@@ -1369,10 +1315,9 @@
         }
 
         const now = Date.now();
-        const cleanStoryHtml = storyEl.innerHTML.replace(/\u200B/g, '');
         const payload = {
           title: titleEl.innerHTML,
-          story: cleanStoryHtml,
+          story: storyEl.innerHTML,
           updatedAt: now
         };
 
@@ -1400,7 +1345,7 @@
         window.history.pushState({}, '', '/' + targetSlug);
         document.title = titleText;
         isViewMode = true;
-        captureSnapshot();
+        captureInitialSnapshot();
         setEditable(false);
         actionBtn.textContent = 'EDIT';
         updateEditVisibility();
@@ -1408,6 +1353,8 @@
         navigator.clipboard?.writeText(window.location.href);
       } catch (e) {
         setStatus('Ошибка публикации: ' + e.message, 'error');
+      } finally {
+        actionBtn.classList.remove('is-saving');
         updatePublishState();
       }
     });
