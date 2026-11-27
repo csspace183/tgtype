@@ -1082,7 +1082,80 @@
       updatePublishState();
     });
 
-    // Вставка в основной текст: картинки сжимаем, HTML-виджеты превращаем в плеер, текст вставляем чистым
+    // Очистка вставляемого HTML: сохраняем базовое форматирование и цвета текста, но убираем фоны и чужие стили
+    function sanitizePastedHtml(rawHtml) {
+      const doc = new DOMParser().parseFromString(rawHtml, 'text/html');
+      const allowedTags = new Set([
+        'P', 'BR', 'B', 'STRONG', 'I', 'EM', 'U', 'S', 'STRIKE', 'DEL',
+        'H1', 'H2', 'H3', 'H4', 'BLOCKQUOTE', 'UL', 'OL', 'LI', 'A', 'SPAN', 'DIV', 'FONT'
+      ]);
+
+      function cleanNode(node) {
+        if (node.nodeType === 3) {
+          return document.createTextNode(node.nodeValue);
+        }
+        if (node.nodeType !== 1) return null;
+
+        const tag = node.tagName.toUpperCase();
+        if (['STYLE', 'SCRIPT', 'META', 'LINK', 'XML', 'HEAD', 'TITLE', 'IFRAME', 'OBJECT'].includes(tag)) {
+          return null;
+        }
+
+        const frag = document.createDocumentFragment();
+        for (const child of Array.from(node.childNodes)) {
+          const cleanedChild = cleanNode(child);
+          if (cleanedChild) frag.appendChild(cleanedChild);
+        }
+
+        if (!allowedTags.has(tag)) {
+          return frag;
+        }
+
+        let targetTag = tag.toLowerCase();
+        if (['H1', 'H2', 'H4'].includes(tag)) targetTag = 'h3';
+        if (tag === 'OL') targetTag = 'ul';
+        if (tag === 'FONT') targetTag = 'span';
+
+        const el = document.createElement(targetTag);
+
+        // Сохраняем выравнивание для блочных элементов
+        if (['P', 'DIV', 'H1', 'H2', 'H3', 'H4', 'BLOCKQUOTE'].includes(tag)) {
+          const align = (node.style && node.style.textAlign) || node.getAttribute('align');
+          if (align && ['center', 'right', 'left', 'justify'].includes(align.toLowerCase())) {
+            el.style.textAlign = align.toLowerCase();
+          }
+        }
+
+        // Сохраняем только цвет текста (игнорируя background / background-color)
+        const textColor = (node.style && node.style.color) || node.getAttribute('color');
+        if (textColor) {
+          el.style.color = textColor;
+        }
+
+        // Сохраняем безопасные ссылки
+        if (tag === 'A') {
+          const href = node.getAttribute('href');
+          if (href && /^https?:\/\//i.test(href.trim())) {
+            el.href = href.trim();
+            el.target = '_blank';
+          } else {
+            return frag;
+          }
+        }
+
+        el.appendChild(frag);
+        return el;
+      }
+
+      const container = document.createElement('div');
+      for (const child of Array.from(doc.body.childNodes)) {
+        const cleaned = cleanNode(child);
+        if (cleaned) container.appendChild(cleaned);
+      }
+      return container.innerHTML;
+    }
+
+    // Вставка в основной текст: картинки сжимаем, HTML-виджеты превращаем в плеер, форматирование чистим от фонов
     storyEl.addEventListener('paste', e => {
       const cd = e.clipboardData || window.clipboardData;
       const items = cd ? cd.items : [];
@@ -1102,6 +1175,19 @@
           insertYandexMusicEmbed(ym);
           return;
         }
+      }
+
+      const html = cd ? cd.getData('text/html') : '';
+      if (html) {
+        const cleanHtml = sanitizePastedHtml(html);
+        if (cleanHtml.trim()) {
+          document.execCommand('insertHTML', false, cleanHtml);
+          updatePublishState();
+          return;
+        }
+      }
+
+      if (text) {
         document.execCommand('insertText', false, text);
         updatePublishState();
       }
