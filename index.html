@@ -273,14 +273,17 @@
       fileInput.value = '';
     });
 
-    storyEl.addEventListener('paste', e => {
-      const cd = e.clipboardData || window.clipboardData;
-      const items = cd ? cd.items : [];
-      for (const item of items) {
-        if (item.kind === 'file' && item.type.indexOf('image') === 0) {
+    storyEl.addEventListener('keydown', e => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        const sel = window.getSelection();
+        const node = sel?.anchorNode;
+        const el = node?.nodeType === 3 ? node.parentElement : node;
+        const block = el?.closest('blockquote, h3');
+
+        if (block && storyEl.contains(block)) {
           e.preventDefault();
-          compressAndInsertImage(item.getAsFile());
-          return;
+          document.execCommand('insertParagraph', false, null);
+          document.execCommand('formatBlock', false, 'P');
         }
       }
     });
