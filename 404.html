@@ -36,8 +36,9 @@
       white-space: nowrap;
       flex-shrink: 0;
     }
-    .publish-btn:hover { background: #222; color: #fff; }
-    .publish-btn:disabled { opacity: 0.5; cursor: wait; }
+    .publish-btn:hover:not(:disabled) { background: #222; color: #fff; }
+    .publish-btn:disabled { opacity: 0.35; cursor: default; }
+    .publish-btn.is-saving { opacity: 0.5; cursor: wait; }
     .editable { outline: none; width: 100%; box-sizing: border-box; word-wrap: break-word; }
     .editable:empty:before {
       content: attr(data-placeholder);
@@ -173,6 +174,56 @@
       min-height: 28px;
     }
     .tool-btn:hover { border-color: #222; color: #222; }
+
+    /* Палитра цветов текста */
+    .color-wrap {
+      position: relative;
+      display: inline-flex;
+    }
+    .color-btn-inner {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      line-height: 1;
+      font-weight: 700;
+      font-size: 13px;
+    }
+    .color-bar {
+      width: 13px;
+      height: 2.5px;
+      background: #222;
+      margin-top: 2px;
+      border-radius: 1px;
+    }
+    .color-popover {
+      display: none;
+      position: absolute;
+      top: calc(100% + 6px);
+      left: 0;
+      z-index: 95;
+      background: #fff;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 7px 8px;
+      gap: 6px;
+      align-items: center;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+    }
+    .color-popover.open {
+      display: flex;
+    }
+    .color-swatch {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      border: 1px solid rgba(0, 0, 0, 0.15);
+      cursor: pointer;
+      padding: 0;
+      transition: transform 0.12s ease;
+    }
+    .color-swatch:hover {
+      transform: scale(1.18);
+    }
 
     #story {
       font-family: Georgia, "Times New Roman", Times, serif;
@@ -316,6 +367,24 @@
             <button class="tool-btn" type="button" data-cmd="strikeThrough" title="Зачёркнутый">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4H9a3 3 0 0 0-2.83 4"/><path d="M14 12a4 4 0 0 1 0 8H6"/><line x1="4" y1="12" x2="20" y2="12"/></svg>
             </button>
+            <div class="color-wrap" id="colorWrap">
+              <button class="tool-btn" type="button" id="colorBtn" title="Цвет текста">
+                <span class="color-btn-inner">
+                  <span>A</span>
+                  <span class="color-bar" id="colorBar"></span>
+                </span>
+              </button>
+              <div class="color-popover" id="colorPopover">
+                <button type="button" class="color-swatch" data-color="#222222" style="background:#222222;" title="Чёрный (по умолчанию)"></button>
+                <button type="button" class="color-swatch" data-color="#888888" style="background:#888888;" title="Серый"></button>
+                <button type="button" class="color-swatch" data-color="#d93025" style="background:#d93025;" title="Красный"></button>
+                <button type="button" class="color-swatch" data-color="#e37400" style="background:#e37400;" title="Оранжевый"></button>
+                <button type="button" class="color-swatch" data-color="#d4a017" style="background:#d4a017;" title="Жёлтый"></button>
+                <button type="button" class="color-swatch" data-color="#1e8e3e" style="background:#1e8e3e;" title="Зелёный"></button>
+                <button type="button" class="color-swatch" data-color="#1a73e8" style="background:#1a73e8;" title="Синий"></button>
+                <button type="button" class="color-swatch" data-color="#9334e6" style="background:#9334e6;" title="Пурпурный"></button>
+              </div>
+            </div>
             <button class="tool-btn" type="button" data-cmd="formatBlock" data-arg="H3" title="Подзаголовок">H</button>
             <button class="tool-btn" type="button" data-cmd="formatBlock" data-arg="BLOCKQUOTE" title="Цитата">”</button>
             <button class="tool-btn" type="button" data-cmd="insertUnorderedList" title="Список">
@@ -333,7 +402,7 @@
             <button id="photoBtn" class="tool-btn" type="button">📷 Фото</button>
             <input type="file" id="fileInput" accept="image/*" style="display:none">
           </div>
-          <button id="actionBtn" class="publish-btn" type="button">PUBLISH</button>
+          <button id="actionBtn" class="publish-btn" type="button" disabled>PUBLISH</button>
         </div>
       </div>
     </div>
@@ -391,6 +460,10 @@
     const linkPopover = document.getElementById('linkPopover');
     const linkUrlInput = document.getElementById('linkUrlInput');
     const closeLinkPopover = document.getElementById('closeLinkPopover');
+    const colorWrap = document.getElementById('colorWrap');
+    const colorBtn = document.getElementById('colorBtn');
+    const colorBar = document.getElementById('colorBar');
+    const colorPopover = document.getElementById('colorPopover');
     const fileInput = document.getElementById('fileInput');
     const toolbar = document.getElementById('toolbar');
     const statusEl = document.getElementById('status');
@@ -406,6 +479,39 @@
     const pathSlug = window.location.pathname.replace(/^\/+|\/+$/g, '');
     let currentSlug = pathSlug;
     let isViewMode = false;
+
+    let initialSnapshot = { title: '', story: '', meta: '' };
+
+    function getCurrentSnapshot() {
+      return {
+        title: titleEl.innerHTML,
+        story: storyEl.innerHTML,
+        meta: metaInfoEl.innerText.trim()
+      };
+    }
+
+    function captureInitialSnapshot() {
+      initialSnapshot = getCurrentSnapshot();
+      updatePublishState();
+    }
+
+    function hasUnsavedChanges() {
+      const cur = getCurrentSnapshot();
+      if (cur.title !== initialSnapshot.title) return true;
+      if (cur.story !== initialSnapshot.story) return true;
+      if (currentUser && isAdmin(currentUser) && cur.meta !== initialSnapshot.meta) return true;
+      return false;
+    }
+
+    function updatePublishState() {
+      if (isViewMode) {
+        actionBtn.disabled = false;
+        return;
+      }
+      actionBtn.disabled = !hasUnsavedChanges();
+    }
+
+    captureInitialSnapshot();
 
     function updateFixedHeader() {
       if (!editorHeader.classList.contains('is-editing')) {
@@ -442,7 +548,11 @@
       const canEdit = titleEl.isContentEditable;
       titleSideLabel.classList.toggle('visible', hasText && canEdit);
     }
-    titleEl.addEventListener('input', updateTitleSideLabel);
+    titleEl.addEventListener('input', () => {
+      updateTitleSideLabel();
+      updatePublishState();
+    });
+    metaInfoEl.addEventListener('input', updatePublishState);
 
     function renderMeta(login, timestamp) {
       const parts = [];
@@ -479,9 +589,38 @@
       sel.addRange(range);
     }
 
+    // Палитра цветов текста
+    colorBtn.addEventListener('mousedown', e => e.preventDefault());
+    colorBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      colorPopover.classList.toggle('open');
+    });
+
+    document.querySelectorAll('.color-swatch').forEach(swatch => {
+      swatch.addEventListener('mousedown', e => e.preventDefault());
+      swatch.addEventListener('click', e => {
+        e.stopPropagation();
+        const color = swatch.dataset.color;
+        storyEl.focus();
+        document.execCommand('styleWithCSS', false, true);
+        document.execCommand('foreColor', false, color);
+        document.execCommand('styleWithCSS', false, false);
+        colorBar.style.background = color;
+        colorPopover.classList.remove('open');
+        updatePublishState();
+      });
+    });
+
+    document.addEventListener('click', e => {
+      if (!colorWrap.contains(e.target)) {
+        colorPopover.classList.remove('open');
+      }
+    });
+
     document.querySelectorAll('.tool-btn[data-cmd]').forEach(btn => {
       btn.addEventListener('mousedown', e => e.preventDefault());
       btn.addEventListener('click', () => {
+        colorPopover.classList.remove('open');
         storyEl.focus();
         const cmd = btn.dataset.cmd;
         const arg = btn.dataset.arg || null;
@@ -492,12 +631,14 @@
           const el = node?.nodeType === 3 ? node.parentElement : node;
           if (el?.closest(arg.toLowerCase())) {
             document.execCommand('formatBlock', false, 'P');
+            updatePublishState();
             return;
           }
         }
 
         if ((cmd === 'justifyCenter' || cmd === 'justifyRight') && document.queryCommandState(cmd)) {
           document.execCommand('justifyLeft', false, null);
+          updatePublishState();
           return;
         }
 
@@ -513,10 +654,12 @@
               placeCaretAtEnd(li);
             }
           }
+          updatePublishState();
           return;
         }
 
         document.execCommand(cmd, false, arg);
+        updatePublishState();
       });
     });
 
@@ -528,6 +671,7 @@
 
     linkBtn.addEventListener('mousedown', e => e.preventDefault());
     linkBtn.addEventListener('click', () => {
+      colorPopover.classList.remove('open');
       const sel = window.getSelection();
       if (!sel || !sel.rangeCount) return;
 
@@ -541,6 +685,7 @@
         }
         document.execCommand('unlink', false, null);
         hideLinkPopover();
+        updatePublishState();
         return;
       }
 
@@ -583,6 +728,7 @@
         if (newAnchor) newAnchor.target = '_blank';
 
         hideLinkPopover();
+        updatePublishState();
       } else if (e.key === 'Escape') {
         hideLinkPopover();
       }
@@ -590,7 +736,10 @@
 
     closeLinkPopover.addEventListener('click', hideLinkPopover);
 
-    photoBtn.addEventListener('click', () => fileInput.click());
+    photoBtn.addEventListener('click', () => {
+      colorPopover.classList.remove('open');
+      fileInput.click();
+    });
     fileInput.addEventListener('change', e => {
       for (const f of e.target.files || []) compressAndInsertImage(f);
       fileInput.value = '';
@@ -625,6 +774,7 @@
         sel.removeAllRanges();
         sel.addRange(range);
       }
+      updatePublishState();
     }
 
     storyEl.addEventListener('keydown', e => {
@@ -648,34 +798,36 @@
     });
 
     storyEl.addEventListener('input', () => {
-      if (!resetAfterBlockBreak) return;
-      resetAfterBlockBreak = false;
+      if (resetAfterBlockBreak) {
+        resetAfterBlockBreak = false;
 
-      const sel = window.getSelection();
-      const node = sel?.anchorNode;
-      const el = node?.nodeType === 3 ? node.parentElement : node;
-      const block = el?.closest('blockquote, h3');
+        const sel = window.getSelection();
+        const node = sel?.anchorNode;
+        const el = node?.nodeType === 3 ? node.parentElement : node;
+        const block = el?.closest('blockquote, h3');
 
-      if (block && storyEl.contains(block)) {
-        document.execCommand('formatBlock', false, 'P');
+        if (block && storyEl.contains(block)) {
+          document.execCommand('formatBlock', false, 'P');
+        }
+        if (document.queryCommandState('bold')) {
+          document.execCommand('bold', false, null);
+        }
+        const curNode = window.getSelection()?.anchorNode;
+        const curEl = curNode?.nodeType === 3 ? curNode.parentElement : curNode;
+        const bTag = curEl?.closest('b, strong');
+        if (bTag && storyEl.contains(bTag) && bTag.textContent.trim() === '') {
+          const p = document.createElement('p');
+          p.innerHTML = '<br>';
+          bTag.replaceWith(p);
+          const range = document.createRange();
+          range.setStart(p, 0);
+          range.collapse(true);
+          const s = window.getSelection();
+          s.removeAllRanges();
+          s.addRange(range);
+        }
       }
-      if (document.queryCommandState('bold')) {
-        document.execCommand('bold', false, null);
-      }
-      const curNode = window.getSelection()?.anchorNode;
-      const curEl = curNode?.nodeType === 3 ? curNode.parentElement : curNode;
-      const bTag = curEl?.closest('b, strong');
-      if (bTag && storyEl.contains(bTag) && bTag.textContent.trim() === '') {
-        const p = document.createElement('p');
-        p.innerHTML = '<br>';
-        bTag.replaceWith(p);
-        const range = document.createRange();
-        range.setStart(p, 0);
-        range.collapse(true);
-        const s = window.getSelection();
-        s.removeAllRanges();
-        s.addRange(range);
-      }
+      updatePublishState();
     });
 
     // Вставка в заголовок строго чистым текстом в одну строку
@@ -684,6 +836,7 @@
       const text = (e.clipboardData || window.clipboardData).getData('text/plain').replace(/\r?\n/g, ' ');
       document.execCommand('insertText', false, text);
       updateTitleSideLabel();
+      updatePublishState();
     });
 
     // Вставка в основной текст: картинки сжимаем, любой текст вставляем без чужого фона и шрифтов
@@ -702,6 +855,7 @@
       const text = cd ? cd.getData('text/plain') : '';
       if (text) {
         document.execCommand('insertText', false, text);
+        updatePublishState();
       }
     });
 
@@ -729,6 +883,7 @@
           const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
           storyEl.focus();
           document.execCommand('insertHTML', false, `<img src="${dataUrl}"><br>`);
+          updatePublishState();
         };
         img.src = event.target.result;
       };
@@ -905,6 +1060,10 @@
         }
 
         updateEditVisibility();
+        if (!isViewMode) {
+          metaInfoEl.contentEditable = Boolean(user && isAdmin(user));
+          updatePublishState();
+        }
 
         if (pathSlug === 'blog') {
           loadBlogPage();
@@ -920,10 +1079,12 @@
         actionBtn.style.display = 'inline-block';
         toolbarRow.classList.remove('hidden', 'view-mode');
         metaInfoEl.classList.remove('no-toolbar', 'can-edit-btn');
+        updatePublishState();
         return;
       }
       const canEdit = currentUser && (currentUser.uid === currentArticleOwner || isAdmin(currentUser));
       actionBtn.style.display = canEdit ? 'inline-block' : 'none';
+      actionBtn.disabled = false;
       toolbarRow.classList.add('view-mode');
       toolbarRow.classList.toggle('hidden', !canEdit);
       metaInfoEl.classList.toggle('no-toolbar', !canEdit);
@@ -1078,10 +1239,12 @@
           setStatus('');
           actionBtn.textContent = 'EDIT';
           isViewMode = true;
+          captureInitialSnapshot();
           updateEditVisibility();
         } else {
           setStatus('Страница не найдена. Можете создать её здесь!');
           setEditable(true);
+          captureInitialSnapshot();
         }
       } catch (e) {
         setStatus('Ошибка загрузки: ' + e.message, 'error');
@@ -1101,6 +1264,7 @@
       editorHeader.classList.toggle('is-editing', canEdit);
       updateFixedHeader();
       updateTitleSideLabel();
+      updatePublishState();
     }
 
     function slugify(text) {
@@ -1123,8 +1287,11 @@
         isViewMode = false;
         setEditable(true);
         actionBtn.textContent = 'PUBLISH';
+        captureInitialSnapshot();
         return;
       }
+
+      if (!hasUnsavedChanges()) return;
 
       const titleText = titleEl.innerText.trim();
       if (!titleText) {
@@ -1133,6 +1300,7 @@
       }
 
       actionBtn.disabled = true;
+      actionBtn.classList.add('is-saving');
       setStatus('Публикация...');
 
       try {
@@ -1177,6 +1345,7 @@
         window.history.pushState({}, '', '/' + targetSlug);
         document.title = titleText;
         isViewMode = true;
+        captureInitialSnapshot();
         setEditable(false);
         actionBtn.textContent = 'EDIT';
         updateEditVisibility();
@@ -1185,7 +1354,8 @@
       } catch (e) {
         setStatus('Ошибка публикации: ' + e.message, 'error');
       } finally {
-        actionBtn.disabled = false;
+        actionBtn.classList.remove('is-saving');
+        updatePublishState();
       }
     });
   </script>
