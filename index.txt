@@ -47,6 +47,39 @@
       display: block;
     }
 
+    /* Экран загрузки страницы при обращении к базе */
+    .page-loader {
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      background: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      transition: opacity 0.2s ease;
+    }
+    .page-loader.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+    .loader-spinner {
+      width: 34px;
+      height: 34px;
+      border: 3px solid #eaeaea;
+      border-top-color: #222;
+      border-radius: 50%;
+      animation: tgSpin 0.75s linear infinite;
+    }
+    .loader-text {
+      font-size: 13px;
+      color: #888;
+    }
+    @keyframes tgSpin {
+      to { transform: rotate(360deg); }
+    }
+
     /* Шапка редактора */
     .editor-header {
       background: #fff;
@@ -295,9 +328,9 @@
     .status { font-size: 13px; color: #888; margin-top: 10px; font-weight: 500; min-height: 18px; }
     .status.error { color: #d9534f; }
     .status.ok { color: #28a745; }
-    .auth-bar { margin-top: 40px; font-size: 12px; color: #aaa; }
-    .auth-bar button { background: none; border: 0; padding: 0; font: inherit; color: #aaa; cursor: pointer; text-decoration: underline; }
-    .auth-bar button:hover { color: #222; }
+    .auth-bar { margin-top: 40px; font-size: 12px; color: #aaa; display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
+    .auth-bar button, .auth-bar a { background: none; border: 0; padding: 0; font: inherit; color: #aaa; cursor: pointer; text-decoration: underline; }
+    .auth-bar button:hover, .auth-bar a:hover { color: #222; }
 
     /* Список /blog */
     .blog-search {
@@ -314,7 +347,7 @@
     .post-info a:hover { color: #0066cc; }
     .post-meta { font-size: 12px; color: #888; margin-top: 4px; }
     .post-actions { display: flex; gap: 6px; flex-shrink: 0; }
-.mini-btn {
+ .mini-btn {
       background: #fff; border: 1px solid #ddd; border-radius: 15px;
       padding: 5px 11px; font-size: 12px; cursor: pointer; color: #333;
       white-space: nowrap;
@@ -380,6 +413,11 @@
   </style>
 </head>
 <body>
+
+  <div id="pageLoader" class="page-loader" style="display:none;">
+    <div class="loader-spinner"></div>
+    <div class="loader-text">Загрузка...</div>
+  </div>
 
   <div class="container">
     <div id="headerSpacer" style="display:none;"></div>
@@ -453,6 +491,7 @@
 
     <div class="auth-bar">
       <button id="authBtn" type="button">Войти</button>
+      <a href="/start" id="faqLink">FAQ</a>
     </div>
   </div>
 
@@ -481,13 +520,14 @@
       <button id="closeModalBtn" class="modal-close" type="button">Закрыть</button>
     </div>
   </div>
-<script src="/firebase-app-compat.js"></script>
+   <script src="/firebase-app-compat.js"></script>
   <script src="/firebase-auth-compat.js"></script>
   <script src="/firebase-firestore-compat.js"></script>
   <script>
     const ADMIN_LOGIN = 'lordman';
     const DEFAULT_RAINBOW = 'linear-gradient(90deg, #ff3b30, #ff9500, #ffcc00, #34c759, #007aff, #af52de)';
 
+    const pageLoader = document.getElementById('pageLoader');
     const editorHeader = document.getElementById('editorHeader');
     const headerSpacer = document.getElementById('headerSpacer');
     const toolbarRow = document.getElementById('toolbarRow');
@@ -514,12 +554,29 @@
     const loginInput = document.getElementById('loginInput');
     const passInput = document.getElementById('passInput');
 
+    function showLoader() {
+      if (pageLoader) {
+        pageLoader.style.display = 'flex';
+        pageLoader.classList.remove('hidden');
+      }
+    }
+    function hideLoader() {
+      if (pageLoader && pageLoader.style.display !== 'none') {
+        pageLoader.classList.add('hidden');
+        setTimeout(() => { pageLoader.style.display = 'none'; }, 200);
+      }
+    }
+
     let currentUser = null;
     let currentArticleOwner = null;
     let savedLinkRange = null;
     const pathSlug = window.location.pathname.replace(/^\/+|\/+$/g, '');
     let currentSlug = pathSlug;
     let isViewMode = false;
+
+    if (pathSlug) {
+      showLoader();
+    }
 
     let initialSnapshot = { title: '', story: '', meta: '' };
 
@@ -663,8 +720,7 @@
         colorPopover.classList.remove('open');
       }
     });
-
-    document.querySelectorAll('.tool-btn[data-cmd]').forEach(btn => {
+document.querySelectorAll('.tool-btn[data-cmd]').forEach(btn => {
       btn.addEventListener('mousedown', e => e.preventDefault());
       btn.addEventListener('click', () => {
         colorPopover.classList.remove('open');
@@ -678,13 +734,15 @@
           const node = sel.anchorNode;
           const el = node?.nodeType === 3 ? node.parentElement : node;
 
-          // 1. Если строка уже заголовок/цитата — превращаем обратно в обычный абзац <p>
+          // 1. Если строка уже заголовок/цитата — превращаем обратно в обычный абзац <p> через историю Undo
           const existingBlock = el?.closest(arg.toLowerCase());
           if (existingBlock && storyEl.contains(existingBlock)) {
-            const p = document.createElement('p');
-            p.innerHTML = existingBlock.innerHTML || '<br>';
-            existingBlock.replaceWith(p);
-            placeCaretAtEnd(p);
+            const range = document.createRange();
+            range.selectNode(existingBlock);
+            sel.removeAllRanges();
+            sel.addRange(range);
+            const inner = existingBlock.innerHTML || '<br>';
+            document.execCommand('insertHTML', false, `<p>${inner}</p>`);
             updatePublishState();
             return;
           }
@@ -694,38 +752,40 @@
           if (lineBlock === storyEl) lineBlock = null;
 
           if (lineBlock && storyEl.contains(lineBlock)) {
-            const newEl = document.createElement(arg.toLowerCase());
-            newEl.innerHTML = lineBlock.innerHTML || '<br>';
-            lineBlock.replaceWith(newEl);
-            placeCaretAtEnd(newEl);
+            const range = document.createRange();
+            range.selectNode(lineBlock);
+            sel.removeAllRanges();
+            sel.addRange(range);
+            const tag = arg.toLowerCase();
+            const inner = lineBlock.innerHTML || '<br>';
+            document.execCommand('insertHTML', false, `<${tag}>${inner}</${tag}>`);
             updatePublishState();
             return;
           }
 
-          // 3. Если текст лежит прямо в корне #story без <p>/<div> — оборачиваем всю строку
+          // 3. Если текст лежит прямо в корне #story без <p>/<div> — выделяем строку и оборачиваем через execCommand
           if (node && storyEl.contains(node)) {
             let startNode = node;
             while (startNode.previousSibling && startNode.previousSibling.nodeName !== 'BR' && !/^(P|DIV|H3|BLOCKQUOTE|UL)$/i.test(startNode.previousSibling.nodeName)) {
               startNode = startNode.previousSibling;
             }
-            const nodesToWrap = [];
-            let cur = startNode;
-            while (cur && cur.nodeName !== 'BR' && !/^(P|DIV|H3|BLOCKQUOTE|UL)$/i.test(cur.nodeName)) {
-              const next = cur.nextSibling;
-              nodesToWrap.push(cur);
-              cur = next;
+            let endNode = startNode;
+            while (endNode.nextSibling && endNode.nextSibling.nodeName !== 'BR' && !/^(P|DIV|H3|BLOCKQUOTE|UL)$/i.test(endNode.nextSibling.nodeName)) {
+              endNode = endNode.nextSibling;
             }
-            if (cur && cur.nodeName === 'BR') cur.remove();
 
-            const newEl = document.createElement(arg.toLowerCase());
-            if (nodesToWrap.length > 0) {
-              storyEl.insertBefore(newEl, nodesToWrap.at(0));
-              nodesToWrap.forEach(n => newEl.appendChild(n));
-            } else {
-              newEl.innerHTML = '<br>';
-              storyEl.appendChild(newEl);
-            }
-            placeCaretAtEnd(newEl);
+            const range = document.createRange();
+            range.setStartBefore(startNode);
+            range.setEndAfter(endNode);
+            sel.removeAllRanges();
+            sel.addRange(range);
+
+            const frag = range.cloneContents();
+            const temp = document.createElement('div');
+            temp.appendChild(frag);
+            const tag = arg.toLowerCase();
+            const inner = temp.innerHTML || '<br>';
+            document.execCommand('insertHTML', false, `<${tag}>${inner}</${tag}>`);
             updatePublishState();
             return;
           }
@@ -803,7 +863,8 @@
       linkPopover.style.left = Math.max(10, Math.min(window.innerWidth - popWidth - 10, wordCenter - (popWidth / 2))) + 'px';
       linkUrlInput.focus();
     });
-     linkUrlInput.addEventListener('keydown', e => {
+
+    linkUrlInput.addEventListener('keydown', e => {
       if (e.key === 'Enter') {
         e.preventDefault();
         let url = linkUrlInput.value.trim();
@@ -878,7 +939,7 @@
       if (!iframeMatch) return null;
 
       const src = iframeMatch.at(1);
-             const allowedHosts = /^(?:music\.yandex\.(?:ru|by|kz|uz|com)|(?:[\w-]+\.)?vk\.com|(?:[\w-]+\.)?vk\.ru|(?:[\w-]+\.)?vkvideo\.ru|(?:[\w-]+\.)?rutube\.ru|(?:[\w-]+\.)?dzen\.ru|(?:[\w-]+\.)?zvuk\.com|(?:[\w-]+\.)?yandex\.ru|(?:[\w-]+\.)?youtube\.com|(?:[\w-]+\.)?youtube-nocookie\.com)$/i;
+      const allowedHosts = /^(?:music\.yandex\.(?:ru|by|kz|uz|com)|(?:[\w-]+\.)?vk\.com|(?:[\w-]+\.)?vk\.ru|(?:[\w-]+\.)?vkvideo\.ru|(?:[\w-]+\.)?rutube\.ru|(?:[\w-]+\.)?dzen\.ru|(?:[\w-]+\.)?zvuk\.com|(?:[\w-]+\.)?yandex\.ru|(?:[\w-]+\.)?youtube\.com|(?:[\w-]+\.)?youtube-nocookie\.com)$/i;
       try {
         const urlObj = new URL(src);
         if (!allowedHosts.test(urlObj.hostname)) return null;
@@ -918,7 +979,7 @@
       }
 
       const newRange = document.createRange();
-      newRange.setStart(afterP, 0);
+ newRange.setStart(afterP, 0);
       newRange.collapse(true);
       const sel = window.getSelection();
       sel.removeAllRanges();
@@ -1018,7 +1079,7 @@
       updatePublishState();
     });
 
-    // Вставка в основной текст: картинки сжимаем, HTML/ссылки Яндекс Музыки превращаем в плеер, текст вставляем чистым
+    // Вставка в основной текст: картинки сжимаем, HTML-виджеты превращаем в плеер, текст вставляем чистым
     storyEl.addEventListener('paste', e => {
       const cd = e.clipboardData || window.clipboardData;
       const items = cd ? cd.items : [];
@@ -1065,7 +1126,7 @@
           ctx.drawImage(img, 0, 0, width, height);
 
           const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
- storyEl.focus();
+          storyEl.focus();
           document.execCommand('insertHTML', false, `<img src="${dataUrl}"><br>`);
           updatePublishState();
         };
@@ -1088,7 +1149,15 @@
       db = firebase.firestore();
       auth = firebase.auth();
     } else {
+      hideLoader();
       setStatus('Ошибка: файлы Firebase не загрузились.', 'error');
+      const reloadBtn = document.createElement('button');
+      reloadBtn.type = 'button';
+      reloadBtn.textContent = 'Обновить';
+      reloadBtn.className = 'mini-btn';
+      reloadBtn.style.marginTop = '8px';
+      reloadBtn.addEventListener('click', () => window.location.reload());
+      statusEl.after(reloadBtn);
     }
 
     const modalTitle = document.getElementById('modalTitle');
@@ -1194,7 +1263,7 @@
           modalMsg.textContent = 'Слишком много неудачных попыток. Повторите попытку позже.';
           return;
         } else if (lockUntil > 0) {
-          localStorage.removeItem('tgtype_login_lock');
+ localStorage.removeItem('tgtype_login_lock');
           localStorage.removeItem('tgtype_login_fails');
         }
 
@@ -1231,7 +1300,10 @@
       }
     });
 
-    let initialLoaded = false;
+    if (pathSlug && pathSlug !== 'blog' && db) {
+      loadArticle(pathSlug);
+    }
+
     if (auth) {
       auth.onAuthStateChanged(user => {
         currentUser = user;
@@ -1251,12 +1323,10 @@
 
         if (pathSlug === 'blog') {
           loadBlogPage();
-        } else if (!initialLoaded) {
-          initialLoaded = true;
-          if (pathSlug) loadArticle(pathSlug);
         }
       });
     }
+
     function updateEditVisibility() {
       if (!isViewMode) {
         actionBtn.style.display = 'inline-block';
@@ -1288,6 +1358,7 @@
       document.querySelector('.posts-list')?.remove();
 
       if (!currentUser) {
+        hideLoader();
         titleEl.textContent = 'Мои публикации';
         document.title = 'Мои публикации — tgtype';
         setStatus('Войдите в аккаунт, чтобы увидеть свои публикации.', 'error');
@@ -1397,6 +1468,8 @@
         renderList();
       } catch (e) {
         setStatus('Ошибка загрузки списка: ' + e.message, 'error');
+      } finally {
+        hideLoader();
       }
     }
 
@@ -1425,25 +1498,35 @@
           captureInitialSnapshot();
           updateEditVisibility();
         } else {
-          setStatus('Страница не найдена. Можете создать её здесь!');
-          setEditable(true);
-          captureInitialSnapshot();
+          metaInfoEl.style.display = 'none';
+          toolbarRow.style.display = 'none';
+          storyEl.style.display = 'none';
+          actionBtn.style.display = 'none';
+          titleEl.contentEditable = false;
+          editorHeader.classList.remove('is-editing');
+          updateFixedHeader();
+          updateTitleSideLabel();
+          titleEl.textContent = 'Страница не найдена';
+          document.title = 'Страница не найдена — tgtype';
+          setStatus('Этой страницы не существует.', 'error');
         }
       } catch (e) {
         setStatus('Ошибка загрузки: ' + e.message, 'error');
+      } finally {
+        hideLoader();
       }
     }
 
     function setEditable(canEdit) {
-      titleEl.contentEditable = canEdit;
-      storyEl.contentEditable = canEdit;
+      titleEl.contentEditable = Boolean(canEdit);
+      storyEl.contentEditable = Boolean(canEdit);
       toolbar.style.display = canEdit ? 'flex' : 'none';
       toolbarRow.classList.toggle('view-mode', !canEdit);
       if (canEdit) {
         toolbarRow.classList.remove('hidden');
         metaInfoEl.classList.remove('no-toolbar', 'can-edit-btn');
       }
-      metaInfoEl.contentEditable = (canEdit && currentUser && isAdmin(currentUser));
+      metaInfoEl.contentEditable = Boolean(canEdit && currentUser && isAdmin(currentUser));
       editorHeader.classList.toggle('is-editing', canEdit);
       updateFixedHeader();
       updateTitleSideLabel();
@@ -1521,7 +1604,7 @@
         if (isAdmin(currentUser)) {
           metaInfoEl.textContent = payload.customMeta;
         } else {
- renderMeta(payload.ownerLogin || getLoginName(currentUser), now);
+          renderMeta(payload.ownerLogin || getLoginName(currentUser), now);
         }
 
         currentSlug = targetSlug;
@@ -1532,7 +1615,7 @@
         setEditable(false);
         actionBtn.textContent = 'EDIT';
         updateEditVisibility();
-         setStatus('Опубликовано!', 'ok');
+        setStatus('Опубликовано!', 'ok');
       } catch (e) {
         setStatus('Ошибка публикации: ' + e.message, 'error');
       } finally {
@@ -1558,7 +1641,21 @@
 
 
 
+
+
+
+
+
+
   
+
+
+
+
+
+
+
+
 
 
 
