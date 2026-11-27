@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>tgtype</title>
+  <link rel="preconnect" href="https://googleapis.com" crossorigin>
+  
   <style>
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -58,7 +60,7 @@
       align-items: center;
       justify-content: center;
       gap: 14px;
-      transition: opacity 0.2s ease;
+      transition: opacity 0.15s ease;
     }
     .page-loader.hidden {
       opacity: 0;
@@ -346,8 +348,8 @@
     .post-info a { font-family: Georgia, serif; font-size: 20px; font-weight: 700; color: #222; text-decoration: none; }
     .post-info a:hover { color: #0066cc; }
     .post-meta { font-size: 12px; color: #888; margin-top: 4px; }
-    .post-actions { display: flex; gap: 6px; flex-shrink: 0; }
- .mini-btn {
+.post-actions { display: flex; gap: 6px; flex-shrink: 0; }
+    .mini-btn {
       background: #fff; border: 1px solid #ddd; border-radius: 15px;
       padding: 5px 11px; font-size: 12px; cursor: pointer; color: #333;
       white-space: nowrap;
@@ -520,7 +522,7 @@
       <button id="closeModalBtn" class="modal-close" type="button">Закрыть</button>
     </div>
   </div>
-   <script src="/firebase-app-compat.js"></script>
+<script src="/firebase-app-compat.js"></script>
   <script src="/firebase-auth-compat.js"></script>
   <script src="/firebase-firestore-compat.js"></script>
   <script>
@@ -563,7 +565,7 @@
     function hideLoader() {
       if (pageLoader && pageLoader.style.display !== 'none') {
         pageLoader.classList.add('hidden');
-        setTimeout(() => { pageLoader.style.display = 'none'; }, 200);
+        setTimeout(() => { pageLoader.style.display = 'none'; }, 150);
       }
     }
 
@@ -1263,7 +1265,7 @@ document.querySelectorAll('.tool-btn[data-cmd]').forEach(btn => {
           modalMsg.textContent = 'Слишком много неудачных попыток. Повторите попытку позже.';
           return;
         } else if (lockUntil > 0) {
- localStorage.removeItem('tgtype_login_lock');
+localStorage.removeItem('tgtype_login_lock');
           localStorage.removeItem('tgtype_login_fails');
         }
 
@@ -1300,7 +1302,7 @@ document.querySelectorAll('.tool-btn[data-cmd]').forEach(btn => {
       }
     });
 
-    if (pathSlug && pathSlug !== 'blog' && db) {
+    if (pathSlug && pathSlug !== 'blog') {
       loadArticle(pathSlug);
     }
 
@@ -1473,21 +1475,59 @@ document.querySelectorAll('.tool-btn[data-cmd]').forEach(btn => {
       }
     }
 
+    function parseFirestoreRestDoc(fields) {
+      if (!fields) return {};
+      const readVal = v => {
+        if (!v) return undefined;
+        if ('stringValue' in v) return v.stringValue;
+        if ('integerValue' in v) return Number(v.integerValue);
+        if ('doubleValue' in v) return Number(v.doubleValue);
+        if ('booleanValue' in v) return Boolean(v.booleanValue);
+        if ('arrayValue' in v) return (v.arrayValue.values || []).map(readVal);
+        return undefined;
+      };
+      const out = {};
+      for (const k of Object.keys(fields)) {
+        out[k] = readVal(fields[k]);
+      }
+      return out;
+    }
+
     async function loadArticle(slug) {
       setEditable(false);
       setStatus('Загрузка...');
       try {
-        const snap = await db.collection('articles').doc(slug).get();
-        if (snap.exists) {
-          const data = snap.data();
-          titleEl.innerHTML = data.title;
-          storyEl.innerHTML = data.story;
+        let exists = false;
+        let data = null;
+
+        try {
+          const restUrl = `https://googleapis.com{encodeURIComponent(slug)}`;
+          const res = await fetch(restUrl);
+          if (res.status === 200) {
+            const json = await res.json();
+            exists = true;
+            data = parseFirestoreRestDoc(json.fields);
+          } else if (res.status === 404) {
+            exists = false;
+          } else {
+            throw new Error('HTTP ' + res.status);
+          }
+        } catch (restErr) {
+          if (!db) throw restErr;
+          const snap = await db.collection('articles').doc(slug).get();
+          exists = snap.exists;
+          data = exists ? snap.data() : null;
+        }
+
+        if (exists && data) {
+          titleEl.innerHTML = data.title || '';
+          storyEl.innerHTML = data.story || '';
           currentArticleOwner = data.ownerUid || null;
           if (data.customMeta !== undefined) {
             metaInfoEl.textContent = data.customMeta;
           } else {
             const rawAuthor = Array.isArray(data.ownerLogin) ? data.ownerLogin.at(0) : (data.ownerLogin || '');
-            const authorDisplay = rawAuthor || (data.author ? data.author.replace(/<[^>]*>/g, '').trim() : '');
+const authorDisplay = rawAuthor || (data.author ? data.author.replace(/<[^>]*>/g, '').trim() : '');
             renderMeta(authorDisplay, data.updatedAt);
           }
 
@@ -1647,7 +1687,18 @@ document.querySelectorAll('.tool-btn[data-cmd]').forEach(btn => {
 
 
 
-  
+
+
+
+
+
+
+
+
+      
+
+
+
 
 
 
