@@ -333,8 +333,13 @@
 
       linkUrlInput.value = '';
       linkPopover.style.display = 'flex';
-      linkPopover.style.top = Math.max(10, window.scrollY + rect.top - 46) + 'px';
-      linkPopover.style.left = Math.max(10, Math.min(window.innerWidth - 270, window.scrollX + rect.left)) + 'px';
+
+      const popWidth = linkPopover.offsetWidth;
+      const popHeight = linkPopover.offsetHeight;
+      const wordCenter = window.scrollX + rect.left + (rect.width / 2);
+
+      linkPopover.style.top = Math.max(10, window.scrollY + rect.top - popHeight - 10) + 'px';
+      linkPopover.style.left = Math.max(10, Math.min(window.innerWidth - popWidth - 10, wordCenter - (popWidth / 2))) + 'px';
       linkUrlInput.focus();
     });
 
