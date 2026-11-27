@@ -263,11 +263,11 @@
     #story .tg-ymusic-embed iframe {
       display: block;
       width: 100%;
-      height: 180px;
+      height: 244px;
       border: 0;
     }
     #story .tg-ymusic-embed.is-album iframe {
-      height: 420px;
+      height: 450px;
     }
     .tg-ymusic-del {
       position: absolute;
@@ -314,7 +314,7 @@
     .post-info a:hover { color: #0066cc; }
     .post-meta { font-size: 12px; color: #888; margin-top: 4px; }
     .post-actions { display: flex; gap: 6px; flex-shrink: 0; }
- .mini-btn {
+.mini-btn {
       background: #fff; border: 1px solid #ddd; border-radius: 15px;
       padding: 5px 11px; font-size: 12px; cursor: pointer; color: #333;
       white-space: nowrap;
@@ -448,7 +448,7 @@
       </div>
     </div>
 
-    <div id="story" class="editable" contenteditable="true" data-placeholder="Your story... (можно вставлять фото и ссылки Яндекс Музыки через Ctrl+V)"></div>
+    <div id="story" class="editable" contenteditable="true" data-placeholder="Your story... (можно вставлять фото и HTML/ссылки Яндекс Музыки через Ctrl+V)"></div>
     <div id="status" class="status"></div>
 
     <div class="auth-bar">
@@ -481,7 +481,7 @@
       <button id="closeModalBtn" class="modal-close" type="button">Закрыть</button>
     </div>
   </div>
- <script src="/firebase-app-compat.js"></script>
+<script src="/firebase-app-compat.js"></script>
   <script src="/firebase-auth-compat.js"></script>
   <script src="/firebase-firestore-compat.js"></script>
   <script>
@@ -755,7 +755,7 @@
       linkPopover.style.left = Math.max(10, Math.min(window.innerWidth - popWidth - 10, wordCenter - (popWidth / 2))) + 'px';
       linkUrlInput.focus();
     });
- linkUrlInput.addEventListener('keydown', e => {
+     linkUrlInput.addEventListener('keydown', e => {
       if (e.key === 'Enter') {
         e.preventDefault();
         let url = linkUrlInput.value.trim();
@@ -823,30 +823,47 @@
       updatePublishState();
     }
 
-     // Встраивание плеера Яндекс Музыки
-    function parseYandexMusicUrl(text) {
+    // Встраивание плеера Яндекс Музыки (по HTML-коду iframe или по обычной ссылке)
+    function parseYandexMusicEmbed(text) {
       const trimmed = (text || '').trim();
+
+      // 1. Готовый HTML-код <iframe ... src="https://yandex.ru...">
+      const iframeMatch = trimmed.match(/<iframe\b[^>]*\bsrc=["'](https?:\/\/music\.yandex\.(?:ru|by|kz|uz|com)\/iframe\/[^"']+)["'][^>]*>/i);
+      if (iframeMatch) {
+        const src = iframeMatch.at(1);
+        return {
+          src: src,
+          isAlbum: /\/iframe\/album\/\d+\/?(?:$|\?)/i.test(src)
+        };
+      }
+
+      // 2. Обычная ссылка на трек в альбоме
       const trackWithAlbum = trimmed.match(/^https?:\/\/music\.yandex\.(?:ru|by|kz|uz|com)\/album\/(\d+)\/track\/(\d+)(?:[?/#].*)?$/i);
       if (trackWithAlbum) {
         return {
-          src: 'https://yandex.ru' + trackWithAlbum.at(2) + '/' + trackWithAlbum.at(1),
+          src: 'https://yandex.rualbum/' + trackWithAlbum.at(1) + '/track/' + trackWithAlbum.at(2),
           isAlbum: false
         };
       }
+
+      // 3. Обычная ссылка на трек
       const trackOnly = trimmed.match(/^https?:\/\/music\.yandex\.(?:ru|by|kz|uz|com)\/track\/(\d+)(?:[?/#].*)?$/i);
       if (trackOnly) {
         return {
-          src: 'https://yandex.ru' + trackOnly.at(1),
+          src: 'https://yandex.rutrack/' + trackOnly.at(1),
           isAlbum: false
         };
       }
+
+      // 4. Обычная ссылка на альбом
       const albumOnly = trimmed.match(/^https?:\/\/music\.yandex\.(?:ru|by|kz|uz|com)\/album\/(\d+)(?:[?/#].*)?$/i);
       if (albumOnly) {
         return {
-          src: 'https://yandex.ru' + albumOnly.at(1),
+          src: 'https://yandex.rualbum/' + albumOnly.at(1),
           isAlbum: true
         };
       }
+
       return null;
     }
 
@@ -854,7 +871,7 @@
       const wrap = document.createElement('div');
       wrap.className = 'tg-ymusic-embed' + (parsed.isAlbum ? ' is-album' : '');
       wrap.setAttribute('contenteditable', 'false');
-      wrap.innerHTML = `<iframe src="${parsed.src}" allow="clipboard-write"></iframe><button type="button" class="tg-ymusic-del" title="Удалить плеер">✕</button>`;
+      wrap.innerHTML = '<iframe src="' + parsed.src + '" allow="clipboard-write"></iframe><button type="button" class="tg-ymusic-del" title="Удалить плеер">✕</button>';
 
       const afterP = document.createElement('p');
       afterP.innerHTML = '<br>';
@@ -900,14 +917,14 @@
         const lineEl = node?.nodeType === 3 ? node.parentElement : node;
         const targetBlock = lineEl?.closest('p, div');
         if (targetBlock && targetBlock !== storyEl && storyEl.contains(targetBlock)) {
-          const ym = parseYandexMusicUrl(targetBlock.innerText);
+          const ym = parseYandexMusicEmbed(targetBlock.innerText);
           if (ym) {
             e.preventDefault();
             insertYandexMusicEmbed(ym, targetBlock);
             return;
           }
         } else if (node && node.nodeType === 3 && node.parentElement === storyEl) {
-          const ym = parseYandexMusicUrl(node.textContent);
+          const ym = parseYandexMusicEmbed(node.textContent);
           if (ym) {
             e.preventDefault();
             insertYandexMusicEmbed(ym, node);
@@ -975,7 +992,7 @@
       updatePublishState();
     });
 
-    // Вставка в основной текст: картинки сжимаем, ссылки Яндекс Музыки превращаем в плеер, текст вставляем чистым
+    // Вставка в основной текст: картинки сжимаем, HTML/ссылки Яндекс Музыки превращаем в плеер, текст вставляем чистым
     storyEl.addEventListener('paste', e => {
       const cd = e.clipboardData || window.clipboardData;
       const items = cd ? cd.items : [];
@@ -990,7 +1007,7 @@
       e.preventDefault();
       const text = cd ? cd.getData('text/plain') : '';
       if (text) {
-        const ym = parseYandexMusicUrl(text);
+        const ym = parseYandexMusicEmbed(text);
         if (ym) {
           insertYandexMusicEmbed(ym);
           return;
@@ -1022,7 +1039,7 @@
           ctx.drawImage(img, 0, 0, width, height);
 
           const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
-          storyEl.focus();
+ storyEl.focus();
           document.execCommand('insertHTML', false, `<img src="${dataUrl}"><br>`);
           updatePublishState();
         };
@@ -1040,7 +1057,7 @@
         projectId: "tgtype-a41aa",
         storageBucket: "tgtype-a41aa.firebasestorage.app",
         messagingSenderId: "967552866716",
-appId: "1:967552866716:web:2d3dff00a96e83e151d059"
+        appId: "1:967552866716:web:2d3dff00a96e83e151d059"
       });
       db = firebase.firestore();
       auth = firebase.auth();
@@ -1214,7 +1231,7 @@ appId: "1:967552866716:web:2d3dff00a96e83e151d059"
         }
       });
     }
-function updateEditVisibility() {
+    function updateEditVisibility() {
       if (!isViewMode) {
         actionBtn.style.display = 'inline-block';
         toolbarRow.classList.remove('hidden', 'view-mode');
@@ -1476,9 +1493,9 @@ function updateEditVisibility() {
         await db.collection('articles').doc(targetSlug).set(payload, { merge: true });
 
         if (isAdmin(currentUser)) {
-    metaInfoEl.textContent = payload.customMeta;
+          metaInfoEl.textContent = payload.customMeta;
         } else {
-          renderMeta(payload.ownerLogin || getLoginName(currentUser), now);
+ renderMeta(payload.ownerLogin || getLoginName(currentUser), now);
         }
 
         currentSlug = targetSlug;
@@ -1510,6 +1527,13 @@ function updateEditVisibility() {
 
 
 
+
+
+
+
+
+
+  
 
 
 
