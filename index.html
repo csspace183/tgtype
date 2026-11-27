@@ -830,8 +830,7 @@
       if (!iframeMatch) return null;
 
       const src = iframeMatch.at(1);
-       const allowedHosts = /^(?:music\.yandex\.(?:ru|by|kz|uz|com)|(?:[\w-]+\.)?vk\.com|(?:[\w-]+\.)?vk\.ru|(?:[\w-]+\.)?vkvideo\.ru|(?:[\w-]+\.)?rutube\.ru|(?:[\w-]+\.)?dzen\.ru|(?:[\w-]+\.)?zvuk\.com|(?:[\w-]+\.)?yandex\.ru)$/i;
-
+             const allowedHosts = /^(?:music\.yandex\.(?:ru|by|kz|uz|com)|(?:[\w-]+\.)?vk\.com|(?:[\w-]+\.)?vk\.ru|(?:[\w-]+\.)?vkvideo\.ru|(?:[\w-]+\.)?rutube\.ru|(?:[\w-]+\.)?dzen\.ru|(?:[\w-]+\.)?zvuk\.com|(?:[\w-]+\.)?yandex\.ru|(?:[\w-]+\.)?youtube\.com|(?:[\w-]+\.)?youtube-nocookie\.com)$/i;
       try {
         const urlObj = new URL(src);
         if (!allowedHosts.test(urlObj.hostname)) return null;
