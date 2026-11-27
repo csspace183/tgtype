@@ -43,13 +43,15 @@
       pointer-events: none;
       display: block;
     }
-    #title {
+    .title-wrap {
       position: relative;
+      margin-bottom: 10px;
+    }
+    #title {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       font-size: 32px;
       font-weight: 700;
       line-height: 1.2;
-      margin-bottom: 10px;
     }
     .side-label {
       position: absolute;
@@ -204,7 +206,7 @@
       <button id="actionBtn" class="publish-btn" type="button">PUBLISH</button>
     </div>
 
-    <div class="title-wrap" style="position: relative;">
+    <div class="title-wrap">
       <span id="titleSideLabel" class="side-label">Title</span>
       <div id="title" class="editable" contenteditable="true" data-placeholder="Title"></div>
     </div>
@@ -293,6 +295,16 @@
     let currentSlug = pathSlug;
     let isViewMode = false;
 
+    function updateTitleSideLabel() {
+      const hasText = titleEl.innerText.trim().length > 0;
+      if (!hasText && titleEl.innerHTML !== '') {
+        titleEl.innerHTML = '';
+      }
+      const canEdit = titleEl.isContentEditable;
+      titleSideLabel.classList.toggle('visible', hasText && canEdit);
+    }
+    titleEl.addEventListener('input', updateTitleSideLabel);
+
     function renderMeta(login, timestamp) {
       const parts = [];
       if (login) parts.push(login);
@@ -317,6 +329,7 @@
     function isAdmin(user) {
       return getLoginName(user) === ADMIN_LOGIN;
     }
+
     document.querySelectorAll('.tool-btn[data-cmd]').forEach(btn => {
       btn.addEventListener('mousedown', e => e.preventDefault());
       btn.addEventListener('click', () => {
@@ -434,14 +447,8 @@
       e.preventDefault();
       const text = (e.clipboardData || window.clipboardData).getData('text/plain').replace(/\r?\n/g, ' ');
       document.execCommand('insertText', false, text);
+      updateTitleSideLabel();
     });
-
-    function updateTitleSideLabel() {
-      const hasText = titleEl.innerText.trim().length > 0;
-      const canEdit = titleEl.isContentEditable;
-      titleSideLabel.classList.toggle('visible', hasText && canEdit);
-    }
-    titleEl.addEventListener('input', updateTitleSideLabel);
 
     // Вставка в основной текст: картинки сжимаем, любой текст вставляем без чужого фона и шрифтов
     storyEl.addEventListener('paste', e => {
@@ -544,7 +551,8 @@
         passInput.placeholder = 'Пароль';
       }
     }  
- switchModeBtn.addEventListener('click', () => {
+
+    switchModeBtn.addEventListener('click', () => {
       setAuthMode(!isRegMode);
       loginInput.focus();
     });
