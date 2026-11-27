@@ -82,13 +82,13 @@
       line-height: 1.58;
       min-height: 350px;
     }
-    #story p, #story div { margin: 0; line-height: 1.58; }
+    #story p, #story div { margin: 0 0 1em; }
     #story h3 {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       font-size: 24px;
       font-weight: 700;
-      line-height: 1.58;
-      margin: 0;
+      line-height: 1.35;
+      margin: 0.4em 0 0.6em;
     }
     #story blockquote { margin: 1em 0; padding-left: 16px; border-left: 3px solid #222; }
     #story img { max-width: 100%; height: auto; display: block; margin: 18px 0; border-radius: 4px; }
@@ -295,6 +295,10 @@
     let currentSlug = pathSlug;
     let isViewMode = false;
 
+    try {
+      document.execCommand('defaultParagraphSeparator', false, 'p');
+    } catch (e) {}
+
     function updateTitleSideLabel() {
       const hasText = titleEl.innerText.trim().length > 0;
       if (!hasText && titleEl.innerHTML !== '') {
@@ -342,7 +346,7 @@
           const node = sel?.anchorNode;
           const el = node?.nodeType === 3 ? node.parentElement : node;
           if (el?.closest(arg.toLowerCase())) {
-            document.execCommand('formatBlock', false, 'DIV');
+            document.execCommand('formatBlock', false, 'P');
             return;
           }
         }
@@ -427,31 +431,27 @@
       fileInput.value = '';
     });
 
-    function resetHeadingOrQuoteOnNewLine() {
-      document.execCommand('insertParagraph', false, null);
-      document.execCommand('formatBlock', false, 'DIV');
-      if (document.queryCommandState('bold')) {
-        document.execCommand('bold', false, null);
-      }
+    let resetBlockAfterEnter = false;
+
+    function resetCurrentLineToNormal() {
       const sel = window.getSelection();
       const node = sel?.anchorNode;
       const el = node?.nodeType === 3 ? node.parentElement : node;
-      const boldWrap = el?.closest('b, strong');
-      if (boldWrap && storyEl.contains(boldWrap) && boldWrap.innerText.trim() === '') {
-        const div = boldWrap.closest('div, p') || boldWrap.parentElement;
-        if (div) {
-          div.innerHTML = '<br>';
-          const range = document.createRange();
-          range.setStart(div, 0);
-          range.collapse(true);
-          sel.removeAllRanges();
-          sel.addRange(range);
-        }
+      if (el?.closest('h3, blockquote')) {
+        document.execCommand('formatBlock', false, 'P');
+      }
+      if (document.queryCommandState('bold')) {
+        document.execCommand('bold', false, null);
       }
     }
 
-    storyEl.addEventListener('beforeinput', e => {
-      if (e.inputType === 'insertParagraph' || e.inputType === 'insertLineBreak') {
+    storyEl.addEventListener('keydown', e => {
+      if (e.key === 'Enter') {
+        if (e.shiftKey) {
+          e.preventDefault();
+          document.execCommand('insertLineBreak', false, null);
+          return;
+        }
         const sel = window.getSelection();
         const node = sel?.anchorNode;
         const el = node?.nodeType === 3 ? node.parentElement : node;
@@ -459,22 +459,32 @@
 
         if (block && storyEl.contains(block)) {
           e.preventDefault();
-          resetHeadingOrQuoteOnNewLine();
+          document.execCommand('insertParagraph', false, null);
+          resetCurrentLineToNormal();
         }
       }
     });
 
-    storyEl.addEventListener('keydown', e => {
-      if (e.key === 'Enter' && !e.shiftKey) {
+    storyEl.addEventListener('beforeinput', e => {
+      if (e.inputType === 'insertLineBreak') {
+        e.preventDefault();
+        document.execCommand('insertLineBreak', false, null);
+        return;
+      }
+      if (e.inputType === 'insertParagraph') {
         const sel = window.getSelection();
         const node = sel?.anchorNode;
         const el = node?.nodeType === 3 ? node.parentElement : node;
-        const block = el?.closest('blockquote, h3');
-
-        if (block && storyEl.contains(block)) {
-          e.preventDefault();
-          resetHeadingOrQuoteOnNewLine();
+        if (el?.closest('blockquote, h3')) {
+          resetBlockAfterEnter = true;
         }
+      }
+    });
+
+    storyEl.addEventListener('input', () => {
+      if (resetBlockAfterEnter) {
+        resetBlockAfterEnter = false;
+        resetCurrentLineToNormal();
       }
     });
 
@@ -586,7 +596,7 @@
         passInput.setAttribute('autocomplete', 'current-password');
         passInput.placeholder = 'Пароль';
       }
-    }
+    }  
 
     switchModeBtn.addEventListener('click', () => {
       setAuthMode(!isRegMode);
