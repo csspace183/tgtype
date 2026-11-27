@@ -74,7 +74,7 @@
     .auth-bar button { background: none; border: 0; padding: 0; font: inherit; color: #aaa; cursor: pointer; text-decoration: underline; }
     .auth-bar button:hover { color: #222; }
 
-    /* Админ-список /blog */
+    /* Список /blog */
     .blog-search {
       width: 100%; box-sizing: border-box; padding: 9px 14px; margin: 10px 0 15px;
       border: 1px solid #ddd; border-radius: 20px; font-size: 14px; outline: none;
@@ -120,7 +120,7 @@
     .modal-close { display: block; width: 100%; margin-top: 10px; background: none; border: none; color: #999; font-size: 12px; cursor: pointer; }
   </style>
 </head>
-<body>
+  <body>
 
   <div class="container">
     <div class="top-bar">
@@ -186,7 +186,8 @@
     const authModal = document.getElementById('authModal');
     const loginInput = document.getElementById('loginInput');
     const passInput = document.getElementById('passInput');
-     let currentUser = null;
+
+    let currentUser = null;
     let currentArticleOwner = null;
     const pathSlug = window.location.pathname.replace(/^\/+|\/+$/g, '');
     let currentSlug = pathSlug;
@@ -210,13 +211,12 @@
     }
 
     function getLoginName(user) {
-      return user && user.email ? user.email.split('@')[0] : '';
+      return user && user.email ? user.email.split('@') : '';
     }
 
     function isAdmin(user) {
       return getLoginName(user) === ADMIN_LOGIN;
     }
-
     document.querySelectorAll('.tool-btn[data-cmd]').forEach(btn => {
       btn.addEventListener('mousedown', e => e.preventDefault());
       btn.addEventListener('click', () => {
@@ -387,13 +387,11 @@
 
         updateEditVisibility();
 
-        if (!initialLoaded) {
+        if (pathSlug === 'blog') {
+          loadBlogPage();
+        } else if (!initialLoaded) {
           initialLoaded = true;
-          if (pathSlug === 'blog') {
-            loadAdminBlog();
-          } else if (pathSlug) {
-            loadArticle(pathSlug);
-          }
+          if (pathSlug) loadArticle(pathSlug);
         }
       });
     }
@@ -406,29 +404,38 @@
       const canEdit = currentUser && (currentUser.uid === currentArticleOwner || isAdmin(currentUser));
       actionBtn.style.display = canEdit ? 'inline-block' : 'none';
     }
-
-    async function loadAdminBlog() {
+    async function loadBlogPage() {
       metaInfoEl.style.display = 'none';
       toolbar.style.display = 'none';
       storyEl.style.display = 'none';
       actionBtn.style.display = 'none';
       titleEl.contentEditable = false;
 
-      if (!currentUser || !isAdmin(currentUser)) {
-        titleEl.textContent = 'Доступ запрещён';
-        document.title = 'Доступ запрещён';
-        setStatus('У вас нет прав для просмотра этой страницы. Запросите доступ у администратора.', 'error');
+      document.querySelector('.blog-search')?.remove();
+      document.querySelector('.posts-list')?.remove();
+
+      if (!currentUser) {
+        titleEl.textContent = 'Мои публикации';
+        document.title = 'Мои публикации — tgtype';
+        setStatus('Войдите в аккаунт, чтобы увидеть свои публикации.', 'error');
+        authModal.style.display = 'flex';
         return;
       }
 
-      titleEl.textContent = 'Все публикации (/blog)';
-      document.title = 'Админ-панель — tgtype';
+      const adminMode = isAdmin(currentUser);
+      titleEl.textContent = adminMode ? 'Все публикации (/blog)' : 'Мои публикации';
+      document.title = `${titleEl.textContent} — tgtype`;
       setStatus('Загрузка публикаций...');
 
       try {
-        const snap = await db.collection('articles').get();
+        let query = db.collection('articles');
+        if (!adminMode) {
+          query = query.where('ownerUid', '==', currentUser.uid);
+        }
+        const snap = await query.get();
+
         if (snap.empty) {
-          setStatus('Пока нет ни одной статьи.');
+          setStatus(adminMode ? 'Пока нет ни одной статьи.' : 'Здесь пока пусто — вы ещё ничего не опубликовали.');
           return;
         }
 
@@ -439,7 +446,10 @@
         const searchInput = document.createElement('input');
         searchInput.type = 'text';
         searchInput.className = 'blog-search';
-        searchInput.placeholder = 'Поиск по заголовку, ссылке или логину автора...';
+        searchInput.placeholder = adminMode
+          ? 'Поиск по заголовку, ссылке или логину автора...'
+          : 'Поиск по вашим публикациям...';
+
         const ul = document.createElement('ul');
         ul.className = 'posts-list';
 
@@ -454,7 +464,7 @@
             const cleanTitle = temp.innerText.trim() || post.id;
             const ownerName = post.ownerLogin || 'неизвестен (старая запись)';
 
-            if (q && !cleanTitle.toLowerCase().includes(q) && !post.id.toLowerCase().includes(q) && !ownerName.toLowerCase().includes(q)) {
+            if (q && !cleanTitle.toLowerCase().includes(q) && !post.id.toLowerCase().includes(q) && !(adminMode && ownerName.toLowerCase().includes(q))) {
               return;
             }
             count++;
@@ -463,13 +473,14 @@
               day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
             }) : '—';
             const fullUrl = `${window.location.origin}/${post.id}`;
+            const authorPart = adminMode ? ` • Автор: <b>${ownerName}</b>` : '';
 
             const li = document.createElement('li');
             li.className = 'post-item';
             li.innerHTML = `
               <div class="post-info">
                 <a href="/${post.id}">${cleanTitle}</a>
-                <div class="post-meta">/${post.id} • Автор: <b>${ownerName}</b> • Изменено: ${dateStr}</div>
+                <div class="post-meta">/${post.id}${authorPart} • Изменено: ${dateStr}</div>
               </div>
               <div class="post-actions">
                 <button class="mini-btn copy-btn" type="button">Копировать</button>
@@ -489,7 +500,13 @@
                 await db.collection('articles').doc(post.id).delete();
                 const idx = posts.indexOf(post);
                 if (idx > -1) posts.splice(idx, 1);
-                renderList(searchInput.value);
+                if (posts.length === 0) {
+                  searchInput.remove();
+                  ul.remove();
+                  setStatus('Здесь пока пусто — вы ещё ничего не опубликовали.');
+                } else {
+                  renderList(searchInput.value);
+                }
               } catch (err) {
                 alert('Ошибка удаления: ' + err.message);
               }
@@ -519,7 +536,7 @@
           titleEl.innerHTML = data.title;
           storyEl.innerHTML = data.story;
           currentArticleOwner = data.ownerUid || null;
-          
+
           if (data.customMeta !== undefined) {
             metaInfoEl.textContent = data.customMeta;
           } else {
@@ -545,7 +562,6 @@
       titleEl.contentEditable = canEdit;
       storyEl.contentEditable = canEdit;
       toolbar.style.display = canEdit ? 'flex' : 'none';
-      // Админ может редактировать строку под заголовком как обычный текст
       metaInfoEl.contentEditable = (canEdit && currentUser && isAdmin(currentUser));
     }
 
@@ -598,7 +614,7 @@
           updatedAt: now
         };
 
-       if (isAdmin(currentUser)) {
+        if (isAdmin(currentUser)) {
           payload.customMeta = metaInfoEl.innerText.trim();
         } else {
           payload.customMeta = firebase.firestore.FieldValue.delete();
@@ -636,7 +652,3 @@
   </script>
 </body>
 </html>
-
-
-
-    
