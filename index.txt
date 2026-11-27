@@ -122,8 +122,7 @@
       .side-label { display: none; }
     }
     #metaInfo { font-size: 14px; color: #888; margin-bottom: 20px; min-height: 18px; }
-    #metaInfo.no-toolbar { margin-bottom: 28px; }
-    #metaInfo.can-edit-btn { margin-bottom: 10px; }
+    #metaInfo.no-toolbar, #metaInfo.can-edit-btn { margin-bottom: 28px; }
 
     /* Строка с панелью инструментов и кнопкой PUBLISH вровень */
     .toolbar-row {
@@ -135,8 +134,15 @@
       min-height: 34px;
     }
     .toolbar-row.view-mode {
-      justify-content: flex-end;
-      margin-bottom: 14px;
+      position: relative;
+      height: 0;
+      min-height: 0;
+      margin: 0;
+    }
+    .toolbar-row.view-mode .publish-btn {
+      position: absolute;
+      right: 0;
+      bottom: 22px;
     }
     .toolbar-row.hidden {
       display: none;
