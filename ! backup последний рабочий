@@ -122,6 +122,8 @@
       .side-label { display: none; }
     }
     #metaInfo { font-size: 14px; color: #888; margin-bottom: 20px; min-height: 18px; }
+    #metaInfo.no-toolbar { margin-bottom: 28px; }
+    #metaInfo.can-edit-btn { margin-bottom: 10px; }
 
     /* Строка с панелью инструментов и кнопкой PUBLISH вровень */
     .toolbar-row {
@@ -134,6 +136,10 @@
     }
     .toolbar-row.view-mode {
       justify-content: flex-end;
+      margin-bottom: 14px;
+    }
+    .toolbar-row.hidden {
+      display: none;
     }
     .toolbar {
       display: flex;
@@ -906,10 +912,16 @@
     function updateEditVisibility() {
       if (!isViewMode) {
         actionBtn.style.display = 'inline-block';
+        toolbarRow.classList.remove('hidden', 'view-mode');
+        metaInfoEl.classList.remove('no-toolbar', 'can-edit-btn');
         return;
       }
       const canEdit = currentUser && (currentUser.uid === currentArticleOwner || isAdmin(currentUser));
       actionBtn.style.display = canEdit ? 'inline-block' : 'none';
+      toolbarRow.classList.add('view-mode');
+      toolbarRow.classList.toggle('hidden', !canEdit);
+      metaInfoEl.classList.toggle('no-toolbar', !canEdit);
+      metaInfoEl.classList.toggle('can-edit-btn', canEdit);
     }
 
     async function loadBlogPage() {
@@ -1075,6 +1087,10 @@
       storyEl.contentEditable = canEdit;
       toolbar.style.display = canEdit ? 'flex' : 'none';
       toolbarRow.classList.toggle('view-mode', !canEdit);
+      if (canEdit) {
+        toolbarRow.classList.remove('hidden');
+        metaInfoEl.classList.remove('no-toolbar', 'can-edit-btn');
+      }
       metaInfoEl.contentEditable = (canEdit && currentUser && isAdmin(currentUser));
       editorHeader.classList.toggle('is-editing', canEdit);
       updateFixedHeader();
