@@ -1411,7 +1411,7 @@ function updateEditVisibility() {
       }
     }
 
-    async function loadArticle(slug) {
+        async function loadArticle(slug) {
       setEditable(false);
       setStatus('Загрузка...');
       try {
@@ -1436,9 +1436,17 @@ function updateEditVisibility() {
           captureInitialSnapshot();
           updateEditVisibility();
         } else {
-          setStatus('Страница не найдена. Можете создать её здесь!');
-          setEditable(true);
-          captureInitialSnapshot();
+          metaInfoEl.style.display = 'none';
+          toolbarRow.style.display = 'none';
+          storyEl.style.display = 'none';
+          actionBtn.style.display = 'none';
+          titleEl.contentEditable = false;
+          editorHeader.classList.remove('is-editing');
+          updateFixedHeader();
+          updateTitleSideLabel();
+          titleEl.textContent = 'Страница не найдена';
+          document.title = 'Страница не найдена — tgtype';
+          setStatus('Этой страницы не существует.', 'error');
         }
       } catch (e) {
         setStatus('Ошибка загрузки: ' + e.message, 'error');
@@ -1446,20 +1454,21 @@ function updateEditVisibility() {
     }
 
     function setEditable(canEdit) {
-      titleEl.contentEditable = canEdit;
-      storyEl.contentEditable = canEdit;
+      titleEl.contentEditable = Boolean(canEdit);
+      storyEl.contentEditable = Boolean(canEdit);
       toolbar.style.display = canEdit ? 'flex' : 'none';
       toolbarRow.classList.toggle('view-mode', !canEdit);
       if (canEdit) {
         toolbarRow.classList.remove('hidden');
         metaInfoEl.classList.remove('no-toolbar', 'can-edit-btn');
       }
-      metaInfoEl.contentEditable = (canEdit && currentUser && isAdmin(currentUser));
+      metaInfoEl.contentEditable = Boolean(canEdit && currentUser && isAdmin(currentUser));
       editorHeader.classList.toggle('is-editing', canEdit);
       updateFixedHeader();
       updateTitleSideLabel();
       updatePublishState();
     }
+
 
     function slugify(text) {
       const map = {'а':'a','б':'b','в':'v','г':'g','д':'d','е':'e','ё':'yo','ж':'zh','з':'z','и':'i','й':'y','к':'k','л':'l','м':'m','н':'n','о':'o','п':'p','р':'r','с':'s','т':'t','у':'u','ф':'f','х':'h','ц':'ts','ч':'ch','ш':'sh','щ':'sch','ъ':'','ы':'y','ь':'','э':'e','ю':'yu','я':'ya'};
