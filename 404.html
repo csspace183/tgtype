@@ -823,48 +823,27 @@
       updatePublishState();
     }
 
-    // Встраивание плеера Яндекс Музыки (по HTML-коду iframe или по обычной ссылке)
+    // Встраивание виджета только по готовому HTML-коду <iframe>
     function parseYandexMusicEmbed(text) {
       const trimmed = (text || '').trim();
+      const iframeMatch = trimmed.match(/<iframe\b[^>]*\bsrc=["'](https?:\/\/[^"']+)["'][^>]*>/i);
+      if (!iframeMatch) return null;
 
-      // 1. Готовый HTML-код <iframe ... src="https://yandex.ru...">
-      const iframeMatch = trimmed.match(/<iframe\b[^>]*\bsrc=["'](https?:\/\/music\.yandex\.(?:ru|by|kz|uz|com)\/iframe\/[^"']+)["'][^>]*>/i);
-      if (iframeMatch) {
-        const src = iframeMatch.at(1);
+      const src = iframeMatch.at(1);
+      const allowedHosts = /^(?:music\.yandex\.(?:ru|by|kz|uz|com)|vk\.com|vkvideo\.ru|rutube\.ru|dzen\.ru|zvuk\.com|yandex\.ru)$/i;
+
+      try {
+        const urlObj = new URL(src);
+        if (!allowedHosts.test(urlObj.hostname)) return null;
+
+        const isTall = /\/iframe\/album\/\d+\/?(?:$|\?)/i.test(src) || /video|embed|map-widget/i.test(src);
         return {
           src: src,
-          isAlbum: /\/iframe\/album\/\d+\/?(?:$|\?)/i.test(src)
+          isAlbum: isTall
         };
+      } catch (e) {
+        return null;
       }
-
-      // 2. Обычная ссылка на трек в альбоме
-      const trackWithAlbum = trimmed.match(/^https?:\/\/music\.yandex\.(?:ru|by|kz|uz|com)\/album\/(\d+)\/track\/(\d+)(?:[?/#].*)?$/i);
-      if (trackWithAlbum) {
-        return {
-          src: 'https://yandex.rualbum/' + trackWithAlbum.at(1) + '/track/' + trackWithAlbum.at(2),
-          isAlbum: false
-        };
-      }
-
-      // 3. Обычная ссылка на трек
-      const trackOnly = trimmed.match(/^https?:\/\/music\.yandex\.(?:ru|by|kz|uz|com)\/track\/(\d+)(?:[?/#].*)?$/i);
-      if (trackOnly) {
-        return {
-          src: 'https://yandex.rutrack/' + trackOnly.at(1),
-          isAlbum: false
-        };
-      }
-
-      // 4. Обычная ссылка на альбом
-      const albumOnly = trimmed.match(/^https?:\/\/music\.yandex\.(?:ru|by|kz|uz|com)\/album\/(\d+)(?:[?/#].*)?$/i);
-      if (albumOnly) {
-        return {
-          src: 'https://yandex.rualbum/' + albumOnly.at(1),
-          isAlbum: true
-        };
-      }
-
-      return null;
     }
 
     function insertYandexMusicEmbed(parsed, replaceNode = null) {
