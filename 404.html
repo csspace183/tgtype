@@ -50,30 +50,7 @@
       line-height: 1.2;
       margin-bottom: 10px;
     }
-    #metaInfo { font-size: 14px; color: #888; margin-bottom: 24px; min-height: 18px; outline: none; }
-    .field-wrap { position: relative; }
-    .side-label {
-      display: none;
-      position: absolute;
-      right: calc(100% + 14px);
-      top: 0;
-      color: #bbb;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      font-weight: 400;
-      user-select: none;
-      pointer-events: none;
-      white-space: nowrap;
-      padding-right: 10px;
-      border-right: 1px solid #e0e0e0;
-    }
-    .side-label.title-lbl { font-size: 32px; line-height: 1.2; }
-    .side-label.author-lbl { font-size: 14px; line-height: 1.4; }
-    .editing-mode .field-wrap:has(.editable:not(:empty)) .side-label {
-      display: block;
-    }
-    @media (max-width: 780px) {
-      .editing-mode .side-label { display: none; }
-    }
+    #metaInfo { font-size: 14px; color: #888; margin-bottom: 24px; min-height: 18px; }
     #story {
       font-family: Georgia, "Times New Roman", Times, serif;
       font-size: 18px;
@@ -204,15 +181,8 @@
       <button id="actionBtn" class="publish-btn" type="button">PUBLISH</button>
     </div>
 
-    <div class="field-wrap">
-      <span class="side-label title-lbl">Title</span>
-      <div id="title" class="editable" contenteditable="true" data-placeholder="Title"></div>
-    </div>
-
-    <div class="field-wrap">
-      <span class="side-label author-lbl">Author</span>
-      <div id="metaInfo" class="editable" data-placeholder="Author"></div>
-    </div>
+    <div id="title" class="editable" contenteditable="true" data-placeholder="Title"></div>
+    <div id="metaInfo"></div>
 
     <div id="toolbar" class="toolbar">
       <button class="tool-btn" type="button" data-cmd="bold" title="Жирный">
@@ -320,7 +290,6 @@
     function isAdmin(user) {
       return getLoginName(user) === ADMIN_LOGIN;
     }
-javascript
     document.querySelectorAll('.tool-btn[data-cmd]').forEach(btn => {
       btn.addEventListener('mousedown', e => e.preventDefault());
       btn.addEventListener('click', () => {
@@ -433,12 +402,14 @@ javascript
       }
     });
 
+    // Вставка в заголовок строго чистым текстом в одну строку
     titleEl.addEventListener('paste', e => {
       e.preventDefault();
       const text = (e.clipboardData || window.clipboardData).getData('text/plain').replace(/\r?\n/g, ' ');
       document.execCommand('insertText', false, text);
     });
 
+    // Вставка в основной текст: картинки сжимаем, любой текст вставляем без чужого фона и шрифтов
     storyEl.addEventListener('paste', e => {
       const cd = e.clipboardData || window.clipboardData;
       const items = cd ? cd.items : [];
@@ -538,8 +509,8 @@ javascript
         passInput.setAttribute('autocomplete', 'current-password');
         passInput.placeholder = 'Пароль';
       }
-    }
-        switchModeBtn.addEventListener('click', () => {
+    }  
+ switchModeBtn.addEventListener('click', () => {
       setAuthMode(!isRegMode);
       loginInput.focus();
     });
@@ -676,7 +647,6 @@ javascript
     }
 
     async function loadBlogPage() {
-      document.querySelector('.container').classList.remove('editing-mode');
       metaInfoEl.style.display = 'none';
       toolbar.style.display = 'none';
       storyEl.style.display = 'none';
@@ -807,10 +777,9 @@ javascript
         if (snap.exists) {
           const data = snap.data();
           titleEl.innerHTML = data.title;
-storyEl.innerHTML = data.story;
+          storyEl.innerHTML = data.story;
           currentArticleOwner = data.ownerUid || null;
-
-          if (data.customMeta !== undefined) {
+if (data.customMeta !== undefined) {
             metaInfoEl.textContent = data.customMeta;
           } else {
             const rawAuthor = Array.isArray(data.ownerLogin) ? data.ownerLogin[0] : (data.ownerLogin || '');
@@ -833,7 +802,6 @@ storyEl.innerHTML = data.story;
     }
 
     function setEditable(canEdit) {
-      document.querySelector('.container').classList.toggle('editing-mode', canEdit);
       titleEl.contentEditable = canEdit;
       storyEl.contentEditable = canEdit;
       toolbar.style.display = canEdit ? 'flex' : 'none';
@@ -925,21 +893,6 @@ storyEl.innerHTML = data.story;
         actionBtn.disabled = false;
       }
     });
-
-    if (!pathSlug) {
-      setEditable(true);
-    }
   </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-    
