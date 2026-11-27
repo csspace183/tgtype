@@ -235,11 +235,25 @@
     function isAdmin(user) {
       return getLoginName(user) === ADMIN_LOGIN;
     }
-    document.querySelectorAll('.tool-btn[data-cmd]').forEach(btn => {
+     document.querySelectorAll('.tool-btn[data-cmd]').forEach(btn => {
       btn.addEventListener('mousedown', e => e.preventDefault());
       btn.addEventListener('click', () => {
         storyEl.focus();
-        document.execCommand(btn.dataset.cmd, false, btn.dataset.arg || null);
+        const cmd = btn.dataset.cmd;
+        const arg = btn.dataset.arg || null;
+
+        if (cmd === 'formatBlock' && arg) {
+          const sel = window.getSelection();
+          const node = sel?.anchorNode;
+          const el = node?.nodeType === 3 ? node.parentElement : node;
+          // Если текст уже внутри H3 или BLOCKQUOTE — возвращаем обычный абзац (P)
+          if (el?.closest(arg.toLowerCase())) {
+            document.execCommand('formatBlock', false, 'P');
+            return;
+          }
+        }
+
+        document.execCommand(cmd, false, arg);
       });
     });
 
