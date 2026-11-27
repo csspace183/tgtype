@@ -522,10 +522,11 @@
       <button id="closeModalBtn" class="modal-close" type="button">Закрыть</button>
     </div>
   </div>
-<script src="/firebase-app-compat.js"></script>
-  <script src="/firebase-auth-compat.js"></script>
-  <script src="/firebase-firestore-compat.js"></script>
-  <script>
+
+  <script src="/firebase-app-compat.js" defer></script>
+  <script src="/firebase-auth-compat.js" defer></script>
+  <script src="/firebase-firestore-compat.js" defer></script>
+<script>
     const ADMIN_LOGIN = 'lordman';
     const DEFAULT_RAINBOW = 'linear-gradient(90deg, #ff3b30, #ff9500, #ffcc00, #34c759, #007aff, #af52de)';
 
@@ -722,7 +723,7 @@
         colorPopover.classList.remove('open');
       }
     });
-document.querySelectorAll('.tool-btn[data-cmd]').forEach(btn => {
+ document.querySelectorAll('.tool-btn[data-cmd]').forEach(btn => {
       btn.addEventListener('mousedown', e => e.preventDefault());
       btn.addEventListener('click', () => {
         colorPopover.classList.remove('open');
@@ -1139,28 +1140,56 @@ document.querySelectorAll('.tool-btn[data-cmd]').forEach(btn => {
 
     let db = null;
     let auth = null;
-    if (typeof firebase !== 'undefined') {
-      firebase.initializeApp({
-        apiKey: "AIzaSyAGZvMxxAZEsbech1evNe2aNwR6GfC0xhw",
-        authDomain: "://firebaseapp.com",
-        projectId: "tgtype-a41aa",
-        storageBucket: "tgtype-a41aa.firebasestorage.app",
-        messagingSenderId: "967552866716",
-        appId: "1:967552866716:web:2d3dff00a96e83e151d059"
-      });
-      db = firebase.firestore();
-      auth = firebase.auth();
-    } else {
-      hideLoader();
-      setStatus('Ошибка: файлы Firebase не загрузились.', 'error');
-      const reloadBtn = document.createElement('button');
-      reloadBtn.type = 'button';
-      reloadBtn.textContent = 'Обновить';
-      reloadBtn.className = 'mini-btn';
-      reloadBtn.style.marginTop = '8px';
-      reloadBtn.addEventListener('click', () => window.location.reload());
-      statusEl.after(reloadBtn);
+
+    if (pathSlug && pathSlug !== 'blog') {
+      loadArticle(pathSlug);
     }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      if (typeof firebase !== 'undefined') {
+        firebase.initializeApp({
+          apiKey: "AIzaSyAGZvMxxAZEsbech1evNe2aNwR6GfC0xhw",
+          authDomain: "tgtype-a41aa." + "firebaseapp.com",
+          projectId: "tgtype-a41aa",
+          storageBucket: "tgtype-a41aa.firebasestorage.app",
+          messagingSenderId: "967552866716",
+          appId: "1:967552866716:web:2d3dff00a96e83e151d059"
+        });
+        db = firebase.firestore();
+        auth = firebase.auth();
+
+        auth.onAuthStateChanged(user => {
+          currentUser = user;
+          const login = getLoginName(user);
+
+          if (user) {
+            authBtn.textContent = `Выйти (${login})`;
+          } else {
+            authBtn.textContent = 'Войти';
+          }
+
+          updateEditVisibility();
+          if (!isViewMode) {
+            metaInfoEl.contentEditable = Boolean(user && isAdmin(user));
+            updatePublishState();
+          }
+
+          if (pathSlug === 'blog') {
+            loadBlogPage();
+          }
+        });
+      } else {
+        hideLoader();
+        setStatus('Ошибка: файлы Firebase не загрузились.', 'error');
+        const reloadBtn = document.createElement('button');
+        reloadBtn.type = 'button';
+        reloadBtn.textContent = 'Обновить';
+        reloadBtn.className = 'mini-btn';
+        reloadBtn.style.marginTop = '8px';
+        reloadBtn.addEventListener('click', () => window.location.reload());
+        statusEl.after(reloadBtn);
+      }
+    });
 
     const modalTitle = document.getElementById('modalTitle');
     const authForm = document.getElementById('authForm');
@@ -1248,7 +1277,7 @@ document.querySelectorAll('.tool-btn[data-cmd]').forEach(btn => {
         try {
           await auth.createUserWithEmailAndPassword(`${login}@tgtype.local`, pass);
           localStorage.setItem('tgtype_last_reg', String(Date.now()));
-          authModal.style.display = 'none';
+ authModal.style.display = 'none';
           setStatus(`Аккаунт ${login} зарегистрирован!`, 'ok');
         } catch (err) {
           if (err.code === 'auth/email-already-in-use') {
@@ -1265,7 +1294,7 @@ document.querySelectorAll('.tool-btn[data-cmd]').forEach(btn => {
           modalMsg.textContent = 'Слишком много неудачных попыток. Повторите попытку позже.';
           return;
         } else if (lockUntil > 0) {
-localStorage.removeItem('tgtype_login_lock');
+          localStorage.removeItem('tgtype_login_lock');
           localStorage.removeItem('tgtype_login_fails');
         }
 
@@ -1301,33 +1330,6 @@ localStorage.removeItem('tgtype_login_lock');
         }
       }
     });
-
-    if (pathSlug && pathSlug !== 'blog') {
-      loadArticle(pathSlug);
-    }
-
-    if (auth) {
-      auth.onAuthStateChanged(user => {
-        currentUser = user;
-        const login = getLoginName(user);
-
-        if (user) {
-          authBtn.textContent = `Выйти (${login})`;
-        } else {
-          authBtn.textContent = 'Войти';
-        }
-
-        updateEditVisibility();
-        if (!isViewMode) {
-          metaInfoEl.contentEditable = Boolean(user && isAdmin(user));
-          updatePublishState();
-        }
-
-        if (pathSlug === 'blog') {
-          loadBlogPage();
-        }
-      });
-    }
 
     function updateEditVisibility() {
       if (!isViewMode) {
@@ -1501,7 +1503,8 @@ localStorage.removeItem('tgtype_login_lock');
         let data = null;
 
         try {
-          const restUrl = `https://googleapis.com{encodeURIComponent(slug)}`;
+          const restHost = 'https://firestore.' + 'googleapis.com';
+          const restUrl = `${restHost}/v1/projects/tgtype-a41aa/databases/(default)/documents/articles/${encodeURIComponent(slug)}`;
           const res = await fetch(restUrl);
           if (res.status === 200) {
             const json = await res.json();
@@ -1526,8 +1529,8 @@ localStorage.removeItem('tgtype_login_lock');
           if (data.customMeta !== undefined) {
             metaInfoEl.textContent = data.customMeta;
           } else {
-            const rawAuthor = Array.isArray(data.ownerLogin) ? data.ownerLogin.at(0) : (data.ownerLogin || '');
-const authorDisplay = rawAuthor || (data.author ? data.author.replace(/<[^>]*>/g, '').trim() : '');
+const rawAuthor = Array.isArray(data.ownerLogin) ? data.ownerLogin.at(0) : (data.ownerLogin || '');
+            const authorDisplay = rawAuthor || (data.author ? data.author.replace(/<[^>]*>/g, '').trim() : '');
             renderMeta(authorDisplay, data.updatedAt);
           }
 
@@ -1666,38 +1669,6 @@ const authorDisplay = rawAuthor || (data.author ? data.author.replace(/<[^>]*>/g
   </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-      
-
-
 
 
 
