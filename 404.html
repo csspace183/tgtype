@@ -830,7 +830,7 @@
       if (!iframeMatch) return null;
 
       const src = iframeMatch.at(1);
-      const allowedHosts = /^(?:music\.yandex\.(?:ru|by|kz|uz|com)|vk\.com|vkvideo\.ru|rutube\.ru|dzen\.ru|zvuk\.com|yandex\.ru)$/i;
+       const allowedHosts = /^(?:music\.yandex\.(?:ru|by|kz|uz|com)|(?:[\w-]+\.)?vk\.com|(?:[\w-]+\.)?vk\.ru|(?:[\w-]+\.)?vkvideo\.ru|(?:[\w-]+\.)?rutube\.ru|(?:[\w-]+\.)?dzen\.ru|(?:[\w-]+\.)?zvuk\.com|(?:[\w-]+\.)?yandex\.ru)$/i;
 
       try {
         const urlObj = new URL(src);
@@ -850,7 +850,7 @@
       const wrap = document.createElement('div');
       wrap.className = 'tg-ymusic-embed' + (parsed.isAlbum ? ' is-album' : '');
       wrap.setAttribute('contenteditable', 'false');
-      wrap.innerHTML = '<iframe src="' + parsed.src + '" allow="clipboard-write"></iframe><button type="button" class="tg-ymusic-del" title="Удалить плеер">✕</button>';
+      wrap.innerHTML = '<iframe src="' + parsed.src + '" allow="autoplay; encrypted-media; fullscreen; picture-in-picture; clipboard-write" allowfullscreen></iframe><button type="button" class="tg-ymusic-del" title="Удалить плеер">✕</button>';
 
       const afterP = document.createElement('p');
       afterP.innerHTML = '<br>';
