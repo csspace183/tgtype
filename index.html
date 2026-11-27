@@ -65,6 +65,10 @@
       cursor: pointer;
       color: #555;
       font-size: 13px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 28px;
     }
     .tool-btn:hover { border-color: #222; color: #222; }
     .status { font-size: 13px; color: #888; margin-top: 10px; font-weight: 500; min-height: 18px; }
@@ -136,8 +140,15 @@
     <div id="metaInfo"></div>
 
     <div id="toolbar" class="toolbar">
-      <button class="tool-btn" type="button" data-cmd="bold"><b>B</b></button>
-      <button class="tool-btn" type="button" data-cmd="italic"><i>k</i></button>
+      <button class="tool-btn" type="button" data-cmd="bold" title="Жирный">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4h8a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/><path d="M6 12h9a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/></svg>
+      </button>
+      <button class="tool-btn" type="button" data-cmd="italic" title="Курсив">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="4" x2="10" y2="4"/><line x1="14" y1="20" x2="5" y2="20"/><line x1="15" y1="4" x2="9" y2="20"/></svg>
+      </button>
+      <button class="tool-btn" type="button" data-cmd="strikeThrough" title="Зачёркнутый">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4H9a3 3 0 0 0-2.83 4"/><path d="M14 12a4 4 0 0 1 0 8H6"/><line x1="4" y1="12" x2="20" y2="12"/></svg>
+      </button>
       <button class="tool-btn" type="button" data-cmd="formatBlock" data-arg="H3">H</button>
       <button class="tool-btn" type="button" data-cmd="formatBlock" data-arg="BLOCKQUOTE">”</button>
       <button id="linkBtn" class="tool-btn" type="button">🔗 Ссылка</button>
