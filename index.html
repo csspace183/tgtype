@@ -82,13 +82,13 @@
       line-height: 1.58;
       min-height: 350px;
     }
-    #story p { margin: 0 0 1em; }
-     #story h3 {
+    #story p, #story div { margin: 0; line-height: 1.58; }
+    #story h3 {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       font-size: 24px;
       font-weight: 700;
       line-height: 1.58;
-      margin: 0 0 1em;
+      margin: 0;
     }
     #story blockquote { margin: 1em 0; padding-left: 16px; border-left: 3px solid #222; }
     #story img { max-width: 100%; height: auto; display: block; margin: 18px 0; border-radius: 4px; }
@@ -342,10 +342,7 @@
           const node = sel?.anchorNode;
           const el = node?.nodeType === 3 ? node.parentElement : node;
           if (el?.closest(arg.toLowerCase())) {
-            document.execCommand('formatBlock', false, 'P');
-            if (document.queryCommandState('bold')) {
-              document.execCommand('bold', false, null);
-            }
+            document.execCommand('formatBlock', false, 'DIV');
             return;
           }
         }
@@ -430,20 +427,26 @@
       fileInput.value = '';
     });
 
-    let resetBlockAfterBreak = false;
-
-    function breakOutOfHeadingOrQuote() {
+    function resetHeadingOrQuoteOnNewLine() {
       document.execCommand('insertParagraph', false, null);
-      document.execCommand('formatBlock', false, 'P');
+      document.execCommand('formatBlock', false, 'DIV');
+      if (document.queryCommandState('bold')) {
+        document.execCommand('bold', false, null);
+      }
       const sel = window.getSelection();
       const node = sel?.anchorNode;
       const el = node?.nodeType === 3 ? node.parentElement : node;
-      const boldTag = el?.closest('b, strong');
-      if (boldTag && storyEl.contains(boldTag) && boldTag.textContent.trim() === '') {
-        boldTag.remove();
-      }
-      if (document.queryCommandState('bold')) {
-        document.execCommand('bold', false, null);
+      const boldWrap = el?.closest('b, strong');
+      if (boldWrap && storyEl.contains(boldWrap) && boldWrap.innerText.trim() === '') {
+        const div = boldWrap.closest('div, p') || boldWrap.parentElement;
+        if (div) {
+          div.innerHTML = '<br>';
+          const range = document.createRange();
+          range.setStart(div, 0);
+          range.collapse(true);
+          sel.removeAllRanges();
+          sel.addRange(range);
+        }
       }
     }
 
@@ -455,12 +458,8 @@
         const block = el?.closest('blockquote, h3');
 
         if (block && storyEl.contains(block)) {
-          if (e.cancelable) {
-            e.preventDefault();
-            breakOutOfHeadingOrQuote();
-          } else {
-            resetBlockAfterBreak = true;
-          }
+          e.preventDefault();
+          resetHeadingOrQuoteOnNewLine();
         }
       }
     });
@@ -474,24 +473,8 @@
 
         if (block && storyEl.contains(block)) {
           e.preventDefault();
-          breakOutOfHeadingOrQuote();
+          resetHeadingOrQuoteOnNewLine();
         }
-      }
-    });
-
-    storyEl.addEventListener('input', () => {
-      if (!resetBlockAfterBreak) return;
-      resetBlockAfterBreak = false;
-      document.execCommand('formatBlock', false, 'P');
-      const sel = window.getSelection();
-      const node = sel?.anchorNode;
-      const el = node?.nodeType === 3 ? node.parentElement : node;
-      const boldTag = el?.closest('b, strong');
-      if (boldTag && storyEl.contains(boldTag) && boldTag.textContent.trim() === '') {
-        boldTag.remove();
-      }
-      if (document.queryCommandState('bold')) {
-        document.execCommand('bold', false, null);
       }
     });
 
@@ -603,7 +586,7 @@
         passInput.setAttribute('autocomplete', 'current-password');
         passInput.placeholder = 'Пароль';
       }
-    }  
+    }
 
     switchModeBtn.addEventListener('click', () => {
       setAuthMode(!isRegMode);
