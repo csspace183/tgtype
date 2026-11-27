@@ -191,7 +191,7 @@
     .color-bar {
       width: 13px;
       height: 2.5px;
-      background: #222;
+      background: linear-gradient(90deg, #d93025, #e37400, #d4a017, #1e8e3e, #1a73e8, #9334e6);
       margin-top: 2px;
       border-radius: 1px;
     }
@@ -375,7 +375,7 @@
                 </span>
               </button>
               <div class="color-popover" id="colorPopover">
-                <button type="button" class="color-swatch" data-color="#222222" style="background:#222222;" title="Чёрный (по умолчанию)"></button>
+                <button type="button" class="color-swatch" data-color="#222222" style="background:linear-gradient(135deg, #d93025, #d4a017, #1e8e3e, #1a73e8, #9334e6);" title="По умолчанию (чёрный)"></button>
                 <button type="button" class="color-swatch" data-color="#888888" style="background:#888888;" title="Серый"></button>
                 <button type="button" class="color-swatch" data-color="#d93025" style="background:#d93025;" title="Красный"></button>
                 <button type="button" class="color-swatch" data-color="#e37400" style="background:#e37400;" title="Оранжевый"></button>
@@ -605,7 +605,9 @@
         document.execCommand('styleWithCSS', false, true);
         document.execCommand('foreColor', false, color);
         document.execCommand('styleWithCSS', false, false);
-        colorBar.style.background = color;
+        colorBar.style.background = (color === '#222222')
+          ? 'linear-gradient(90deg, #d93025, #e37400, #d4a017, #1e8e3e, #1a73e8, #9334e6)'
+          : color;
         colorPopover.classList.remove('open');
         updatePublishState();
       });
@@ -833,7 +835,9 @@
     // Вставка в заголовок строго чистым текстом в одну строку
     titleEl.addEventListener('paste', e => {
       e.preventDefault();
-      const text = (e.clipboardData || window.clipboardData).getData('text/plain').replace(/\r?\n/g, ' ');
+      const text = (e.clipboardData || window.clipboardData).getData('text/plain').replace(/
+?
+/g, ' ');
       document.execCommand('insertText', false, text);
       updateTitleSideLabel();
       updatePublishState();
