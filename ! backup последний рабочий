@@ -17,8 +17,8 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      min-height: 36px;
-      margin-bottom: 20px;
+      min-height: 24px;
+      margin-bottom: 16px;
     }
     .top-left { display: flex; align-items: center; gap: 16px; }
     .new-link { font-size: 13px; color: #999; text-decoration: none; }
@@ -33,6 +33,8 @@
       letter-spacing: 0.5px;
       cursor: pointer;
       transition: 0.2s;
+      white-space: nowrap;
+      flex-shrink: 0;
     }
     .publish-btn:hover { background: #222; color: #fff; }
     .publish-btn:disabled { opacity: 0.5; cursor: wait; }
@@ -43,6 +45,50 @@
       pointer-events: none;
       display: block;
     }
+
+    /* Шапка редактора */
+    .editor-header {
+      background: #fff;
+      transition: box-shadow 0.15s ease;
+    }
+    .editor-header-inner {
+      max-width: 730px;
+      margin: 0 auto;
+    }
+    .editor-header.is-fixed {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 80;
+      background: #fff;
+      padding: 12px 20px 10px;
+      border-bottom: 1px solid #eee;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+    }
+    .editor-header.is-fixed .top-bar {
+      margin-bottom: 8px;
+    }
+    .editor-header.is-fixed .title-wrap {
+      margin-bottom: 4px;
+    }
+    .editor-header.is-fixed #title {
+      font-size: 20px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .editor-header.is-fixed #metaInfo {
+      margin-bottom: 10px;
+      font-size: 12px;
+    }
+    .editor-header.is-fixed .toolbar-row {
+      margin-bottom: 0;
+    }
+    .editor-header.is-fixed .side-label {
+      font-size: 18px;
+    }
+
     .title-wrap {
       position: relative;
       margin-bottom: 10px;
@@ -75,7 +121,47 @@
     @media (max-width: 900px) {
       .side-label { display: none; }
     }
-    #metaInfo { font-size: 14px; color: #888; margin-bottom: 24px; min-height: 18px; }
+    #metaInfo { font-size: 14px; color: #888; margin-bottom: 20px; min-height: 18px; }
+
+    /* Строка с панелью инструментов и кнопкой PUBLISH вровень */
+    .toolbar-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 18px;
+      min-height: 34px;
+    }
+    .toolbar-row.view-mode {
+      justify-content: flex-end;
+    }
+    .toolbar {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .tool-sep {
+      width: 1px;
+      height: 18px;
+      background: #e0e0e0;
+      margin: 0 2px;
+    }
+    .tool-btn {
+      background: none;
+      border: 1px solid #e0e0e0;
+      border-radius: 4px;
+      padding: 4px 9px;
+      cursor: pointer;
+      color: #555;
+      font-size: 13px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 28px;
+    }
+    .tool-btn:hover { border-color: #222; color: #222; }
+
     #story {
       font-family: Georgia, "Times New Roman", Times, serif;
       font-size: 18px;
@@ -91,26 +177,16 @@
       margin: 18px 0 8px;
     }
     #story blockquote { margin: 12px 0; padding-left: 16px; border-left: 3px solid #222; }
-    #story ul { margin: 8px 0; padding-left: 24px; }
-    #story li { margin: 4px 0; line-height: 1.58; }
+    #story ul { margin: 12px 0; padding-left: 24px; }
+    #story li {
+      margin: 0 0 13px;
+      padding-left: 6px;
+      line-height: 1.55;
+    }
+    #story li:last-child { margin-bottom: 0; }
     #story img { max-width: 100%; height: auto; display: block; margin: 18px 0; border-radius: 4px; }
     #story a { color: #0066cc; text-decoration: underline; cursor: pointer; }
-    .toolbar { margin-bottom: 15px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
-    .tool-sep { width: 1px; height: 18px; background: #e6e6e6; margin: 0 2px; }
-    .tool-btn {
-      background: none;
-      border: 1px solid #e0e0e0;
-      border-radius: 4px;
-      padding: 4px 9px;
-      cursor: pointer;
-      color: #555;
-      font-size: 13px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 28px;
-    }
-    .tool-btn:hover { border-color: #222; color: #222; }
+
     .status { font-size: 13px; color: #888; margin-top: 10px; font-weight: 500; min-height: 18px; }
     .status.error { color: #d9534f; }
     .status.ok { color: #28a745; }
@@ -201,46 +277,53 @@
 <body>
 
   <div class="container">
-    <div class="top-bar">
-      <div class="top-left">
-        <a href="/" class="new-link">+ Новая запись</a>
-        <a href="/blog" id="adminBlogLink" class="new-link">Блог</a>
+    <div id="headerSpacer" style="display:none;"></div>
+    <div id="editorHeader" class="editor-header is-editing">
+      <div class="editor-header-inner">
+        <div class="top-bar">
+          <div class="top-left">
+            <a href="/" class="new-link">+ Новая запись</a>
+            <a href="/blog" id="adminBlogLink" class="new-link">Блог</a>
+          </div>
+        </div>
+
+        <div class="title-wrap">
+          <span id="titleSideLabel" class="side-label">Title</span>
+          <div id="title" class="editable" contenteditable="true" data-placeholder="Title"></div>
+        </div>
+        <div id="metaInfo" class="editable" data-placeholder="Author"></div>
+
+        <div id="toolbarRow" class="toolbar-row">
+          <div id="toolbar" class="toolbar">
+            <button class="tool-btn" type="button" data-cmd="bold" title="Жирный">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4h8a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/><path d="M6 12h9a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/></svg>
+            </button>
+            <button class="tool-btn" type="button" data-cmd="italic" title="Курсив">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="4" x2="10" y2="4"/><line x1="14" y1="20" x2="5" y2="20"/><line x1="15" y1="4" x2="9" y2="20"/></svg>
+            </button>
+            <button class="tool-btn" type="button" data-cmd="strikeThrough" title="Зачёркнутый">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4H9a3 3 0 0 0-2.83 4"/><path d="M14 12a4 4 0 0 1 0 8H6"/><line x1="4" y1="12" x2="20" y2="12"/></svg>
+            </button>
+            <button class="tool-btn" type="button" data-cmd="formatBlock" data-arg="H3" title="Подзаголовок">H</button>
+            <button class="tool-btn" type="button" data-cmd="formatBlock" data-arg="BLOCKQUOTE" title="Цитата">”</button>
+            <button class="tool-btn" type="button" data-cmd="insertUnorderedList" title="Список">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+            </button>
+            <span class="tool-sep"></span>
+            <button class="tool-btn" type="button" data-cmd="justifyCenter" title="По центру">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="6"/><line x1="21" y1="12" x2="3" y2="12"/><line x1="18" y1="18" x2="6" y2="18"/></svg>
+            </button>
+            <button class="tool-btn" type="button" data-cmd="justifyRight" title="По правому краю">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="12" x2="9" y2="12"/><line x1="21" y1="18" x2="3" y2="18"/></svg>
+            </button>
+            <span class="tool-sep"></span>
+            <button id="linkBtn" class="tool-btn" type="button">🔗 Ссылка</button>
+            <button id="photoBtn" class="tool-btn" type="button">📷 Фото</button>
+            <input type="file" id="fileInput" accept="image/*" style="display:none">
+          </div>
+          <button id="actionBtn" class="publish-btn" type="button">PUBLISH</button>
+        </div>
       </div>
-      <button id="actionBtn" class="publish-btn" type="button">PUBLISH</button>
-    </div>
-
-    <div class="title-wrap">
-      <span id="titleSideLabel" class="side-label">Title</span>
-      <div id="title" class="editable" contenteditable="true" data-placeholder="Title"></div>
-    </div>
-    <div id="metaInfo" class="editable" data-placeholder="Author"></div>
-
-    <div id="toolbar" class="toolbar">
-      <button class="tool-btn" type="button" data-cmd="bold" title="Жирный">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4h8a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/><path d="M6 12h9a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/></svg>
-      </button>
-      <button class="tool-btn" type="button" data-cmd="italic" title="Курсив">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="4" x2="10" y2="4"/><line x1="14" y1="20" x2="5" y2="20"/><line x1="15" y1="4" x2="9" y2="20"/></svg>
-      </button>
-      <button class="tool-btn" type="button" data-cmd="strikeThrough" title="Зачёркнутый">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4H9a3 3 0 0 0-2.83 4"/><path d="M14 12a4 4 0 0 1 0 8H6"/><line x1="4" y1="12" x2="20" y2="12"/></svg>
-      </button>
-      <button class="tool-btn" type="button" data-cmd="formatBlock" data-arg="H3" title="Заголовок">H</button>
-      <button class="tool-btn" type="button" data-cmd="formatBlock" data-arg="BLOCKQUOTE" title="Цитата">”</button>
-      <button class="tool-btn" type="button" data-cmd="insertUnorderedList" title="Маркированный список">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="9" y1="6" x2="20" y2="6"/><line x1="9" y1="12" x2="20" y2="12"/><line x1="9" y1="18" x2="20" y2="18"/><circle cx="4" cy="6" r="1.5" fill="currentColor" stroke="none"/><circle cx="4" cy="12" r="1.5" fill="currentColor" stroke="none"/><circle cx="4" cy="18" r="1.5" fill="currentColor" stroke="none"/></svg>
-      </button>
-      <span class="tool-sep"></span>
-      <button class="tool-btn" type="button" data-cmd="justifyCenter" title="По центру">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="6"/><line x1="21" y1="12" x2="3" y2="12"/><line x1="18" y1="18" x2="6" y2="18"/></svg>
-      </button>
-      <button class="tool-btn" type="button" data-cmd="justifyRight" title="По правому краю">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="21" y1="6" x2="9" y2="6"/><line x1="21" y1="12" x2="3" y2="12"/><line x1="21" y1="18" x2="9" y2="18"/></svg>
-      </button>
-      <span class="tool-sep"></span>
-      <button id="linkBtn" class="tool-btn" type="button">🔗 Ссылка</button>
-      <button id="photoBtn" class="tool-btn" type="button">📷 Фото</button>
-      <input type="file" id="fileInput" accept="image/*" style="display:none">
     </div>
 
     <div id="story" class="editable" contenteditable="true" data-placeholder="Your story... (можно вставлять фото через Ctrl+V)"></div>
@@ -283,6 +366,9 @@
   <script>
     const ADMIN_LOGIN = 'lordman';
 
+    const editorHeader = document.getElementById('editorHeader');
+    const headerSpacer = document.getElementById('headerSpacer');
+    const toolbarRow = document.getElementById('toolbarRow');
     const titleEl = document.getElementById('title');
     const titleSideLabel = document.getElementById('titleSideLabel');
     const metaInfoEl = document.getElementById('metaInfo');
@@ -308,6 +394,33 @@
     const pathSlug = window.location.pathname.replace(/^\/+|\/+$/g, '');
     let currentSlug = pathSlug;
     let isViewMode = false;
+
+    function updateFixedHeader() {
+      if (!editorHeader.classList.contains('is-editing')) {
+        editorHeader.classList.remove('is-fixed');
+        headerSpacer.style.display = 'none';
+        return;
+      }
+      const triggerY = 28;
+      if (window.scrollY > triggerY) {
+        if (!editorHeader.classList.contains('is-fixed')) {
+          headerSpacer.style.height = editorHeader.offsetHeight + 'px';
+          headerSpacer.style.display = 'block';
+          editorHeader.classList.add('is-fixed');
+        }
+      } else {
+        editorHeader.classList.remove('is-fixed');
+        headerSpacer.style.display = 'none';
+      }
+    }
+    window.addEventListener('scroll', updateFixedHeader, { passive: true });
+    window.addEventListener('resize', () => {
+      if (editorHeader.classList.contains('is-fixed')) {
+        editorHeader.classList.remove('is-fixed');
+        headerSpacer.style.height = editorHeader.offsetHeight + 'px';
+        editorHeader.classList.add('is-fixed');
+      }
+    });
 
     function updateTitleSideLabel() {
       const hasText = titleEl.innerText.trim().length > 0;
@@ -344,6 +457,16 @@
       return getLoginName(user) === ADMIN_LOGIN;
     }
 
+    function placeCaretAtEnd(el) {
+      if (!el) return;
+      const range = document.createRange();
+      range.selectNodeContents(el);
+      range.collapse(false);
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+    }
+
     document.querySelectorAll('.tool-btn[data-cmd]').forEach(btn => {
       btn.addEventListener('mousedown', e => e.preventDefault());
       btn.addEventListener('click', () => {
@@ -361,11 +484,24 @@
           }
         }
 
-        if (cmd === 'justifyCenter' || cmd === 'justifyRight') {
-          if (document.queryCommandState(cmd)) {
-            document.execCommand('justifyLeft', false, null);
-            return;
+        if ((cmd === 'justifyCenter' || cmd === 'justifyRight') && document.queryCommandState(cmd)) {
+          document.execCommand('justifyLeft', false, null);
+          return;
+        }
+
+        if (cmd === 'insertUnorderedList') {
+          const sel = window.getSelection();
+          const wasCollapsed = sel && sel.isCollapsed;
+          document.execCommand(cmd, false, arg);
+          if (wasCollapsed) {
+            const curNode = window.getSelection()?.anchorNode;
+            const curEl = curNode?.nodeType === 3 ? curNode.parentElement : curNode;
+            const li = curEl?.closest('li');
+            if (li && storyEl.contains(li)) {
+              placeCaretAtEnd(li);
+            }
           }
+          return;
         }
 
         document.execCommand(cmd, false, arg);
@@ -592,7 +728,7 @@
     if (typeof firebase !== 'undefined') {
       firebase.initializeApp({
         apiKey: "AIzaSyAGZvMxxAZEsbech1evNe2aNwR6GfC0xhw",
-        authDomain: "://firebaseapp.com",
+        authDomain: "tgtype-a41aa.firebaseapp.com",
         projectId: "tgtype-a41aa",
         storageBucket: "tgtype-a41aa.firebasestorage.app",
         messagingSenderId: "967552866716",
@@ -778,10 +914,12 @@
 
     async function loadBlogPage() {
       metaInfoEl.style.display = 'none';
-      toolbar.style.display = 'none';
+      toolbarRow.style.display = 'none';
       storyEl.style.display = 'none';
       actionBtn.style.display = 'none';
       titleEl.contentEditable = false;
+      editorHeader.classList.remove('is-editing');
+      updateFixedHeader();
       updateTitleSideLabel();
 
       document.querySelector('.blog-search')?.remove();
@@ -936,7 +1074,10 @@
       titleEl.contentEditable = canEdit;
       storyEl.contentEditable = canEdit;
       toolbar.style.display = canEdit ? 'flex' : 'none';
+      toolbarRow.classList.toggle('view-mode', !canEdit);
       metaInfoEl.contentEditable = (canEdit && currentUser && isAdmin(currentUser));
+      editorHeader.classList.toggle('is-editing', canEdit);
+      updateFixedHeader();
       updateTitleSideLabel();
     }
 
