@@ -82,13 +82,13 @@
       line-height: 1.58;
       min-height: 350px;
     }
-    #story p { margin: 0 0 1em; }
-     #story h3 {
+    #story p, #story div { margin: 0; line-height: 1.58; }
+    #story h3 {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       font-size: 24px;
       font-weight: 700;
       line-height: 1.58;
-      margin: 0 0 1em;
+      margin: 0;
     }
     #story blockquote { margin: 1em 0; padding-left: 16px; border-left: 3px solid #222; }
     #story img { max-width: 100%; height: auto; display: block; margin: 18px 0; border-radius: 4px; }
@@ -237,7 +237,7 @@
     </div>
   </div>
 
-  <!-- Всплывающее поле ввода ссылки -->
+  <!-- Всплывающая плашка ввода ссылки -->
   <div id="linkPopover" class="link-popover">
     <input type="text" id="linkUrlInput" placeholder="Paste or type a link...">
     <button type="button" id="closeLinkPopover" title="Закрыть">✕</button>
@@ -342,10 +342,7 @@
           const node = sel?.anchorNode;
           const el = node?.nodeType === 3 ? node.parentElement : node;
           if (el?.closest(arg.toLowerCase())) {
-            document.execCommand('formatBlock', false, 'P');
-            if (document.queryCommandState('bold')) {
-              document.execCommand('bold', false, null);
-            }
+            document.execCommand('formatBlock', false, 'DIV');
             return;
           }
         }
@@ -430,20 +427,18 @@
       fileInput.value = '';
     });
 
-    let resetBlockAfterBreak = false;
-
-    function breakOutOfHeadingOrQuote() {
+    function exitHeadingOrQuote() {
       document.execCommand('insertParagraph', false, null);
-      document.execCommand('formatBlock', false, 'P');
+      document.execCommand('formatBlock', false, 'DIV');
+      if (document.queryCommandState('bold')) {
+        document.execCommand('bold', false, null);
+      }
       const sel = window.getSelection();
       const node = sel?.anchorNode;
       const el = node?.nodeType === 3 ? node.parentElement : node;
       const boldTag = el?.closest('b, strong');
-      if (boldTag && storyEl.contains(boldTag) && boldTag.textContent.trim() === '') {
+      if (boldTag && storyEl.contains(boldTag) && boldTag.innerText.trim() === '') {
         boldTag.remove();
-      }
-      if (document.queryCommandState('bold')) {
-        document.execCommand('bold', false, null);
       }
     }
 
@@ -455,12 +450,8 @@
         const block = el?.closest('blockquote, h3');
 
         if (block && storyEl.contains(block)) {
-          if (e.cancelable) {
-            e.preventDefault();
-            breakOutOfHeadingOrQuote();
-          } else {
-            resetBlockAfterBreak = true;
-          }
+          e.preventDefault();
+          exitHeadingOrQuote();
         }
       }
     });
@@ -474,31 +465,17 @@
 
         if (block && storyEl.contains(block)) {
           e.preventDefault();
-          breakOutOfHeadingOrQuote();
+          exitHeadingOrQuote();
         }
-      }
-    });
-
-    storyEl.addEventListener('input', () => {
-      if (!resetBlockAfterBreak) return;
-      resetBlockAfterBreak = false;
-      document.execCommand('formatBlock', false, 'P');
-      const sel = window.getSelection();
-      const node = sel?.anchorNode;
-      const el = node?.nodeType === 3 ? node.parentElement : node;
-      const boldTag = el?.closest('b, strong');
-      if (boldTag && storyEl.contains(boldTag) && boldTag.textContent.trim() === '') {
-        boldTag.remove();
-      }
-      if (document.queryCommandState('bold')) {
-        document.execCommand('bold', false, null);
       }
     });
 
     // Вставка в заголовок строго чистым текстом в одну строку
     titleEl.addEventListener('paste', e => {
       e.preventDefault();
-      const text = (e.clipboardData || window.clipboardData).getData('text/plain').replace(/\r?\n/g, ' ');
+      const text = (e.clipboardData || window.clipboardData).getData('text/plain').replace(/
+?
+/g, ' ');
       document.execCommand('insertText', false, text);
       updateTitleSideLabel();
     });
