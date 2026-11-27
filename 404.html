@@ -43,16 +43,28 @@
       pointer-events: none;
       display: block;
     }
-    #title { font-family: Georgia, serif; font-size: 34px; font-weight: 700; margin-bottom: 8px; }
+    #title {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-size: 32px;
+      font-weight: 700;
+      line-height: 1.2;
+      margin-bottom: 10px;
+    }
     #metaInfo { font-size: 14px; color: #888; margin-bottom: 24px; min-height: 18px; }
     #story {
-      font-family: Georgia, serif;
-      font-size: 19px;
-      line-height: 1.65;
+      font-family: Georgia, "Times New Roman", Times, serif;
+      font-size: 18px;
+      line-height: 1.58;
       min-height: 350px;
     }
     #story p { margin: 0 0 1em; }
-    #story h3 { font-size: 24px; margin: 1.3em 0 .5em; }
+    #story h3 {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-size: 24px;
+      font-weight: 700;
+      line-height: 1.3;
+      margin: 1.3em 0 .5em;
+    }
     #story blockquote { margin: 1em 0; padding-left: 16px; border-left: 3px solid #222; }
     #story img { max-width: 100%; height: auto; display: block; margin: 18px 0; border-radius: 4px; }
     #story a { color: #0066cc; text-decoration: underline; cursor: pointer; }
@@ -278,7 +290,7 @@
     function isAdmin(user) {
       return getLoginName(user) === ADMIN_LOGIN;
     }
-     document.querySelectorAll('.tool-btn[data-cmd]').forEach(btn => {
+    document.querySelectorAll('.tool-btn[data-cmd]').forEach(btn => {
       btn.addEventListener('mousedown', e => e.preventDefault());
       btn.addEventListener('click', () => {
         storyEl.focus();
@@ -390,6 +402,14 @@
       }
     });
 
+    // Вставка в заголовок строго чистым текстом в одну строку
+    titleEl.addEventListener('paste', e => {
+      e.preventDefault();
+      const text = (e.clipboardData || window.clipboardData).getData('text/plain').replace(/\r?\n/g, ' ');
+      document.execCommand('insertText', false, text);
+    });
+
+    // Вставка в основной текст: картинки сжимаем, любой текст вставляем без чужого фона и шрифтов
     storyEl.addEventListener('paste', e => {
       const cd = e.clipboardData || window.clipboardData;
       const items = cd ? cd.items : [];
@@ -399,6 +419,12 @@
           compressAndInsertImage(item.getAsFile());
           return;
         }
+      }
+
+      e.preventDefault();
+      const text = cd ? cd.getData('text/plain') : '';
+      if (text) {
+        document.execCommand('insertText', false, text);
       }
     });
 
@@ -483,8 +509,8 @@
         passInput.setAttribute('autocomplete', 'current-password');
         passInput.placeholder = 'Пароль';
       }
-    }
-     switchModeBtn.addEventListener('click', () => {
+    }  
+ switchModeBtn.addEventListener('click', () => {
       setAuthMode(!isRegMode);
       loginInput.focus();
     });
@@ -679,7 +705,7 @@
             const temp = document.createElement('div');
             temp.innerHTML = post.title || post.id;
             const cleanTitle = temp.innerText.trim() || post.id;
-            const ownerName = Array.isArray(post.ownerLogin) ? post.ownerLogin[0] : (post.ownerLogin || 'неизвестен (старая запись)');
+            const ownerName = Array.isArray(post.ownerLogin) ? post.ownerLogin : (post.ownerLogin || 'неизвестен (старая запись)');
 
             if (q && !cleanTitle.toLowerCase().includes(q) && !post.id.toLowerCase().includes(q) && !(adminMode && ownerName.toLowerCase().includes(q))) {
               return;
@@ -753,7 +779,7 @@
           titleEl.innerHTML = data.title;
           storyEl.innerHTML = data.story;
           currentArticleOwner = data.ownerUid || null;
-           if (data.customMeta !== undefined) {
+if (data.customMeta !== undefined) {
             metaInfoEl.textContent = data.customMeta;
           } else {
             const rawAuthor = Array.isArray(data.ownerLogin) ? data.ownerLogin[0] : (data.ownerLogin || '');
