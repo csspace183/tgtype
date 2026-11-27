@@ -343,6 +343,9 @@
           const el = node?.nodeType === 3 ? node.parentElement : node;
           if (el?.closest(arg.toLowerCase())) {
             document.execCommand('formatBlock', false, 'P');
+            if (document.queryCommandState('bold')) {
+              document.execCommand('bold', false, null);
+            }
             return;
           }
         }
@@ -427,6 +430,41 @@
       fileInput.value = '';
     });
 
+    let resetBlockAfterBreak = false;
+
+    function breakOutOfHeadingOrQuote() {
+      document.execCommand('insertParagraph', false, null);
+      document.execCommand('formatBlock', false, 'P');
+      const sel = window.getSelection();
+      const node = sel?.anchorNode;
+      const el = node?.nodeType === 3 ? node.parentElement : node;
+      const boldTag = el?.closest('b, strong');
+      if (boldTag && storyEl.contains(boldTag) && boldTag.textContent.trim() === '') {
+        boldTag.remove();
+      }
+      if (document.queryCommandState('bold')) {
+        document.execCommand('bold', false, null);
+      }
+    }
+
+    storyEl.addEventListener('beforeinput', e => {
+      if (e.inputType === 'insertParagraph' || e.inputType === 'insertLineBreak') {
+        const sel = window.getSelection();
+        const node = sel?.anchorNode;
+        const el = node?.nodeType === 3 ? node.parentElement : node;
+        const block = el?.closest('blockquote, h3');
+
+        if (block && storyEl.contains(block)) {
+          if (e.cancelable) {
+            e.preventDefault();
+            breakOutOfHeadingOrQuote();
+          } else {
+            resetBlockAfterBreak = true;
+          }
+        }
+      }
+    });
+
     storyEl.addEventListener('keydown', e => {
       if (e.key === 'Enter' && !e.shiftKey) {
         const sel = window.getSelection();
@@ -436,9 +474,24 @@
 
         if (block && storyEl.contains(block)) {
           e.preventDefault();
-          document.execCommand('insertParagraph', false, null);
-          document.execCommand('formatBlock', false, 'P');
+          breakOutOfHeadingOrQuote();
         }
+      }
+    });
+
+    storyEl.addEventListener('input', () => {
+      if (!resetBlockAfterBreak) return;
+      resetBlockAfterBreak = false;
+      document.execCommand('formatBlock', false, 'P');
+      const sel = window.getSelection();
+      const node = sel?.anchorNode;
+      const el = node?.nodeType === 3 ? node.parentElement : node;
+      const boldTag = el?.closest('b, strong');
+      if (boldTag && storyEl.contains(boldTag) && boldTag.textContent.trim() === '') {
+        boldTag.remove();
+      }
+      if (document.queryCommandState('bold')) {
+        document.execCommand('bold', false, null);
       }
     });
 
@@ -748,7 +801,7 @@
             const temp = document.createElement('div');
             temp.innerHTML = post.title || post.id;
             const cleanTitle = temp.innerText.trim() || post.id;
-            const ownerName = Array.isArray(post.ownerLogin) ? post.ownerLogin : (post.ownerLogin || 'неизвестен (старая запись)');
+            const ownerName = Array.isArray(post.ownerLogin) ? post.ownerLogin[0] : (post.ownerLogin || 'неизвестен (старая запись)');
 
             if (q && !cleanTitle.toLowerCase().includes(q) && !post.id.toLowerCase().includes(q) && !(adminMode && ownerName.toLowerCase().includes(q))) {
               return;
