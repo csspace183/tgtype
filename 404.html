@@ -1300,7 +1300,10 @@ document.querySelectorAll('.tool-btn[data-cmd]').forEach(btn => {
       }
     });
 
-    let initialLoaded = false;
+    if (pathSlug && pathSlug !== 'blog' && db) {
+      loadArticle(pathSlug);
+    }
+
     if (auth) {
       auth.onAuthStateChanged(user => {
         currentUser = user;
@@ -1320,9 +1323,6 @@ document.querySelectorAll('.tool-btn[data-cmd]').forEach(btn => {
 
         if (pathSlug === 'blog') {
           loadBlogPage();
-        } else if (!initialLoaded) {
-          initialLoaded = true;
-          if (pathSlug) loadArticle(pathSlug);
         }
       });
     }
