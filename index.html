@@ -174,6 +174,11 @@
       min-height: 28px;
     }
     .tool-btn:hover { border-color: #222; color: #222; }
+    .tool-btn-square {
+      width: 28px;
+      height: 28px;
+      padding: 0;
+    }
 
     /* Палитра цветов текста */
     .color-wrap {
@@ -224,8 +229,7 @@
     .color-swatch:hover {
       transform: scale(1.18);
     }
-
-    #story {
+#story {
       font-family: Georgia, "Times New Roman", Times, serif;
       font-size: 18px;
       line-height: 1.58;
@@ -249,6 +253,229 @@
     #story li:last-child { margin-bottom: 0; }
     #story img { max-width: 100%; height: auto; display: block; margin: 18px 0; border-radius: 4px; }
     #story a { color: #0066cc; text-decoration: underline; cursor: pointer; }
+
+    /* Музыкальный плеер в статье */
+    #story .tg-audio-player {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 18px 0;
+      padding: 10px 14px;
+      background: #fafafa;
+      border: 1px solid #e5e5e5;
+      border-radius: 10px;
+      user-select: none;
+      box-sizing: border-box;
+    }
+    .tg-audio-play {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      border: none;
+      background: #222;
+      color: #fff;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      flex-shrink: 0;
+      padding: 0;
+      transition: transform 0.12s ease, background 0.15s ease;
+    }
+    .tg-audio-play:hover { background: #000; transform: scale(1.05); }
+    .tg-audio-progress-wrap {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      min-width: 0;
+    }
+    .tg-audio-meta-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      color: #666;
+      gap: 8px;
+    }
+    .tg-audio-title {
+      font-weight: 500;
+      color: #222;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .tg-audio-time {
+      font-variant-numeric: tabular-nums;
+      color: #888;
+      flex-shrink: 0;
+    }
+    .tg-audio-seek {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 4px;
+      background: #ddd;
+      border-radius: 2px;
+      outline: none;
+      cursor: pointer;
+      margin: 0;
+    }
+    .tg-audio-seek::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #222;
+      cursor: pointer;
+    }
+    .tg-audio-seek::-moz-range-thumb {
+      width: 12px;
+      height: 12px;
+      border: none;
+      border-radius: 50%;
+      background: #222;
+      cursor: pointer;
+    }
+    .tg-audio-vol-wrap {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+    .tg-audio-mute {
+      background: none;
+      border: none;
+      color: #555;
+      cursor: pointer;
+      padding: 2px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .tg-audio-mute:hover { color: #222; }
+    .tg-audio-vol {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 58px;
+      height: 4px;
+      background: #ddd;
+      border-radius: 2px;
+      outline: none;
+      cursor: pointer;
+      margin: 0;
+    }
+    .tg-audio-vol::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #555;
+      cursor: pointer;
+    }
+    .tg-audio-vol::-moz-range-thumb {
+      width: 10px;
+      height: 10px;
+      border: none;
+      border-radius: 50%;
+      background: #555;
+      cursor: pointer;
+    }
+    .tg-audio-del {
+      background: none;
+      border: none;
+      color: #aaa;
+      font-size: 16px;
+      line-height: 1;
+      cursor: pointer;
+      padding: 2px 4px;
+      flex-shrink: 0;
+    }
+    .tg-audio-del:hover { color: #d9534f; }
+    #story[contenteditable="false"] .tg-audio-del {
+      display: none;
+    }
+    @media (max-width: 520px) {
+      .tg-audio-vol { width: 42px; }
+    }
+
+    /* Всплывающая плашка добавления музыки */
+    .music-wrap {
+      position: relative;
+      display: inline-flex;
+    }
+    .music-popover {
+      display: none;
+      position: absolute;
+      top: calc(100% + 6px);
+      right: 0;
+      z-index: 95;
+      width: 310px;
+      background: #fff;
+      border: 1px solid #e0e0e0;
+      border-radius: 10px;
+      padding: 12px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.14);
+      box-sizing: border-box;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .music-popover.open {
+      display: flex;
+    }
+    .music-popover-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #222;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .music-popover-close {
+      background: none;
+      border: none;
+      color: #999;
+      font-size: 15px;
+      cursor: pointer;
+      padding: 0 2px;
+      line-height: 1;
+    }
+    .music-popover-close:hover { color: #222; }
+    .music-popover input {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 7px 10px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 13px;
+      outline: none;
+      font-family: inherit;
+    }
+    .music-popover input:focus { border-color: #222; }
+    .music-hint {
+      font-size: 11.5px;
+      line-height: 1.4;
+      color: #777;
+      background: #f7f7f7;
+      padding: 7px 9px;
+      border-radius: 6px;
+    }
+    .music-hint b { color: #444; }
+    .music-confirm-btn {
+      background: #222;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 7px 12px;
+      font-size: 12.5px;
+      font-weight: 600;
+      cursor: pointer;
+      align-self: flex-end;
+    }
+    .music-confirm-btn:hover { background: #000; }
 
     .status { font-size: 13px; color: #888; margin-top: 10px; font-weight: 500; min-height: 18px; }
     .status.error { color: #d9534f; }
@@ -400,6 +627,24 @@
             <button id="linkBtn" class="tool-btn" type="button">🔗 Ссылка</button>
             <button id="photoBtn" class="tool-btn" type="button">📷 Фото</button>
             <input type="file" id="fileInput" accept="image/*" style="display:none">
+            <div class="music-wrap" id="musicWrap">
+              <button id="musicBtn" class="tool-btn tool-btn-square" type="button" title="Вставить аудиоплеер">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+              </button>
+              <div class="music-popover" id="musicPopover">
+                <div class="music-popover-title">
+                  <span>Вставить музыку</span>
+                  <button type="button" class="music-popover-close" id="closeMusicPopover" title="Закрыть">✕</button>
+                </div>
+                <input type="text" id="musicUrlInput" placeholder="https://example.com">
+                <div class="music-hint">
+                  Нужна <b>прямая ссылка</b> на аудиофайл (<code>.mp3</code>, <code>.ogg</code>, <code>.wav</code>).<br>
+                  • <b>Dropbox / облако:</b> в ссылке замените <code>dl=0</code> на <code>raw=1</code>.<br>
+                  • <b>Яндекс Музыка, YouTube, VK:</b> обычные ссылки на трек/видео не подходят — их нужно предварительно скачать и загрузить на хостинг/GitHub/Dropbox.
+                </div>
+                <button type="button" class="music-confirm-btn" id="musicConfirmBtn">Добавить</button>
+              </div>
+            </div>
           </div>
           <button id="actionBtn" class="publish-btn" type="button" disabled>PUBLISH</button>
         </div>
@@ -439,8 +684,7 @@
       <button id="closeModalBtn" class="modal-close" type="button">Закрыть</button>
     </div>
   </div>
-
-  <script src="/firebase-app-compat.js"></script>
+ <script src="/firebase-app-compat.js"></script>
   <script src="/firebase-auth-compat.js"></script>
   <script src="/firebase-firestore-compat.js"></script>
   <script>
@@ -456,6 +700,12 @@
     const storyEl = document.getElementById('story');
     const actionBtn = document.getElementById('actionBtn');
     const photoBtn = document.getElementById('photoBtn');
+    const musicWrap = document.getElementById('musicWrap');
+    const musicBtn = document.getElementById('musicBtn');
+    const musicPopover = document.getElementById('musicPopover');
+    const closeMusicPopover = document.getElementById('closeMusicPopover');
+    const musicUrlInput = document.getElementById('musicUrlInput');
+    const musicConfirmBtn = document.getElementById('musicConfirmBtn');
     const linkBtn = document.getElementById('linkBtn');
     const linkPopover = document.getElementById('linkPopover');
     const linkUrlInput = document.getElementById('linkUrlInput');
@@ -476,16 +726,31 @@
     let currentUser = null;
     let currentArticleOwner = null;
     let savedLinkRange = null;
+    let savedMusicRange = null;
     const pathSlug = window.location.pathname.replace(/^\/+|\/+$/g, '');
     let currentSlug = pathSlug;
     let isViewMode = false;
 
     let initialSnapshot = { title: '', story: '', meta: '' };
 
+    function getCleanStoryHtml() {
+      const clone = storyEl.cloneNode(true);
+      clone.querySelectorAll('.tg-audio-player').forEach(p => {
+        p.removeAttribute('data-init');
+        const playBtn = p.querySelector('.tg-audio-play');
+        if (playBtn) playBtn.innerHTML = PLAY_ICON;
+        const seek = p.querySelector('.tg-audio-seek');
+        if (seek) seek.value = '0';
+        const timeEl = p.querySelector('.tg-audio-time');
+        if (timeEl) timeEl.textContent = '0:00 / 0:00';
+      });
+      return clone.innerHTML;
+    }
+
     function getCurrentSnapshot() {
       return {
         title: titleEl.innerHTML,
-        story: storyEl.innerHTML,
+        story: getCleanStoryHtml(),
         meta: metaInfoEl.innerText.trim()
       };
     }
@@ -589,10 +854,248 @@
       sel.addRange(range);
     }
 
+    // --- Музыкальный плеер ---
+    const PLAY_ICON = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 4 20 12 6 20 6 4"/></svg>';
+    const PAUSE_ICON = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>';
+    const VOL_ON_ICON = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>';
+    const VOL_OFF_ICON = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>';
+
+    let activeAudio = null;
+    let activePlayBtn = null;
+
+    function formatAudioTime(sec) {
+      if (!isFinite(sec) || sec < 0) return '0:00';
+      const m = Math.floor(sec / 60);
+      const s = Math.floor(sec % 60);
+      return `${m}:${s < 10 ? '0' : ''}${s}`;
+    }
+
+    function extractTrackName(url) {
+      try {
+        const u = new URL(url);
+        const parts = u.pathname.split('/').filter(Boolean);
+        const last = parts.pop() || u.hostname;
+        return decodeURIComponent(last).replace(/\.(mp3|ogg|wav|m4a|aac|flac)$/i, '') || 'Аудиозапись';
+      } catch (e) {
+        return 'Аудиозапись';
+      }
+    }
+
+    function createAudioPlayerElement(src) {
+      const wrap = document.createElement('div');
+      wrap.className = 'tg-audio-player';
+      wrap.setAttribute('contenteditable', 'false');
+      wrap.setAttribute('data-src', src);
+
+      const safeTitle = extractTrackName(src).replace(/[<>&"]/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));
+      wrap.innerHTML = `
+        <button type="button" class="tg-audio-play" title="Воспроизвести / Пауза">${PLAY_ICON}</button>
+        <div class="tg-audio-progress-wrap">
+          <div class="tg-audio-meta-row">
+            <span class="tg-audio-title">${safeTitle}</span>
+            <span class="tg-audio-time">0:00 / 0:00</span>
+          </div>
+          <input type="range" class="tg-audio-seek" min="0" max="100" step="0.1" value="0">
+        </div>
+        <div class="tg-audio-vol-wrap">
+          <button type="button" class="tg-audio-mute" title="Звук">${VOL_ON_ICON}</button>
+          <input type="range" class="tg-audio-vol" min="0" max="1" step="0.05" value="1">
+        </div>
+        <button type="button" class="tg-audio-del" title="Удалить плеер">✕</button>
+      `;
+      return wrap;
+    }
+
+    function initAudioPlayer(playerEl) {
+      if (!playerEl || playerEl.dataset.init === '1') return;
+      playerEl.dataset.init = '1';
+      playerEl.setAttribute('contenteditable', 'false');
+
+      const src = playerEl.getAttribute('data-src');
+      const playBtn = playerEl.querySelector('.tg-audio-play');
+      const seekInput = playerEl.querySelector('.tg-audio-seek');
+      const timeEl = playerEl.querySelector('.tg-audio-time');
+      const muteBtn = playerEl.querySelector('.tg-audio-mute');
+      const volInput = playerEl.querySelector('.tg-audio-vol');
+      const delBtn = playerEl.querySelector('.tg-audio-del');
+
+      const audio = new Audio();
+      audio.preload = 'metadata';
+      audio.src = src;
+
+      let isSeeking = false;
+      let prevVol = 1;
+ function updateTimeDisplay() {
+        const cur = audio.currentTime || 0;
+        const dur = audio.duration || 0;
+        timeEl.textContent = `${formatAudioTime(cur)} / ${formatAudioTime(dur)}`;
+        if (!isSeeking && dur > 0) {
+          seekInput.value = String((cur / dur) * 100);
+        }
+      }
+
+      audio.addEventListener('loadedmetadata', updateTimeDisplay);
+      audio.addEventListener('timeupdate', updateTimeDisplay);
+      audio.addEventListener('ended', () => {
+        playBtn.innerHTML = PLAY_ICON;
+        seekInput.value = '0';
+        if (activeAudio === audio) {
+          activeAudio = null;
+          activePlayBtn = null;
+        }
+      });
+      audio.addEventListener('error', () => {
+        timeEl.textContent = 'Ошибка загрузки';
+        playBtn.innerHTML = PLAY_ICON;
+      });
+
+      playBtn.addEventListener('click', e => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (audio.paused) {
+          if (activeAudio && activeAudio !== audio) {
+            activeAudio.pause();
+            if (activePlayBtn) activePlayBtn.innerHTML = PLAY_ICON;
+          }
+          audio.play().then(() => {
+            playBtn.innerHTML = PAUSE_ICON;
+            activeAudio = audio;
+            activePlayBtn = playBtn;
+          }).catch(() => {
+            timeEl.textContent = 'Недоступно';
+          });
+        } else {
+          audio.pause();
+          playBtn.innerHTML = PLAY_ICON;
+        }
+      });
+
+      seekInput.addEventListener('input', () => {
+        isSeeking = true;
+        if (isFinite(audio.duration) && audio.duration > 0) {
+          const previewSec = (Number(seekInput.value) / 100) * audio.duration;
+          timeEl.textContent = `${formatAudioTime(previewSec)} / ${formatAudioTime(audio.duration)}`;
+        }
+      });
+      seekInput.addEventListener('change', () => {
+        if (isFinite(audio.duration) && audio.duration > 0) {
+          audio.currentTime = (Number(seekInput.value) / 100) * audio.duration;
+        }
+        isSeeking = false;
+      });
+
+      volInput.addEventListener('input', () => {
+        const v = Number(volInput.value);
+        audio.volume = v;
+        audio.muted = v === 0;
+        if (v > 0) prevVol = v;
+        muteBtn.innerHTML = (audio.muted || v === 0) ? VOL_OFF_ICON : VOL_ON_ICON;
+      });
+
+      muteBtn.addEventListener('click', e => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (audio.muted || audio.volume === 0) {
+          audio.muted = false;
+          audio.volume = prevVol || 1;
+          volInput.value = String(audio.volume);
+          muteBtn.innerHTML = VOL_ON_ICON;
+        } else {
+          prevVol = audio.volume || 1;
+          audio.muted = true;
+          volInput.value = '0';
+          muteBtn.innerHTML = VOL_OFF_ICON;
+        }
+      });
+
+      if (delBtn) {
+        delBtn.addEventListener('click', e => {
+          e.preventDefault();
+          e.stopPropagation();
+          audio.pause();
+          playerEl.remove();
+          updatePublishState();
+        });
+      }
+    }
+
+    function initAllAudioPlayers() {
+      storyEl.querySelectorAll('.tg-audio-player').forEach(initAudioPlayer);
+    }
+
+    musicBtn.addEventListener('mousedown', e => e.preventDefault());
+    musicBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      colorPopover.classList.remove('open');
+      const sel = window.getSelection();
+      if (sel && sel.rangeCount && storyEl.contains(sel.anchorNode)) {
+        savedMusicRange = sel.getRangeAt(0).cloneRange();
+      } else {
+        savedMusicRange = null;
+      }
+      musicPopover.classList.toggle('open');
+      if (musicPopover.classList.contains('open')) {
+        musicUrlInput.focus();
+      }
+    });
+
+    closeMusicPopover.addEventListener('click', () => {
+      musicPopover.classList.remove('open');
+    });
+
+    function insertMusicFromInput() {
+      let url = musicUrlInput.value.trim();
+      if (!url) return;
+      if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+
+      const playerEl = createAudioPlayerElement(url);
+      const afterP = document.createElement('p');
+      afterP.innerHTML = '<br>';
+
+      storyEl.focus();
+      const sel = window.getSelection();
+      if (savedMusicRange) {
+        sel.removeAllRanges();
+        sel.addRange(savedMusicRange);
+      }
+
+      if (sel && sel.rangeCount && storyEl.contains(sel.anchorNode)) {
+        const range = sel.getRangeAt(0);
+        range.deleteContents();
+        range.insertNode(afterP);
+        range.insertNode(playerEl);
+        const newRange = document.createRange();
+        newRange.setStart(afterP, 0);
+        newRange.collapse(true);
+        sel.removeAllRanges();
+        sel.addRange(newRange);
+      } else {
+        storyEl.appendChild(playerEl);
+        storyEl.appendChild(afterP);
+      }
+
+      initAudioPlayer(playerEl);
+      musicUrlInput.value = '';
+      savedMusicRange = null;
+      musicPopover.classList.remove('open');
+      updatePublishState();
+    }
+
+    musicConfirmBtn.addEventListener('click', insertMusicFromInput);
+    musicUrlInput.addEventListener('keydown', e => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        insertMusicFromInput();
+      } else if (e.key === 'Escape') {
+        musicPopover.classList.remove('open');
+      }
+    });
+
     // Палитра цветов текста
     colorBtn.addEventListener('mousedown', e => e.preventDefault());
     colorBtn.addEventListener('click', e => {
       e.stopPropagation();
+      musicPopover.classList.remove('open');
       colorPopover.classList.toggle('open');
     });
 
@@ -621,12 +1124,16 @@
       if (!colorWrap.contains(e.target)) {
         colorPopover.classList.remove('open');
       }
+      if (!musicWrap.contains(e.target)) {
+        musicPopover.classList.remove('open');
+      }
     });
 
     document.querySelectorAll('.tool-btn[data-cmd]').forEach(btn => {
       btn.addEventListener('mousedown', e => e.preventDefault());
       btn.addEventListener('click', () => {
         colorPopover.classList.remove('open');
+        musicPopover.classList.remove('open');
         storyEl.focus();
         const cmd = btn.dataset.cmd;
         const arg = btn.dataset.arg || null;
@@ -678,6 +1185,7 @@
     linkBtn.addEventListener('mousedown', e => e.preventDefault());
     linkBtn.addEventListener('click', () => {
       colorPopover.classList.remove('open');
+      musicPopover.classList.remove('open');
       const sel = window.getSelection();
       if (!sel || !sel.rangeCount) return;
 
@@ -712,7 +1220,7 @@
 
       linkPopover.style.top = Math.max(10, window.scrollY + rect.top - popHeight - 10) + 'px';
       linkPopover.style.left = Math.max(10, Math.min(window.innerWidth - popWidth - 10, wordCenter - (popWidth / 2))) + 'px';
-      linkUrlInput.focus();
+ linkUrlInput.focus();
     });
 
     linkUrlInput.addEventListener('keydown', e => {
@@ -744,6 +1252,7 @@
 
     photoBtn.addEventListener('click', () => {
       colorPopover.classList.remove('open');
+      musicPopover.classList.remove('open');
       fileInput.click();
     });
     fileInput.addEventListener('change', e => {
@@ -901,7 +1410,7 @@
     if (typeof firebase !== 'undefined') {
       firebase.initializeApp({
         apiKey: "AIzaSyAGZvMxxAZEsbech1evNe2aNwR6GfC0xhw",
-        authDomain: "tgtype-a41aa.firebaseapp.com",
+        authDomain: "://firebaseapp.com",
         projectId: "tgtype-a41aa",
         storageBucket: "tgtype-a41aa.firebasestorage.app",
         messagingSenderId: "967552866716",
@@ -1003,7 +1512,7 @@
           setStatus(`Аккаунт ${login} зарегистрирован!`, 'ok');
         } catch (err) {
           if (err.code === 'auth/email-already-in-use') {
-            modalMsg.textContent = 'Этот логин уже занят. Придумайте другой.';
+             modalMsg.textContent = 'Этот логин уже занят. Придумайте другой.';
           } else {
             modalMsg.textContent = 'Ошибка регистрации: ' + err.message;
           }
@@ -1232,6 +1741,7 @@
           const data = snap.data();
           titleEl.innerHTML = data.title;
           storyEl.innerHTML = data.story;
+          initAllAudioPlayers();
           currentArticleOwner = data.ownerUid || null;
           if (data.customMeta !== undefined) {
             metaInfoEl.textContent = data.customMeta;
@@ -1323,7 +1833,7 @@
         const now = Date.now();
         const payload = {
           title: titleEl.innerHTML,
-          story: storyEl.innerHTML,
+          story: getCleanStoryHtml(),
           updatedAt: now
         };
 
@@ -1367,3 +1877,8 @@
   </script>
 </body>
 </html>
+
+
+
+
+    
