@@ -93,13 +93,46 @@
     .post-info a:hover { color: #0066cc; }
     .post-meta { font-size: 12px; color: #888; margin-top: 4px; }
     .post-actions { display: flex; gap: 6px; flex-shrink: 0; }
-     .mini-btn {
-     background: #fff; border: 1px solid #ddd; border-radius: 15px;
-     padding: 5px 11px; font-size: 12px; cursor: pointer; color: #333;
-     white-space: nowrap;
-     }
+    .mini-btn {
+      background: #fff; border: 1px solid #ddd; border-radius: 15px;
+      padding: 5px 11px; font-size: 12px; cursor: pointer; color: #333;
+      white-space: nowrap;
+    }
     .mini-btn:hover { border-color: #222; }
     .mini-btn.del:hover { border-color: #d9534f; color: #d9534f; }
+
+    /* Всплывающая плашка ввода ссылки */
+    .link-popover {
+      display: none;
+      position: absolute;
+      z-index: 90;
+      background: #262626;
+      border-radius: 6px;
+      padding: 6px 10px;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+    }
+    .link-popover input {
+      background: transparent;
+      border: none;
+      outline: none;
+      color: #fff;
+      font-size: 14px;
+      width: 220px;
+      font-family: inherit;
+    }
+    .link-popover input::placeholder { color: #888; }
+    .link-popover button {
+      background: none;
+      border: none;
+      color: #999;
+      font-size: 16px;
+      cursor: pointer;
+      padding: 0 4px;
+      line-height: 1;
+    }
+    .link-popover button:hover { color: #fff; }
 
     /* Модальное окно входа/регистрации */
     .modal-bg {
@@ -125,7 +158,7 @@
     .modal-close { display: block; width: 100%; margin-top: 10px; background: none; border: none; color: #999; font-size: 12px; cursor: pointer; }
   </style>
 </head>
-  <body>
+<body>
 
   <div class="container">
     <div class="top-bar">
@@ -164,7 +197,13 @@
     </div>
   </div>
 
-   <!-- Окно входа и регистрации -->
+  <!-- Всплывающее поле ввода ссылки -->
+  <div id="linkPopover" class="link-popover">
+    <input type="text" id="linkUrlInput" placeholder="Paste or type a link...">
+    <button type="button" id="closeLinkPopover" title="Закрыть">✕</button>
+  </div>
+
+  <!-- Окно входа и регистрации -->
   <div id="authModal" class="modal-bg">
     <div class="modal-box">
       <h3 id="modalTitle">Вход</h3>
@@ -196,6 +235,9 @@
     const actionBtn = document.getElementById('actionBtn');
     const photoBtn = document.getElementById('photoBtn');
     const linkBtn = document.getElementById('linkBtn');
+    const linkPopover = document.getElementById('linkPopover');
+    const linkUrlInput = document.getElementById('linkUrlInput');
+    const closeLinkPopover = document.getElementById('closeLinkPopover');
     const fileInput = document.getElementById('fileInput');
     const toolbar = document.getElementById('toolbar');
     const statusEl = document.getElementById('status');
@@ -207,6 +249,7 @@
 
     let currentUser = null;
     let currentArticleOwner = null;
+    let savedLinkRange = null;
     const pathSlug = window.location.pathname.replace(/^\/+|\/+$/g, '');
     let currentSlug = pathSlug;
     let isViewMode = false;
@@ -246,7 +289,6 @@
           const sel = window.getSelection();
           const node = sel?.anchorNode;
           const el = node?.nodeType === 3 ? node.parentElement : node;
-          // Если текст уже внутри H3 или BLOCKQUOTE — возвращаем обычный абзац (P)
           if (el?.closest(arg.toLowerCase())) {
             document.execCommand('formatBlock', false, 'P');
             return;
@@ -256,6 +298,12 @@
         document.execCommand(cmd, false, arg);
       });
     });
+
+    function hideLinkPopover() {
+      linkPopover.style.display = 'none';
+      linkUrlInput.value = '';
+      savedLinkRange = null;
+    }
 
     linkBtn.addEventListener('mousedown', e => e.preventDefault());
     linkBtn.addEventListener('click', () => {
@@ -271,6 +319,7 @@
           sel.addRange(range);
         }
         document.execCommand('unlink', false, null);
+        hideLinkPopover();
         return;
       }
 
@@ -279,18 +328,41 @@
         return;
       }
 
-      const range = sel.getRangeAt(0);
-      let url = prompt('Вставьте ссылку (например, https://google.com):', 'https://');
-      if (!url) return;
-      if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+      savedLinkRange = sel.getRangeAt(0).cloneRange();
+      const rect = savedLinkRange.getBoundingClientRect();
 
-      sel.removeAllRanges();
-      sel.addRange(range);
-      document.execCommand('createLink', false, url);
-
-      const newAnchor = sel.anchorNode?.parentElement?.closest('a') || sel.focusNode?.parentElement?.closest('a');
-      if (newAnchor) newAnchor.target = '_blank';
+      linkUrlInput.value = '';
+      linkPopover.style.display = 'flex';
+      linkPopover.style.top = Math.max(10, window.scrollY + rect.top - 46) + 'px';
+      linkPopover.style.left = Math.max(10, Math.min(window.innerWidth - 270, window.scrollX + rect.left)) + 'px';
+      linkUrlInput.focus();
     });
+
+    linkUrlInput.addEventListener('keydown', e => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        let url = linkUrlInput.value.trim();
+        if (!url || !savedLinkRange) {
+          hideLinkPopover();
+          return;
+        }
+        if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(savedLinkRange);
+        document.execCommand('createLink', false, url);
+
+        const newAnchor = sel.anchorNode?.parentElement?.closest('a') || sel.focusNode?.parentElement?.closest('a');
+        if (newAnchor) newAnchor.target = '_blank';
+
+        hideLinkPopover();
+      } else if (e.key === 'Escape') {
+        hideLinkPopover();
+      }
+    });
+
+    closeLinkPopover.addEventListener('click', hideLinkPopover);
 
     photoBtn.addEventListener('click', () => fileInput.click());
     fileInput.addEventListener('change', e => {
@@ -309,6 +381,18 @@
           e.preventDefault();
           document.execCommand('insertParagraph', false, null);
           document.execCommand('formatBlock', false, 'P');
+        }
+      }
+    });
+
+    storyEl.addEventListener('paste', e => {
+      const cd = e.clipboardData || window.clipboardData;
+      const items = cd ? cd.items : [];
+      for (const item of items) {
+        if (item.kind === 'file' && item.type.indexOf('image') === 0) {
+          e.preventDefault();
+          compressAndInsertImage(item.getAsFile());
+          return;
         }
       }
     });
@@ -360,7 +444,7 @@
       setStatus('Ошибка: файлы Firebase не загрузились.', 'error');
     }
 
-       const modalTitle = document.getElementById('modalTitle');
+    const modalTitle = document.getElementById('modalTitle');
     const authForm = document.getElementById('authForm');
     const modalMsg = document.getElementById('modalMsg');
     const submitAuthBtn = document.getElementById('submitAuthBtn');
@@ -395,8 +479,7 @@
         passInput.placeholder = 'Пароль';
       }
     }
-
-    switchModeBtn.addEventListener('click', () => {
+     switchModeBtn.addEventListener('click', () => {
       setAuthMode(!isRegMode);
       loginInput.focus();
     });
@@ -427,7 +510,6 @@
       const pass = passInput.value;
 
       if (isRegMode) {
-        // Проверка интервала 1 час после последней регистрации
         const lastReg = Number(localStorage.getItem('tgtype_last_reg') || 0);
         if (Date.now() - lastReg < ONE_HOUR) {
           modalMsg.textContent = 'Вы недавно уже создавали аккаунт. Попробуйте позже.';
@@ -459,7 +541,6 @@
           submitAuthBtn.disabled = false;
         }
       } else {
-        // Проверка блокировки на 1 час после 3 неудачных попыток
         const lockUntil = Number(localStorage.getItem('tgtype_login_lock') || 0);
         if (Date.now() < lockUntil) {
           modalMsg.textContent = 'Слишком много неудачных попыток. Повторите попытку позже.';
@@ -533,6 +614,7 @@
       const canEdit = currentUser && (currentUser.uid === currentArticleOwner || isAdmin(currentUser));
       actionBtn.style.display = canEdit ? 'inline-block' : 'none';
     }
+
     async function loadBlogPage() {
       metaInfoEl.style.display = 'none';
       toolbar.style.display = 'none';
@@ -547,6 +629,7 @@
         titleEl.textContent = 'Мои публикации';
         document.title = 'Мои публикации — tgtype';
         setStatus('Войдите в аккаунт, чтобы увидеть свои публикации.', 'error');
+        setAuthMode(false);
         authModal.style.display = 'flex';
         return;
       }
@@ -591,7 +674,7 @@
             const temp = document.createElement('div');
             temp.innerHTML = post.title || post.id;
             const cleanTitle = temp.innerText.trim() || post.id;
-            const ownerName = post.ownerLogin || 'неизвестен (старая запись)';
+            const ownerName = Array.isArray(post.ownerLogin) ? post.ownerLogin[0] : (post.ownerLogin || 'неизвестен (старая запись)');
 
             if (q && !cleanTitle.toLowerCase().includes(q) && !post.id.toLowerCase().includes(q) && !(adminMode && ownerName.toLowerCase().includes(q))) {
               return;
@@ -606,22 +689,22 @@
 
             const li = document.createElement('li');
             li.className = 'post-item';
-           li.innerHTML = `
-           <div class="post-info">
-             <a href="/${post.id}">${cleanTitle}</a>
-             <div class="post-meta">/${post.id}${authorPart} • Изменено: ${dateStr}</div>
-           </div>
-           <div class="post-actions">
-             <button class="mini-btn copy-btn" type="button">Копировать ссылку</button>
-             <button class="mini-btn del del-btn" type="button">Удалить</button>
-           </div>
-         `;
+            li.innerHTML = `
+              <div class="post-info">
+                <a href="/${post.id}">${cleanTitle}</a>
+                <div class="post-meta">/${post.id}${authorPart} • Изменено: ${dateStr}</div>
+              </div>
+              <div class="post-actions">
+                <button class="mini-btn copy-btn" type="button">Копировать ссылку</button>
+                <button class="mini-btn del del-btn" type="button">Удалить</button>
+              </div>
+            `;
 
-         li.querySelector('.copy-btn').addEventListener('click', (e) => {
-           navigator.clipboard?.writeText(fullUrl);
-           e.target.textContent = 'Скопировано!';
-           setTimeout(() => e.target.textContent = 'Копировать ссылку', 1500);
-         });
+            li.querySelector('.copy-btn').addEventListener('click', (e) => {
+              navigator.clipboard?.writeText(fullUrl);
+              e.target.textContent = 'Скопировано!';
+              setTimeout(() => e.target.textContent = 'Копировать ссылку', 1500);
+            });
 
             li.querySelector('.del-btn').addEventListener('click', async () => {
               if (!confirm(`Точно удалить статью «${cleanTitle}» (/${post.id})?`)) return;
@@ -665,8 +748,7 @@
           titleEl.innerHTML = data.title;
           storyEl.innerHTML = data.story;
           currentArticleOwner = data.ownerUid || null;
-
-          if (data.customMeta !== undefined) {
+           if (data.customMeta !== undefined) {
             metaInfoEl.textContent = data.customMeta;
           } else {
             const rawAuthor = Array.isArray(data.ownerLogin) ? data.ownerLogin[0] : (data.ownerLogin || '');
@@ -705,6 +787,7 @@
       if (!db || !auth) return;
 
       if (!currentUser) {
+        setAuthMode(false);
         authModal.style.display = 'flex';
         loginInput.focus();
         return;
@@ -782,4 +865,3 @@
   </script>
 </body>
 </html>
-
