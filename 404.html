@@ -250,43 +250,45 @@
     #story img { max-width: 100%; height: auto; display: block; margin: 18px 0; border-radius: 4px; }
     #story a { color: #0066cc; text-decoration: underline; cursor: pointer; }
 
-    /* Встроенный YouTube-плеер */
-    #story .tg-video-embed {
+    /* Встроенный плеер Яндекс Музыки */
+    #story .tg-ymusic-embed {
       position: relative;
       width: 100%;
-      aspect-ratio: 16 / 9;
       margin: 18px 0;
-      border-radius: 8px;
+      border-radius: 10px;
       overflow: hidden;
-      background: #000;
+      border: 1px solid #eee;
+      background: #fafafa;
     }
-    #story .tg-video-embed iframe {
-      position: absolute;
-      inset: 0;
+    #story .tg-ymusic-embed iframe {
+      display: block;
       width: 100%;
-      height: 100%;
+      height: 180px;
       border: 0;
     }
-    .tg-video-del {
+    #story .tg-ymusic-embed.is-album iframe {
+      height: 420px;
+    }
+    .tg-ymusic-del {
       position: absolute;
       top: 8px;
       right: 8px;
       z-index: 5;
-      width: 28px;
-      height: 28px;
+      width: 26px;
+      height: 26px;
       border-radius: 50%;
       border: none;
-      background: rgba(0, 0, 0, 0.72);
+      background: rgba(0, 0, 0, 0.65);
       color: #fff;
-      font-size: 14px;
+      font-size: 13px;
       line-height: 1;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
     }
-    .tg-video-del:hover { background: #d93025; }
-    #story[contenteditable="false"] .tg-video-del {
+    .tg-ymusic-del:hover { background: #d93025; }
+    #story[contenteditable="false"] .tg-ymusic-del {
       display: none;
     }
 
@@ -446,7 +448,7 @@
       </div>
     </div>
 
-    <div id="story" class="editable" contenteditable="true" data-placeholder="Your story... (можно вставлять фото и ссылки YouTube через Ctrl+V)"></div>
+    <div id="story" class="editable" contenteditable="true" data-placeholder="Your story... (можно вставлять фото и ссылки Яндекс Музыки через Ctrl+V)"></div>
     <div id="status" class="status"></div>
 
     <div class="auth-bar">
@@ -479,7 +481,7 @@
       <button id="closeModalBtn" class="modal-close" type="button">Закрыть</button>
     </div>
   </div>
-   <script src="/firebase-app-compat.js"></script>
+ <script src="/firebase-app-compat.js"></script>
   <script src="/firebase-auth-compat.js"></script>
   <script src="/firebase-firestore-compat.js"></script>
   <script>
@@ -751,10 +753,9 @@
 
       linkPopover.style.top = Math.max(10, window.scrollY + rect.top - popHeight - 10) + 'px';
       linkPopover.style.left = Math.max(10, Math.min(window.innerWidth - popWidth - 10, wordCenter - (popWidth / 2))) + 'px';
-linkUrlInput.focus();
+      linkUrlInput.focus();
     });
-
-    linkUrlInput.addEventListener('keydown', e => {
+ linkUrlInput.addEventListener('keydown', e => {
       if (e.key === 'Enter') {
         e.preventDefault();
         let url = linkUrlInput.value.trim();
@@ -822,37 +823,53 @@ linkUrlInput.focus();
       updatePublishState();
     }
 
-    // Встраивание YouTube-плеера по ссылке
-    function extractYouTubeId(text) {
+    // Встраивание плеера Яндекс Музыки
+    function parseYandexMusicUrl(text) {
       const trimmed = (text || '').trim();
-      const match = trimmed.match(/^(?:https?:\/\/)?(?:www\.|m\.)?(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/|live\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})(?:[?&/#].*)?$/i);
-      return match ? match.at(1) : null;
+      const trackWithAlbum = trimmed.match(/^https?:\/\/music\.yandex\.(?:ru|by|kz|uz|com)\/album\/(\d+)\/track\/(\d+)(?:[?/#].*)?$/i);
+      if (trackWithAlbum) {
+        return {
+          src: `https://yandex.ru{trackWithAlbum.at(2)}/${trackWithAlbum.at(1)}`,
+          isAlbum: false
+        };
+      }
+      const trackOnly = trimmed.match(/^https?:\/\/music\.yandex\.(?:ru|by|kz|uz|com)\/track\/(\d+)(?:[?/#].*)?$/i);
+      if (trackOnly) {
+        return {
+          src: `https://yandex.ru{trackOnly.at(1)}`,
+          isAlbum: false
+        };
+      }
+      const albumOnly = trimmed.match(/^https?:\/\/music\.yandex\.(?:ru|by|kz|uz|com)\/album\/(\d+)(?:[?/#].*)?$/i);
+      if (albumOnly) {
+        return {
+          src: `https://yandex.ru{albumOnly.at(1)}`,
+          isAlbum: true
+        };
+      }
+      return null;
     }
 
-    function createYouTubeEmbedElement(videoId) {
+    function insertYandexMusicEmbed(parsed, replaceNode = null) {
       const wrap = document.createElement('div');
-      wrap.className = 'tg-video-embed';
+      wrap.className = 'tg-ymusic-embed' + (parsed.isAlbum ? ' is-album' : '');
       wrap.setAttribute('contenteditable', 'false');
-      wrap.innerHTML = `<iframe src="https://youtube.com{videoId}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe><button type="button" class="tg-video-del" title="Удалить видео">✕</button>`;
-      return wrap;
-    }
+      wrap.innerHTML = `<iframe src="${parsed.src}" allow="clipboard-write"></iframe><button type="button" class="tg-ymusic-del" title="Удалить плеер">✕</button>`;
 
-    function insertYouTubeEmbed(videoId, replaceNode = null) {
-      const embedEl = createYouTubeEmbedElement(videoId);
       const afterP = document.createElement('p');
       afterP.innerHTML = '<br>';
 
       if (replaceNode && storyEl.contains(replaceNode)) {
-        replaceNode.replaceWith(embedEl, afterP);
+        replaceNode.replaceWith(wrap, afterP);
       } else {
         const sel = window.getSelection();
         if (sel && sel.rangeCount && storyEl.contains(sel.anchorNode)) {
           const range = sel.getRangeAt(0);
           range.deleteContents();
           range.insertNode(afterP);
-          range.insertNode(embedEl);
+          range.insertNode(wrap);
         } else {
-          storyEl.appendChild(embedEl);
+          storyEl.appendChild(wrap);
           storyEl.appendChild(afterP);
         }
       }
@@ -867,11 +884,11 @@ linkUrlInput.focus();
     }
 
     storyEl.addEventListener('click', e => {
-      const delBtn = e.target.closest('.tg-video-del');
+      const delBtn = e.target.closest('.tg-ymusic-del');
       if (delBtn && storyEl.contains(delBtn)) {
         e.preventDefault();
         e.stopPropagation();
-        delBtn.closest('.tg-video-embed')?.remove();
+        delBtn.closest('.tg-ymusic-embed')?.remove();
         updatePublishState();
       }
     });
@@ -883,17 +900,17 @@ linkUrlInput.focus();
         const lineEl = node?.nodeType === 3 ? node.parentElement : node;
         const targetBlock = lineEl?.closest('p, div');
         if (targetBlock && targetBlock !== storyEl && storyEl.contains(targetBlock)) {
-          const ytId = extractYouTubeId(targetBlock.innerText);
-          if (ytId) {
+          const ym = parseYandexMusicUrl(targetBlock.innerText);
+          if (ym) {
             e.preventDefault();
-            insertYouTubeEmbed(ytId, targetBlock);
+            insertYandexMusicEmbed(ym, targetBlock);
             return;
           }
         } else if (node && node.nodeType === 3 && node.parentElement === storyEl) {
-          const ytId = extractYouTubeId(node.textContent);
-          if (ytId) {
+          const ym = parseYandexMusicUrl(node.textContent);
+          if (ym) {
             e.preventDefault();
-            insertYouTubeEmbed(ytId, node);
+            insertYandexMusicEmbed(ym, node);
             return;
           }
         }
@@ -958,7 +975,7 @@ linkUrlInput.focus();
       updatePublishState();
     });
 
-    // Вставка в основной текст: картинки сжимаем, ссылки YouTube превращаем в плеер, текст вставляем чистым
+    // Вставка в основной текст: картинки сжимаем, ссылки Яндекс Музыки превращаем в плеер, текст вставляем чистым
     storyEl.addEventListener('paste', e => {
       const cd = e.clipboardData || window.clipboardData;
       const items = cd ? cd.items : [];
@@ -973,9 +990,9 @@ linkUrlInput.focus();
       e.preventDefault();
       const text = cd ? cd.getData('text/plain') : '';
       if (text) {
-        const ytId = extractYouTubeId(text);
-        if (ytId) {
-          insertYouTubeEmbed(ytId);
+        const ym = parseYandexMusicUrl(text);
+        if (ym) {
+          insertYandexMusicEmbed(ym);
           return;
         }
         document.execCommand('insertText', false, text);
@@ -1023,13 +1040,14 @@ linkUrlInput.focus();
         projectId: "tgtype-a41aa",
         storageBucket: "tgtype-a41aa.firebasestorage.app",
         messagingSenderId: "967552866716",
-        appId: "1:967552866716:web:2d3dff00a96e83e151d059"
+appId: "1:967552866716:web:2d3dff00a96e83e151d059"
       });
       db = firebase.firestore();
       auth = firebase.auth();
     } else {
       setStatus('Ошибка: файлы Firebase не загрузились.', 'error');
     }
+
     const modalTitle = document.getElementById('modalTitle');
     const authForm = document.getElementById('authForm');
     const modalMsg = document.getElementById('modalMsg');
@@ -1196,8 +1214,7 @@ linkUrlInput.focus();
         }
       });
     }
-
-    function updateEditVisibility() {
+function updateEditVisibility() {
       if (!isViewMode) {
         actionBtn.style.display = 'inline-block';
         toolbarRow.classList.remove('hidden', 'view-mode');
@@ -1296,7 +1313,7 @@ linkUrlInput.focus();
                 <a href="/${post.id}">${cleanTitle}</a>
                 <div class="post-meta">/${post.id}${authorPart} • Изменено: ${dateStr}</div>
               </div>
- <div class="post-actions">
+              <div class="post-actions">
                 <button class="mini-btn copy-btn" type="button">Копировать ссылку</button>
                 <button class="mini-btn del del-btn" type="button">Удалить</button>
               </div>
@@ -1339,7 +1356,8 @@ linkUrlInput.focus();
         setStatus('Ошибка загрузки списка: ' + e.message, 'error');
       }
     }
-async function loadArticle(slug) {
+
+    async function loadArticle(slug) {
       setEditable(false);
       setStatus('Загрузка...');
       try {
@@ -1458,7 +1476,7 @@ async function loadArticle(slug) {
         await db.collection('articles').doc(targetSlug).set(payload, { merge: true });
 
         if (isAdmin(currentUser)) {
-          metaInfoEl.textContent = payload.customMeta;
+    metaInfoEl.textContent = payload.customMeta;
         } else {
           renderMeta(payload.ownerLogin || getLoginName(currentUser), now);
         }
@@ -1487,27 +1505,6 @@ async function loadArticle(slug) {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    
 
 
 
