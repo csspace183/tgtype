@@ -674,10 +674,58 @@
 
         if (cmd === 'formatBlock' && arg) {
           const sel = window.getSelection();
-          const node = sel?.anchorNode;
+          if (!sel || !sel.rangeCount) return;
+          const node = sel.anchorNode;
           const el = node?.nodeType === 3 ? node.parentElement : node;
-          if (el?.closest(arg.toLowerCase())) {
-            document.execCommand('formatBlock', false, 'P');
+
+          // 1. Если строка уже заголовок/цитата — превращаем обратно в обычный абзац <p>
+          const existingBlock = el?.closest(arg.toLowerCase());
+          if (existingBlock && storyEl.contains(existingBlock)) {
+            const p = document.createElement('p');
+            p.innerHTML = existingBlock.innerHTML || '<br>';
+            existingBlock.replaceWith(p);
+            placeCaretAtEnd(p);
+            updatePublishState();
+            return;
+          }
+
+          // 2. Ищем текущий строчный блок (p, div, blockquote, h3) внутри #story
+          let lineBlock = el?.closest('p, div, blockquote, h3');
+          if (lineBlock === storyEl) lineBlock = null;
+
+          if (lineBlock && storyEl.contains(lineBlock)) {
+            const newEl = document.createElement(arg.toLowerCase());
+            newEl.innerHTML = lineBlock.innerHTML || '<br>';
+            lineBlock.replaceWith(newEl);
+            placeCaretAtEnd(newEl);
+            updatePublishState();
+            return;
+          }
+
+          // 3. Если текст лежит прямо в корне #story без <p>/<div> — оборачиваем всю строку
+          if (node && storyEl.contains(node)) {
+            let startNode = node;
+            while (startNode.previousSibling && startNode.previousSibling.nodeName !== 'BR' && !/^(P|DIV|H3|BLOCKQUOTE|UL)$/i.test(startNode.previousSibling.nodeName)) {
+              startNode = startNode.previousSibling;
+            }
+            const nodesToWrap = [];
+            let cur = startNode;
+            while (cur && cur.nodeName !== 'BR' && !/^(P|DIV|H3|BLOCKQUOTE|UL)$/i.test(cur.nodeName)) {
+              const next = cur.nextSibling;
+              nodesToWrap.push(cur);
+              cur = next;
+            }
+            if (cur && cur.nodeName === 'BR') cur.remove();
+
+            const newEl = document.createElement(arg.toLowerCase());
+            if (nodesToWrap.length > 0) {
+              storyEl.insertBefore(newEl, nodesToWrap.at(0));
+              nodesToWrap.forEach(n => newEl.appendChild(n));
+            } else {
+              newEl.innerHTML = '<br>';
+              storyEl.appendChild(newEl);
+            }
+            placeCaretAtEnd(newEl);
             updatePublishState();
             return;
           }
@@ -1484,8 +1532,7 @@
         setEditable(false);
         actionBtn.textContent = 'EDIT';
         updateEditVisibility();
-        setStatus('Опубликовано! Ссылка скопирована в буфер.', 'ok');
-        navigator.clipboard?.writeText(window.location.href);
+         setStatus('Опубликовано!', 'ok');
       } catch (e) {
         setStatus('Ошибка публикации: ' + e.message, 'error');
       } finally {
