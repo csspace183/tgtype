@@ -47,6 +47,39 @@
       display: block;
     }
 
+    /* Экран загрузки страницы при обращении к базе */
+    .page-loader {
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      background: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      transition: opacity 0.2s ease;
+    }
+    .page-loader.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+    .loader-spinner {
+      width: 34px;
+      height: 34px;
+      border: 3px solid #eaeaea;
+      border-top-color: #222;
+      border-radius: 50%;
+      animation: tgSpin 0.75s linear infinite;
+    }
+    .loader-text {
+      font-size: 13px;
+      color: #888;
+    }
+    @keyframes tgSpin {
+      to { transform: rotate(360deg); }
+    }
+
     /* Шапка редактора */
     .editor-header {
       background: #fff;
@@ -381,6 +414,11 @@
 </head>
 <body>
 
+  <div id="pageLoader" class="page-loader" style="display:none;">
+    <div class="loader-spinner"></div>
+    <div class="loader-text">Загрузка...</div>
+  </div>
+
   <div class="container">
     <div id="headerSpacer" style="display:none;"></div>
     <div id="editorHeader" class="editor-header is-editing">
@@ -482,13 +520,14 @@
       <button id="closeModalBtn" class="modal-close" type="button">Закрыть</button>
     </div>
   </div>
- <script src="/firebase-app-compat.js"></script>
+   <script src="/firebase-app-compat.js"></script>
   <script src="/firebase-auth-compat.js"></script>
   <script src="/firebase-firestore-compat.js"></script>
   <script>
     const ADMIN_LOGIN = 'lordman';
     const DEFAULT_RAINBOW = 'linear-gradient(90deg, #ff3b30, #ff9500, #ffcc00, #34c759, #007aff, #af52de)';
 
+    const pageLoader = document.getElementById('pageLoader');
     const editorHeader = document.getElementById('editorHeader');
     const headerSpacer = document.getElementById('headerSpacer');
     const toolbarRow = document.getElementById('toolbarRow');
@@ -515,12 +554,29 @@
     const loginInput = document.getElementById('loginInput');
     const passInput = document.getElementById('passInput');
 
+    function showLoader() {
+      if (pageLoader) {
+        pageLoader.style.display = 'flex';
+        pageLoader.classList.remove('hidden');
+      }
+    }
+    function hideLoader() {
+      if (pageLoader && pageLoader.style.display !== 'none') {
+        pageLoader.classList.add('hidden');
+        setTimeout(() => { pageLoader.style.display = 'none'; }, 200);
+      }
+    }
+
     let currentUser = null;
     let currentArticleOwner = null;
     let savedLinkRange = null;
     const pathSlug = window.location.pathname.replace(/^\/+|\/+$/g, '');
     let currentSlug = pathSlug;
     let isViewMode = false;
+
+    if (pathSlug) {
+      showLoader();
+    }
 
     let initialSnapshot = { title: '', story: '', meta: '' };
 
@@ -664,8 +720,7 @@
         colorPopover.classList.remove('open');
       }
     });
-
-    document.querySelectorAll('.tool-btn[data-cmd]').forEach(btn => {
+document.querySelectorAll('.tool-btn[data-cmd]').forEach(btn => {
       btn.addEventListener('mousedown', e => e.preventDefault());
       btn.addEventListener('click', () => {
         colorPopover.classList.remove('open');
@@ -735,7 +790,8 @@
             return;
           }
         }
-if ((cmd === 'justifyCenter' || cmd === 'justifyRight') && document.queryCommandState(cmd)) {
+
+        if ((cmd === 'justifyCenter' || cmd === 'justifyRight') && document.queryCommandState(cmd)) {
           document.execCommand('justifyLeft', false, null);
           updatePublishState();
           return;
@@ -923,7 +979,7 @@ if ((cmd === 'justifyCenter' || cmd === 'justifyRight') && document.queryCommand
       }
 
       const newRange = document.createRange();
-      newRange.setStart(afterP, 0);
+ newRange.setStart(afterP, 0);
       newRange.collapse(true);
       const sel = window.getSelection();
       sel.removeAllRanges();
@@ -1013,7 +1069,8 @@ if ((cmd === 'justifyCenter' || cmd === 'justifyRight') && document.queryCommand
       }
       updatePublishState();
     });
-  // Вставка в заголовок строго чистым текстом в одну строку
+
+    // Вставка в заголовок строго чистым текстом в одну строку
     titleEl.addEventListener('paste', e => {
       e.preventDefault();
       const text = (e.clipboardData || window.clipboardData).getData('text/plain').replace(/\r?\n/g, ' ');
@@ -1092,6 +1149,7 @@ if ((cmd === 'justifyCenter' || cmd === 'justifyRight') && document.queryCommand
       db = firebase.firestore();
       auth = firebase.auth();
     } else {
+      hideLoader();
       setStatus('Ошибка: файлы Firebase не загрузились.', 'error');
       const reloadBtn = document.createElement('button');
       reloadBtn.type = 'button';
@@ -1205,7 +1263,7 @@ if ((cmd === 'justifyCenter' || cmd === 'justifyRight') && document.queryCommand
           modalMsg.textContent = 'Слишком много неудачных попыток. Повторите попытку позже.';
           return;
         } else if (lockUntil > 0) {
-          localStorage.removeItem('tgtype_login_lock');
+ localStorage.removeItem('tgtype_login_lock');
           localStorage.removeItem('tgtype_login_fails');
         }
 
@@ -1268,7 +1326,8 @@ if ((cmd === 'justifyCenter' || cmd === 'justifyRight') && document.queryCommand
         }
       });
     }
-function updateEditVisibility() {
+
+    function updateEditVisibility() {
       if (!isViewMode) {
         actionBtn.style.display = 'inline-block';
         toolbarRow.classList.remove('hidden', 'view-mode');
@@ -1299,6 +1358,7 @@ function updateEditVisibility() {
       document.querySelector('.posts-list')?.remove();
 
       if (!currentUser) {
+        hideLoader();
         titleEl.textContent = 'Мои публикации';
         document.title = 'Мои публикации — tgtype';
         setStatus('Войдите в аккаунт, чтобы увидеть свои публикации.', 'error');
@@ -1408,10 +1468,12 @@ function updateEditVisibility() {
         renderList();
       } catch (e) {
         setStatus('Ошибка загрузки списка: ' + e.message, 'error');
+      } finally {
+        hideLoader();
       }
     }
 
-        async function loadArticle(slug) {
+    async function loadArticle(slug) {
       setEditable(false);
       setStatus('Загрузка...');
       try {
@@ -1450,6 +1512,8 @@ function updateEditVisibility() {
         }
       } catch (e) {
         setStatus('Ошибка загрузки: ' + e.message, 'error');
+      } finally {
+        hideLoader();
       }
     }
 
@@ -1468,7 +1532,6 @@ function updateEditVisibility() {
       updateTitleSideLabel();
       updatePublishState();
     }
-
 
     function slugify(text) {
       const map = {'а':'a','б':'b','в':'v','г':'g','д':'d','е':'e','ё':'yo','ж':'zh','з':'z','и':'i','й':'y','к':'k','л':'l','м':'m','н':'n','о':'o','п':'p','р':'r','с':'s','т':'t','у':'u','ф':'f','х':'h','ц':'ts','ч':'ch','ш':'sh','щ':'sch','ъ':'','ы':'y','ь':'','э':'e','ю':'yu','я':'ya'};
@@ -1541,7 +1604,7 @@ function updateEditVisibility() {
         if (isAdmin(currentUser)) {
           metaInfoEl.textContent = payload.customMeta;
         } else {
- renderMeta(payload.ownerLogin || getLoginName(currentUser), now);
+          renderMeta(payload.ownerLogin || getLoginName(currentUser), now);
         }
 
         currentSlug = targetSlug;
@@ -1563,6 +1626,34 @@ function updateEditVisibility() {
   </script>
 </body>
 </html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
 
 
 
