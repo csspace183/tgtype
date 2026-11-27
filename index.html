@@ -152,15 +152,21 @@
     </div>
   </div>
 
-  <!-- Окно входа и регистрации -->
+   <!-- Окно входа и регистрации -->
   <div id="authModal" class="modal-bg">
     <div class="modal-box">
-      <h3>Вход / Регистрация</h3>
-      <input type="text" id="loginInput" placeholder="Логин (латиницей, например admin)">
-      <input type="password" id="passInput" placeholder="Пароль (минимум 6 символов)">
-      <div class="modal-btns">
-        <button id="doLoginBtn" class="btn-primary" type="button">Войти</button>
-        <button id="doRegBtn" class="btn-secondary" type="button">Регистрация</button>
+      <h3 id="modalTitle">Вход</h3>
+      <form id="authForm">
+        <input type="text" id="loginInput" name="username" autocomplete="username" placeholder="Логин (латиницей)">
+        <input type="password" id="passInput" name="password" autocomplete="current-password" placeholder="Пароль">
+        <div id="modalMsg" style="font-size:12px; color:#d9534f; margin-bottom:8px; min-height:16px;"></div>
+        <div class="modal-btns">
+          <button id="submitAuthBtn" class="btn-primary" type="submit">Войти</button>
+        </div>
+      </form>
+      <div style="text-align:center; margin-top:12px; font-size:12px; color:#777;">
+        <span id="switchHint">Нет аккаунта?</span>
+        <button id="switchModeBtn" type="button" style="background:none; border:none; color:#222; font-weight:600; cursor:pointer; text-decoration:underline; padding:0; font-size:12px;">Регистрация</button>
       </div>
       <button id="closeModalBtn" class="modal-close" type="button">Закрыть</button>
     </div>
@@ -325,10 +331,52 @@
       setStatus('Ошибка: файлы Firebase не загрузились.', 'error');
     }
 
+       const modalTitle = document.getElementById('modalTitle');
+    const authForm = document.getElementById('authForm');
+    const modalMsg = document.getElementById('modalMsg');
+    const submitAuthBtn = document.getElementById('submitAuthBtn');
+    const switchHint = document.getElementById('switchHint');
+    const switchModeBtn = document.getElementById('switchModeBtn');
+
+    let isRegMode = false;
+    const ONE_HOUR = 60 * 60 * 1000;
+
+    function setAuthMode(reg) {
+      isRegMode = reg;
+      modalMsg.textContent = '';
+      if (isRegMode) {
+        modalTitle.textContent = 'Регистрация';
+        submitAuthBtn.textContent = 'Создать аккаунт';
+        switchHint.textContent = 'Уже есть аккаунт?';
+        switchModeBtn.textContent = 'Войти';
+        loginInput.value = '';
+        passInput.value = '';
+        loginInput.setAttribute('autocomplete', 'off');
+        passInput.setAttribute('autocomplete', 'new-password');
+        passInput.placeholder = 'Пароль (минимум 6 символов)';
+      } else {
+        modalTitle.textContent = 'Вход';
+        submitAuthBtn.textContent = 'Войти';
+        switchHint.textContent = 'Нет аккаунта?';
+        switchModeBtn.textContent = 'Регистрация';
+        loginInput.value = '';
+        passInput.value = '';
+        loginInput.setAttribute('autocomplete', 'username');
+        passInput.setAttribute('autocomplete', 'current-password');
+        passInput.placeholder = 'Пароль';
+      }
+    }
+
+    switchModeBtn.addEventListener('click', () => {
+      setAuthMode(!isRegMode);
+      loginInput.focus();
+    });
+
     authBtn.addEventListener('click', () => {
       if (currentUser) {
         auth.signOut();
       } else {
+        setAuthMode(false);
         authModal.style.display = 'flex';
         loginInput.focus();
       }
@@ -342,33 +390,85 @@
       return raw.trim().toLowerCase().replace(/[^a-z0-9_-]/g, '');
     }
 
-    document.getElementById('doLoginBtn').addEventListener('click', async () => {
-      const login = cleanLogin(loginInput.value);
-      const pass = passInput.value;
-      if (!login || !pass) return alert('Введите логин и пароль!');
-      try {
-        await auth.signInWithEmailAndPassword(`${login}@tgtype.local`, pass);
-        authModal.style.display = 'none';
-        setStatus(`Вход выполнен: ${login}`, 'ok');
-      } catch (e) {
-        alert('Неверный логин или пароль!');
-      }
-    });
+    authForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      modalMsg.textContent = '';
 
-    document.getElementById('doRegBtn').addEventListener('click', async () => {
       const login = cleanLogin(loginInput.value);
       const pass = passInput.value;
-      if (!login || login.length < 3) return alert('Логин: минимум 3 латинских символа (a-z, 0-9)');
-      if (!pass || pass.length < 6) return alert('Пароль: минимум 6 символов');
-      try {
-        await auth.createUserWithEmailAndPassword(`${login}@tgtype.local`, pass);
-        authModal.style.display = 'none';
-        setStatus(`Аккаунт ${login} зарегистрирован!`, 'ok');
-      } catch (e) {
-        if (e.code === 'auth/email-already-in-use') {
-          alert('Этот логин уже занят! Придумайте другой.');
-        } else {
-          alert('Ошибка регистрации: ' + e.message);
+
+      if (isRegMode) {
+        // Проверка интервала 1 час после последней регистрации
+        const lastReg = Number(localStorage.getItem('tgtype_last_reg') || 0);
+        if (Date.now() - lastReg < ONE_HOUR) {
+          modalMsg.textContent = 'Вы недавно уже создавали аккаунт. Попробуйте позже.';
+          return;
+        }
+
+        if (!login || login.length < 3) {
+          modalMsg.textContent = 'Логин: минимум 3 латинских символа (a-z, 0-9).';
+          return;
+        }
+        if (!pass || pass.length < 6) {
+          modalMsg.textContent = 'Пароль: минимум 6 символов.';
+          return;
+        }
+
+        submitAuthBtn.disabled = true;
+        try {
+          await auth.createUserWithEmailAndPassword(`${login}@tgtype.local`, pass);
+          localStorage.setItem('tgtype_last_reg', String(Date.now()));
+          authModal.style.display = 'none';
+          setStatus(`Аккаунт ${login} зарегистрирован!`, 'ok');
+        } catch (err) {
+          if (err.code === 'auth/email-already-in-use') {
+            modalMsg.textContent = 'Этот логин уже занят. Придумайте другой.';
+          } else {
+            modalMsg.textContent = 'Ошибка регистрации: ' + err.message;
+          }
+        } finally {
+          submitAuthBtn.disabled = false;
+        }
+      } else {
+        // Проверка блокировки на 1 час после 3 неудачных попыток
+        const lockUntil = Number(localStorage.getItem('tgtype_login_lock') || 0);
+        if (Date.now() < lockUntil) {
+          modalMsg.textContent = 'Слишком много неудачных попыток. Повторите попытку позже.';
+          return;
+        } else if (lockUntil > 0) {
+          localStorage.removeItem('tgtype_login_lock');
+          localStorage.removeItem('tgtype_login_fails');
+        }
+
+        if (!login || !pass) {
+          modalMsg.textContent = 'Введите логин и пароль.';
+          return;
+        }
+
+        submitAuthBtn.disabled = true;
+        try {
+          await auth.signInWithEmailAndPassword(`${login}@tgtype.local`, pass);
+          localStorage.removeItem('tgtype_login_fails');
+          localStorage.removeItem('tgtype_login_lock');
+          authModal.style.display = 'none';
+          setStatus(`Вход выполнен: ${login}`, 'ok');
+        } catch (err) {
+          if (err.code === 'auth/too-many-requests') {
+            localStorage.setItem('tgtype_login_lock', String(Date.now() + ONE_HOUR));
+            modalMsg.textContent = 'Слишком много неудачных попыток. Повторите попытку позже.';
+          } else {
+            const fails = Number(localStorage.getItem('tgtype_login_fails') || 0) + 1;
+            if (fails >= 3) {
+              localStorage.setItem('tgtype_login_lock', String(Date.now() + ONE_HOUR));
+              localStorage.removeItem('tgtype_login_fails');
+              modalMsg.textContent = 'Слишком много неудачных попыток. Повторите попытку позже.';
+            } else {
+              localStorage.setItem('tgtype_login_fails', String(fails));
+              modalMsg.textContent = `Неверный логин или пароль. Осталось попыток: ${3 - fails}`;
+            }
+          }
+        } finally {
+          submitAuthBtn.disabled = false;
         }
       }
     });
