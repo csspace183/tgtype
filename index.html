@@ -91,9 +91,12 @@
       margin: 18px 0 8px;
     }
     #story blockquote { margin: 12px 0; padding-left: 16px; border-left: 3px solid #222; }
+    #story ul { margin: 8px 0; padding-left: 24px; }
+    #story li { margin: 4px 0; line-height: 1.58; }
     #story img { max-width: 100%; height: auto; display: block; margin: 18px 0; border-radius: 4px; }
     #story a { color: #0066cc; text-decoration: underline; cursor: pointer; }
-    .toolbar { margin-bottom: 15px; display: flex; gap: 8px; flex-wrap: wrap; }
+    .toolbar { margin-bottom: 15px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .tool-sep { width: 1px; height: 18px; background: #e6e6e6; margin: 0 2px; }
     .tool-btn {
       background: none;
       border: 1px solid #e0e0e0;
@@ -222,8 +225,19 @@
       <button class="tool-btn" type="button" data-cmd="strikeThrough" title="Зачёркнутый">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4H9a3 3 0 0 0-2.83 4"/><path d="M14 12a4 4 0 0 1 0 8H6"/><line x1="4" y1="12" x2="20" y2="12"/></svg>
       </button>
-      <button class="tool-btn" type="button" data-cmd="formatBlock" data-arg="H3">H</button>
-      <button class="tool-btn" type="button" data-cmd="formatBlock" data-arg="BLOCKQUOTE">”</button>
+      <button class="tool-btn" type="button" data-cmd="formatBlock" data-arg="H3" title="Заголовок">H</button>
+      <button class="tool-btn" type="button" data-cmd="formatBlock" data-arg="BLOCKQUOTE" title="Цитата">”</button>
+      <button class="tool-btn" type="button" data-cmd="insertUnorderedList" title="Маркированный список">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="9" y1="6" x2="20" y2="6"/><line x1="9" y1="12" x2="20" y2="12"/><line x1="9" y1="18" x2="20" y2="18"/><circle cx="4" cy="6" r="1.5" fill="currentColor" stroke="none"/><circle cx="4" cy="12" r="1.5" fill="currentColor" stroke="none"/><circle cx="4" cy="18" r="1.5" fill="currentColor" stroke="none"/></svg>
+      </button>
+      <span class="tool-sep"></span>
+      <button class="tool-btn" type="button" data-cmd="justifyCenter" title="По центру">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="7" y1="12" x2="17" y2="12"/><line x1="5" y1="18" x2="19" y2="18"/></svg>
+      </button>
+      <button class="tool-btn" type="button" data-cmd="justifyRight" title="По правому краю">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="10" y1="12" x2="20" y2="12"/><line x1="7" y1="18" x2="20" y2="18"/></svg>
+      </button>
+      <span class="tool-sep"></span>
       <button id="linkBtn" class="tool-btn" type="button">🔗 Ссылка</button>
       <button id="photoBtn" class="tool-btn" type="button">📷 Фото</button>
       <input type="file" id="fileInput" accept="image/*" style="display:none">
@@ -343,6 +357,13 @@
           const el = node?.nodeType === 3 ? node.parentElement : node;
           if (el?.closest(arg.toLowerCase())) {
             document.execCommand('formatBlock', false, 'P');
+            return;
+          }
+        }
+
+        if (cmd === 'justifyCenter' || cmd === 'justifyRight') {
+          if (document.queryCommandState(cmd)) {
+            document.execCommand('justifyLeft', false, null);
             return;
           }
         }
@@ -512,7 +533,9 @@
     // Вставка в заголовок строго чистым текстом в одну строку
     titleEl.addEventListener('paste', e => {
       e.preventDefault();
-      const text = (e.clipboardData || window.clipboardData).getData('text/plain').replace(/\r?\n/g, ' ');
+      const text = (e.clipboardData || window.clipboardData).getData('text/plain').replace(/
+?
+/g, ' ');
       document.execCommand('insertText', false, text);
       updateTitleSideLabel();
     });
