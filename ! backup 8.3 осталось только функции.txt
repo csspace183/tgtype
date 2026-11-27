@@ -43,12 +43,37 @@
       pointer-events: none;
       display: block;
     }
+    .title-wrap {
+      position: relative;
+      margin-bottom: 10px;
+    }
     #title {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       font-size: 32px;
       font-weight: 700;
       line-height: 1.2;
-      margin-bottom: 10px;
+    }
+    .side-label {
+      position: absolute;
+      right: calc(100% + 16px);
+      top: 0;
+      bottom: 0;
+      display: flex;
+      align-items: center;
+      padding-right: 14px;
+      border-right: 1px solid #e0e0e0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-size: 28px;
+      font-weight: 400;
+      color: #bbb;
+      pointer-events: none;
+      user-select: none;
+      opacity: 0;
+      transition: opacity 0.15s ease;
+    }
+    .side-label.visible { opacity: 1; }
+    @media (max-width: 900px) {
+      .side-label { display: none; }
     }
     #metaInfo { font-size: 14px; color: #888; margin-bottom: 24px; min-height: 18px; }
     #story {
@@ -181,8 +206,11 @@
       <button id="actionBtn" class="publish-btn" type="button">PUBLISH</button>
     </div>
 
-    <div id="title" class="editable" contenteditable="true" data-placeholder="Title"></div>
-    <div id="metaInfo"></div>
+    <div class="title-wrap">
+      <span id="titleSideLabel" class="side-label">Title</span>
+      <div id="title" class="editable" contenteditable="true" data-placeholder="Title"></div>
+    </div>
+    <div id="metaInfo" class="editable" data-placeholder="Author"></div>
 
     <div id="toolbar" class="toolbar">
       <button class="tool-btn" type="button" data-cmd="bold" title="Жирный">
@@ -242,6 +270,7 @@
     const ADMIN_LOGIN = 'lordman';
 
     const titleEl = document.getElementById('title');
+    const titleSideLabel = document.getElementById('titleSideLabel');
     const metaInfoEl = document.getElementById('metaInfo');
     const storyEl = document.getElementById('story');
     const actionBtn = document.getElementById('actionBtn');
@@ -265,6 +294,16 @@
     const pathSlug = window.location.pathname.replace(/^\/+|\/+$/g, '');
     let currentSlug = pathSlug;
     let isViewMode = false;
+
+    function updateTitleSideLabel() {
+      const hasText = titleEl.innerText.trim().length > 0;
+      if (!hasText && titleEl.innerHTML !== '') {
+        titleEl.innerHTML = '';
+      }
+      const canEdit = titleEl.isContentEditable;
+      titleSideLabel.classList.toggle('visible', hasText && canEdit);
+    }
+    titleEl.addEventListener('input', updateTitleSideLabel);
 
     function renderMeta(login, timestamp) {
       const parts = [];
@@ -290,6 +329,7 @@
     function isAdmin(user) {
       return getLoginName(user) === ADMIN_LOGIN;
     }
+
     document.querySelectorAll('.tool-btn[data-cmd]').forEach(btn => {
       btn.addEventListener('mousedown', e => e.preventDefault());
       btn.addEventListener('click', () => {
@@ -407,6 +447,7 @@
       e.preventDefault();
       const text = (e.clipboardData || window.clipboardData).getData('text/plain').replace(/\r?\n/g, ' ');
       document.execCommand('insertText', false, text);
+      updateTitleSideLabel();
     });
 
     // Вставка в основной текст: картинки сжимаем, любой текст вставляем без чужого фона и шрифтов
@@ -510,7 +551,8 @@
         passInput.placeholder = 'Пароль';
       }
     }  
- switchModeBtn.addEventListener('click', () => {
+
+    switchModeBtn.addEventListener('click', () => {
       setAuthMode(!isRegMode);
       loginInput.focus();
     });
@@ -652,6 +694,7 @@
       storyEl.style.display = 'none';
       actionBtn.style.display = 'none';
       titleEl.contentEditable = false;
+      updateTitleSideLabel();
 
       document.querySelector('.blog-search')?.remove();
       document.querySelector('.posts-list')?.remove();
@@ -779,7 +822,7 @@
           titleEl.innerHTML = data.title;
           storyEl.innerHTML = data.story;
           currentArticleOwner = data.ownerUid || null;
-if (data.customMeta !== undefined) {
+          if (data.customMeta !== undefined) {
             metaInfoEl.textContent = data.customMeta;
           } else {
             const rawAuthor = Array.isArray(data.ownerLogin) ? data.ownerLogin[0] : (data.ownerLogin || '');
@@ -806,6 +849,7 @@ if (data.customMeta !== undefined) {
       storyEl.contentEditable = canEdit;
       toolbar.style.display = canEdit ? 'flex' : 'none';
       metaInfoEl.contentEditable = (canEdit && currentUser && isAdmin(currentUser));
+      updateTitleSideLabel();
     }
 
     function slugify(text) {
