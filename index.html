@@ -2048,10 +2048,7 @@
           currentArticleViews = Number(data.views) || 0;
           currentArticleViewsLog = Array.isArray(data.viewsLog) ? data.viewsLog : [];
 
-          if (data.customMeta !== undefined) {
-            metaInfoEl.textContent = data.customMeta;
-          } else {
-          if (data.customMeta !== undefined) {
+                   if (data.customMeta !== undefined) {
             metaInfoEl.textContent = data.customMeta;
           } else {
             const rawAuthor = Array.isArray(data.ownerLogin) ? data.ownerLogin.at(0) : (data.ownerLogin || '');
