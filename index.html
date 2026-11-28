@@ -1150,7 +1150,7 @@
             <a href="/" id="newPostLink" class="new-link">+ Новая запись</a>
             <a href="/blog" id="adminBlogLink" class="new-link">Блог</a>
           </div>
-          <span class="site-ver-badge">build v0.0.6</span>
+          <span class="site-ver-badge">build v0.0.7</span>
           <button id="themeBtn" class="theme-btn" type="button" title="Переключить тему">
             <svg class="icon-light" width="17" height="17" viewBox="0 0 24 24" fill="#f5b014" stroke="#e09c00" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
             <svg class="icon-dark" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#a5b4fc" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5a8.5 8.5 0 1 0 11 11z" fill="rgba(165, 180, 252, 0.2)"/><circle cx="17.5" cy="6.5" r="2" fill="#fcd34d" stroke="#fcd34d"/><path d="M14.5 8.2c2-.8 4.4-1.8 6-3.4" stroke="#fcd34d" stroke-width="1.3"/></svg>
@@ -1985,7 +1985,7 @@
         storyEl.focus();
         const cmd = btn.dataset.cmd;
         const arg = btn.dataset.arg || null;
-        if (cmd === 'formatBlock' && arg) {
+                if (cmd === 'formatBlock' && arg) {
           const sel = window.getSelection();
           if (!sel || !sel.rangeCount) return;
           const node = sel.anchorNode;
@@ -1993,17 +1993,49 @@
           const el = node.nodeType === 3 ? node.parentElement : node;
           if (el?.closest('.tg-code-block')) return;
 
-          const existingBlock = el?.closest(arg.toLowerCase());
+          const targetTag = arg.toLowerCase();
+          const existingBlock = el?.closest(targetTag);
+
           if (existingBlock && storyEl.contains(existingBlock)) {
-            document.execCommand('formatBlock', false, 'P');
+            const p = document.createElement('p');
+            p.innerHTML = existingBlock.innerHTML || '<br>';
+            existingBlock.replaceWith(p);
+            placeCaretAtEnd(p);
           } else {
-            document.execCommand('formatBlock', false, arg);
+            let lineBlock = el?.closest('p, div, h3, blockquote, li');
+            if (lineBlock === storyEl) lineBlock = null;
+
+            if (lineBlock && storyEl.contains(lineBlock)) {
+              const newEl = document.createElement(targetTag === 'blockquote' ? 'blockquote' : 'h3');
+              newEl.innerHTML = lineBlock.innerHTML || '<br>';
+              if (lineBlock.tagName === 'LI') {
+                lineBlock.innerHTML = '';
+                lineBlock.appendChild(newEl);
+              } else {
+                lineBlock.replaceWith(newEl);
+              }
+              placeCaretAtEnd(newEl);
+            } else {
+              const newEl = document.createElement(targetTag === 'blockquote' ? 'blockquote' : 'h3');
+              if (!sel.isCollapsed) {
+                const range = sel.getRangeAt(0);
+                newEl.appendChild(range.extractContents());
+                range.insertNode(newEl);
+              } else {
+                newEl.innerHTML = '<br>';
+                const range = sel.getRangeAt(0);
+                range.insertNode(newEl);
+              }
+              placeCaretAtEnd(newEl);
+            }
           }
+
           updateActiveFormatButtons();
           updatePublishState();
           saveDraftToLocal();
           return;
         }
+
 
         if (cmd === 'insertUnorderedList') {
           const sel = window.getSelection();
