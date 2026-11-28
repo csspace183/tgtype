@@ -146,7 +146,6 @@
     .editor-header.is-fixed .side-label {
       font-size: 18px;
     }
-
     .title-wrap {
       position: relative;
       margin-bottom: 10px;
@@ -306,7 +305,6 @@
     #story li:last-child { margin-bottom: 0; }
     #story img { max-width: 100%; height: auto; display: block; margin: 18px 0; border-radius: 4px; }
     #story a { color: #0066cc; text-decoration: underline; cursor: pointer; }
-
     /* Встроенный плеер */
     #story .tg-ymusic-embed {
       position: relative;
@@ -396,15 +394,26 @@
     .post-info a { font-family: Georgia, serif; font-size: 20px; font-weight: 700; color: #222; text-decoration: none; }
     .post-info a:hover { color: #0066cc; }
     .post-meta { font-size: 12px; color: #888; margin-top: 4px; }
-    .blog-views-link {
-  cursor: pointer;
-  border-bottom: 1px dashed #bbb;
-  transition: color 0.15s ease, border-color 0.15s ease;
-}
-.blog-views-link:hover {
-  color: #222;
-  border-bottom-color: #222;
-}
+        .blog-views-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 11px;
+      color: #888;
+      background: #fff;
+      border: 1px solid #e5e5e5;
+      border-radius: 999px;
+      padding: 2px 8px;
+      margin-left: 4px;
+      cursor: pointer;
+      vertical-align: middle;
+      transition: border-color 0.15s ease, color 0.15s ease;
+    }
+    .blog-views-link:hover {
+      border-color: #222;
+      color: #222;
+    }
+
     .post-actions { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; flex-shrink: 0; }
     .mini-btn {
       background: #fff; border: 1px solid #ddd; border-radius: 15px;
@@ -418,7 +427,11 @@
     .mini-btn:hover { border-color: #222; }
     .mini-btn.del:hover { border-color: #d9534f; color: #d9534f; }
 
-    /* Круглая капсульная кнопка доступа как в YouTube Studio */
+    /* Выпадающее меню доступа в стиле YouTube Studio */
+    .access-wrap {
+      position: relative;
+      display: inline-block;
+    }
     .access-pill {
       display: inline-flex;
       align-items: center;
@@ -434,28 +447,83 @@
       transition: all 0.18s ease;
       white-space: nowrap;
     }
-    .access-pill:hover {
-      border-color: #1e7e34;
-    }
-    .access-pill .dot {
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-      background: #28a745;
+    .access-pill:hover { border-color: #1e7e34; }
+    .access-pill .chevron {
+      font-size: 10px;
+      opacity: 0.75;
+      margin-left: 2px;
     }
     .access-pill.is-private {
       border-color: #e2e2e2;
       background: #f4f4f4;
-      color: #555;
+      color: #444;
     }
     .access-pill.is-private:hover {
       border-color: #222;
       color: #222;
     }
-    .access-pill.is-private .dot {
-      background: #777;
+    .access-dropdown {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: calc(100% + 6px);
+      width: 280px;
+      background: #fff;
+      border: 1px solid #e5e5e5;
+      border-radius: 12px;
+      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.14);
+      z-index: 60;
+      overflow: hidden;
+      text-align: left;
     }
-
+    .access-dropdown.open { display: block; }
+    .access-dropdown-header {
+      padding: 12px 14px 10px;
+      font-size: 13px;
+      font-weight: 700;
+      color: #222;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    .access-option {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      width: 100%;
+      padding: 11px 14px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      text-align: left;
+      transition: background 0.12s ease;
+    }
+    .access-option:hover { background: #f7f7f7; }
+    .access-opt-icon {
+      color: #555;
+      display: flex;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .access-opt-text { flex: 1; min-width: 0; }
+    .access-opt-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: #222;
+      line-height: 1.25;
+    }
+    .access-opt-desc {
+      font-size: 11px;
+      color: #888;
+      margin-top: 2px;
+      line-height: 1.3;
+    }
+    .access-opt-check {
+      font-size: 15px;
+      font-weight: 700;
+      color: #222;
+      width: 16px;
+      text-align: center;
+      flex-shrink: 0;
+    }
     /* Всплывающая плашка ввода ссылки */
     .link-popover {
       display: none;
@@ -513,9 +581,7 @@
     .modal-close { display: block; width: 100%; margin-top: 10px; background: none; border: none; color: #999; font-size: 12px; cursor: pointer; }
 
     /* Список просмотров в модальном окне */
-    .views-modal-box {
-      max-width: 380px;
-    }
+    .views-modal-box { max-width: 380px; }
     .views-list {
       list-style: none;
       margin: 0;
@@ -533,19 +599,9 @@
       font-size: 13px;
       gap: 10px;
     }
-    .views-user {
-      font-weight: 600;
-      color: #222;
-    }
-    .views-user.is-guest {
-      font-weight: 400;
-      color: #777;
-    }
-    .views-date {
-      font-size: 12px;
-      color: #999;
-      white-space: nowrap;
-    }
+    .views-user { font-weight: 600; color: #222; }
+    .views-user.is-guest { font-weight: 400; color: #777; }
+    .views-date { font-size: 12px; color: #999; white-space: nowrap; }
   </style>
 </head>
 <body>
@@ -818,7 +874,7 @@
       updatePublishState();
     });
     metaInfoEl.addEventListener('input', updatePublishState);
-    function formatRuDate(timestamp) {
+ function formatRuDate(timestamp) {
       if (!timestamp) return '—';
       return new Date(timestamp).toLocaleString('ru-RU', {
         day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
@@ -1056,7 +1112,7 @@
     });
 
     closeLinkPopover.addEventListener('click', hideLinkPopover);
-    photoBtn.addEventListener('click', () => {
+ photoBtn.addEventListener('click', () => {
       colorPopover.classList.remove('open');
       fileInput.click();
     });
@@ -1241,8 +1297,7 @@
       updateTitleSideLabel();
       updatePublishState();
     });
-
-    function sanitizePastedHtml(rawHtml) {
+function sanitizePastedHtml(rawHtml) {
       const doc = new DOMParser().parseFromString(rawHtml, 'text/html');
       const allowedTags = new Set([
         'P', 'BR', 'B', 'STRONG', 'I', 'EM', 'U', 'S', 'STRIKE', 'DEL',
@@ -1395,18 +1450,18 @@
       }
     }
 
-    function openViewsModal() {
-      viewsModalTitle.textContent = `Просмотры (${currentArticleViews})`;
+    function openViewsModal(viewsCount = currentArticleViews, viewsLog = currentArticleViewsLog) {
+      viewsModalTitle.textContent = `Просмотры (${viewsCount})`;
       viewsList.innerHTML = '';
 
-      if (!currentArticleViewsLog || currentArticleViewsLog.length === 0) {
+      if (!viewsLog || viewsLog.length === 0) {
         viewsEmptyMsg.style.display = 'block';
-        viewsEmptyMsg.textContent = currentArticleViews > 0
+        viewsEmptyMsg.textContent = viewsCount > 0
           ? 'Детальная история ведётся только для новых просмотров.'
           : 'Пока никто не просматривал эту статью.';
       } else {
         viewsEmptyMsg.style.display = 'none';
-        const sorted = [...currentArticleViewsLog].sort((a, b) => (b.at || 0) - (a.at || 0));
+        const sorted = [...viewsLog].sort((a, b) => (b.at || 0) - (a.at || 0));
         sorted.forEach(item => {
           const li = document.createElement('li');
           const who = item.user ? item.user : 'Гость';
@@ -1418,7 +1473,6 @@
 
       viewsModal.style.display = 'flex';
     }
-
     viewsBadge.addEventListener('click', () => {
       if (currentUser && isAdmin(currentUser)) {
         openViewsModal();
@@ -1458,6 +1512,7 @@
         viewCountedForSlug = false;
       }
     }
+
     window.addEventListener('DOMContentLoaded', () => {
       if (typeof firebase !== 'undefined') {
         firebase.initializeApp({
@@ -1583,7 +1638,6 @@
     document.getElementById('closeModalBtn').addEventListener('click', () => {
       authModal.style.display = 'none';
     });
-
     function cleanLogin(raw) {
       return raw.trim().toLowerCase().replace(/[^a-z0-9_-]/g, '');
     }
@@ -1685,6 +1739,7 @@
       metaInfoEl.classList.toggle('no-toolbar', !canEdit);
       metaInfoEl.classList.toggle('can-edit-btn', canEdit);
     }
+
     async function loadBlogPage() {
       metaInfoEl.style.display = 'none';
       toolbarRow.style.display = 'none';
@@ -1739,16 +1794,24 @@
         const ul = document.createElement('ul');
         ul.className = 'posts-list';
 
-        function updateAccessBtnUI(btn, isPrivate) {
+        const globeSvg = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>';
+        const lockSvg = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>';
+
+        function closeAllAccessMenus() {
+          document.querySelectorAll('.access-dropdown.open').forEach(d => d.classList.remove('open'));
+        }
+        document.addEventListener('click', closeAllAccessMenus);
+
+        function updateAccessUI(wrap, isPrivate) {
+          const btn = wrap.querySelector('.access-pill');
+          const checks = wrap.querySelectorAll('.access-opt-check');
           btn.classList.toggle('is-private', Boolean(isPrivate));
           btn.innerHTML = isPrivate
-            ? '<span class="dot"></span><span>Доступ: Закрыт</span>'
-            : '<span class="dot"></span><span>Доступ: Открыт</span>';
-          btn.title = isPrivate
-            ? 'Видно только вам и администратору. Нажмите, чтобы открыть для всех.'
-            : 'Доступно всем по ссылке. Нажмите, чтобы закрыть доступ.';
+            ? `${lockSvg}<span>Ограниченный доступ</span><span class="chevron">▾</span>`
+            : `${globeSvg}<span>Открытый доступ</span><span class="chevron">▾</span>`;
+          if (checks) checks.textContent = isPrivate ? '' : '✓';
+          if (checks) checks.textContent = isPrivate ? '✓' : '';
         }
-
         function renderList(filterText = '') {
           ul.innerHTML = '';
           const q = filterText.toLowerCase().trim();
@@ -1768,7 +1831,8 @@
             const dateStr = formatRuDate(post.updatedAt);
             const fullUrl = `${window.location.origin}/${post.id}`;
             const authorPart = adminMode ? ` • Автор: <b>${ownerName}</b>` : '';
-            const viewsPart = adminMode ? ` • 👁 ${Number(post.views) || 0}` : '';
+            const eyeSvg = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+            const viewsPart = adminMode ? ` • <button type="button" class="blog-views-link" title="Показать историю просмотров">${eyeSvg}<span>${Number(post.views) || 0}</span></button>` : '';
 
             const li = document.createElement('li');
             li.className = 'post-item';
@@ -1778,29 +1842,73 @@
                 <div class="post-meta">/${post.id}${authorPart} • Изменено: ${dateStr}${viewsPart}</div>
               </div>
               <div class="post-actions">
-                <button class="access-pill" type="button"></button>
+                <div class="access-wrap">
+                  <button class="access-pill" type="button"></button>
+                  <div class="access-dropdown">
+                    <div class="access-dropdown-header">Параметры доступа</div>
+                    <button class="access-option" type="button" data-private="false">
+                      <span class="access-opt-icon">${globeSvg}</span>
+                      <span class="access-opt-text">
+                        <div class="access-opt-title">Открытый доступ</div>
+                        <div class="access-opt-desc">Посмотреть сможет любой по ссылке</div>
+                      </span>
+                      <span class="access-opt-check"></span>
+                    </button>
+                    <button class="access-option" type="button" data-private="true">
+                      <span class="access-opt-icon">${lockSvg}</span>
+                      <span class="access-opt-text">
+                        <div class="access-opt-title">Ограниченный доступ</div>
+                        <div class="access-opt-desc">Статья доступна только вам</div>
+                      </span>
+                      <span class="access-opt-check"></span>
+                    </button>
+                  </div>
+                </div>
                 <button class="mini-btn copy-btn" type="button">Копировать ссылку</button>
                 <button class="mini-btn del del-btn" type="button">Удалить</button>
               </div>
             `;
 
-            const accessBtn = li.querySelector('.access-pill');
-            updateAccessBtnUI(accessBtn, Boolean(post.isPrivate));
+            const blogViewsBtn = li.querySelector('.blog-views-link');
+            if (blogViewsBtn) {
+              blogViewsBtn.addEventListener('click', () => {
+                openViewsModal(Number(post.views) || 0, Array.isArray(post.viewsLog) ? post.viewsLog : []);
+              });
+            }
 
-            accessBtn.addEventListener('click', async () => {
-              const nextState = !Boolean(post.isPrivate);
-              accessBtn.disabled = true;
-              try {
-                await db.collection('articles').doc(post.id).update({
-                  isPrivate: nextState
-                });
-                post.isPrivate = nextState;
-                updateAccessBtnUI(accessBtn, nextState);
-              } catch (err) {
-                alert('Ошибка изменения доступа: ' + err.message);
-              } finally {
-                accessBtn.disabled = false;
-              }
+            const accessWrap = li.querySelector('.access-wrap');
+            const accessBtn = accessWrap.querySelector('.access-pill');
+            const dropdown = accessWrap.querySelector('.access-dropdown');
+            updateAccessUI(accessWrap, Boolean(post.isPrivate));
+
+            accessBtn.addEventListener('click', (e) => {
+              e.stopPropagation();
+              const wasOpen = dropdown.classList.contains('open');
+              closeAllAccessMenus();
+              if (!wasOpen) dropdown.classList.add('open');
+            });
+
+            dropdown.addEventListener('click', (e) => e.stopPropagation());
+
+            accessWrap.querySelectorAll('.access-option').forEach(opt => {
+              opt.addEventListener('click', async () => {
+                const nextState = opt.dataset.private === 'true';
+                closeAllAccessMenus();
+                if (Boolean(post.isPrivate) === nextState) return;
+
+                accessBtn.disabled = true;
+                try {
+                  await db.collection('articles').doc(post.id).update({
+                    isPrivate: nextState
+                  });
+                  post.isPrivate = nextState;
+                  updateAccessUI(accessWrap, nextState);
+                } catch (err) {
+                  alert('Ошибка изменения доступа: ' + err.message);
+                } finally {
+                  accessBtn.disabled = false;
+                }
+              });
             });
 
             li.querySelector('.copy-btn').addEventListener('click', (e) => {
@@ -2090,30 +2198,6 @@
   </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    
-
-
-
-
 
 
 
