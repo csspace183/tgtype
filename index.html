@@ -142,16 +142,7 @@
       border-color: var(--text);
       color: var(--text);
     }
-    .btn-mini-spin {
-      width: 12px;
-      height: 12px;
-      border: 2px solid var(--border);
-      border-top-color: currentColor;
-      border-radius: 50%;
-      animation: tgSpin 0.65s linear infinite;
-      flex-shrink: 0;
-    }
-    .publish-btn.is-saved {
+        .publish-btn.is-saved {
       border-color: #28a745;
       color: #fff;
       opacity: 1;
@@ -161,7 +152,11 @@
       transform-origin: left center;
       transform: scaleX(1);
     }
-
+    .publish-btn.is-fading-out {
+      opacity: 0 !important;
+      transform: translateX(14px);
+      transition: opacity 0.35s ease, transform 0.35s ease;
+    }
     .publish-group {
       display: flex;
       align-items: center;
@@ -264,11 +259,10 @@
     @keyframes tgSpin {
       to { transform: rotate(360deg); }
     }
-
     /* Шапка редактора */
     .editor-header {
       background: var(--bg);
-      transition: box-shadow 0.15s ease, background-color 0.2s ease;
+      transition: box-shadow 0.2s ease, background-color 0.2s ease, transform 0.38s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.32s ease;
     }
     .editor-header-inner {
       max-width: 730px;
@@ -285,6 +279,12 @@
       border-bottom: 1px solid var(--border-light);
       box-shadow: 0 4px 16px var(--shadow);
     }
+    .editor-header.is-fixed.is-closing {
+      transform: translateY(-100%);
+      opacity: 0;
+      pointer-events: none;
+    }
+
     .editor-header.is-fixed .top-bar { margin-bottom: 8px; }
     .editor-header.is-fixed .title-wrap { margin-bottom: 4px; }
     .editor-header.is-fixed #title {
@@ -348,10 +348,21 @@
       min-height: 0;
       margin: 0;
     }
-           .toolbar-row.view-mode .publish-btn {
+        @keyframes editBtnFadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(-6px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    .toolbar-row.view-mode .publish-btn {
       position: absolute;
       right: 0;
       bottom: 22px;
+      transition: opacity 0.3s ease, transform 0.3s ease, background-color 0.25s ease, color 0.25s ease;
     }
     .toolbar-row.view-mode .publish-btn.is-scrolled {
       position: fixed;
@@ -360,7 +371,9 @@
       right: 74px;
       z-index: 94;
       box-shadow: 0 2px 10px var(--shadow);
+      animation: editBtnFadeIn 0.32s cubic-bezier(0.22, 1, 0.36, 1);
     }
+
     .toolbar-row.hidden { display: none; }
     .toolbar {
       display: flex;
@@ -2878,11 +2891,12 @@
         alert('Введите заголовок!');
         return;
       }
-      refreshAllCodeBlocks(true);
+            refreshAllCodeBlocks(true);
       actionBtn.disabled = true;
       actionBtn.classList.add('is-saving');
-      actionBtn.innerHTML = '<span class="btn-mini-spin"></span><span>СОХРАНЕНИЕ...</span>';
+      actionBtn.textContent = 'СОХРАНЕНИЕ...';
       setStatus('');
+
       try {
         let targetSlug = currentSlug;
         if (!targetSlug) {
@@ -2926,25 +2940,35 @@
         window.history.pushState({}, '', '/' + targetSlug);
         document.title = titleText;
         setStatus('');
-        // 1. Заливаем кнопку зелёным слева направо
+                // 1. Заливаем кнопку зелёным слева направо
         actionBtn.classList.remove('is-saving');
         actionBtn.disabled = false;
         actionBtn.textContent = 'СОХРАНЕНО';
         actionBtn.classList.add('is-saved');
         if (savedBtnTimer) clearTimeout(savedBtnTimer);
         savedBtnTimer = setTimeout(() => {
-          // 2. Зелёная шторка плавно уезжает вправо, а кнопка на том же месте переходит в РЕДАКТИРОВАТЬ
+          // 2. Зелёная шторка плавно уезжает вправо
           actionBtn.classList.remove('is-saved');
-          actionBtn.textContent = 'РЕДАКТИРОВАТЬ';
           savedBtnTimer = setTimeout(() => {
-            savedBtnTimer = null;
-            isViewMode = true;
-            captureInitialSnapshot();
-            setEditable(false);
-            updateEditVisibility();
-            updateViewsBadge();
+            // 3. Кнопка плавно уходит с затуханием, а закреплённая панель редактирования уезжает вверх
+            actionBtn.classList.add('is-fading-out');
+            if (editorHeader.classList.contains('is-fixed')) {
+              editorHeader.classList.add('is-closing');
+            }
+            savedBtnTimer = setTimeout(() => {
+              savedBtnTimer = null;
+              actionBtn.classList.remove('is-fading-out');
+              editorHeader.classList.remove('is-closing');
+              isViewMode = true;
+              captureInitialSnapshot();
+              setEditable(false);
+              actionBtn.textContent = 'РЕДАКТИРОВАТЬ';
+              updateEditVisibility();
+              updateViewsBadge();
+            }, 360);
           }, 420);
-        }, 1250);
+        }, 1100);
+
       } catch (e) {
         actionBtn.classList.remove('is-saving');
         actionBtn.textContent = 'ОПУБЛИКОВАТЬ';
