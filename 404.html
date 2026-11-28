@@ -669,10 +669,32 @@
     .no-edit-rights .tg-code-edit {
       display: none !important;
     }
-        .tg-code-head-toggle {
+
+    .tg-code-head-toggle {
+      background: none;
+      color: var(--muted);
+      border: 1px solid var(--code-border);
+      border-radius: 6px;
+      width: 24px;
+      height: 22px;
+      padding: 0;
+      font-size: 11px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: color 0.15s ease, border-color 0.15s ease, transform 0.2s ease;
+    }
+    .tg-code-head-toggle:hover {
+      color: var(--text);
+      border-color: var(--text);
+    }
+       .tg-code-block.is-collapsed .tg-code-head-toggle {
       display: none !important;
     }
-
+    .tg-code-block:not(.is-collapsed) .tg-code-head-toggle {
+      transform: rotate(180deg);
+    }
        .tg-code-del {
       background: none;
       color: var(--muted);
@@ -1084,7 +1106,7 @@
             <a href="/" id="newPostLink" class="new-link">+ Новая запись</a>
             <a href="/blog" id="adminBlogLink" class="new-link">Блог</a>
           </div>
-          <span class="site-ver-badge">build v0.0.4</span>
+          <span class="site-ver-badge">build v0.0.1</span>
           <button id="themeBtn" class="theme-btn" type="button" title="Переключить тему">
             <svg class="icon-light" width="17" height="17" viewBox="0 0 24 24" fill="#f5b014" stroke="#e09c00" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
             <svg class="icon-dark" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#a5b4fc" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5a8.5 8.5 0 1 0 11 11z" fill="rgba(165, 180, 252, 0.2)"/><circle cx="17.5" cy="6.5" r="2" fill="#fcd34d" stroke="#fcd34d"/><path d="M14.5 8.2c2-.8 4.4-1.8 6-3.4" stroke="#fcd34d" stroke-width="1.3"/></svg>
@@ -1555,7 +1577,7 @@
       sel.removeAllRanges();
       sel.addRange(range);
     }
-      function updateCodeToggleUI(block) {
+    function updateCodeToggleUI(block) {
       if (!block) return;
       const toggleBtn = block.querySelector('.tg-code-toggle');
       const headToggleBtn = block.querySelector('.tg-code-head-toggle');
@@ -1572,7 +1594,7 @@
       if (headToggleBtn) headToggleBtn.style.display = 'inline-flex';
       const collapsed = block.classList.contains('is-collapsed');
       if (toggleBtn) toggleBtn.textContent = collapsed ? 'Развернуть ▾' : 'Свернуть ▴';
-      if (headToggleBtn) headToggleBtn.textContent = 'Свернуть ▴';
+      if (headToggleBtn) headToggleBtn.title = collapsed ? 'Развернуть' : 'Свернуть';
     }
 
     function normalizeCodeBlockStructure(block) {
@@ -1585,7 +1607,7 @@
         pre.replaceWith(bodyWrap);
         bodyWrap.appendChild(pre);
       }
-                if (head && !head.querySelector('.tg-code-head-left')) {
+           if (head && !head.querySelector('.tg-code-head-left')) {
         const langEl = head.querySelector('.tg-code-lang');
         const delBtn = head.querySelector('.tg-code-del');
         const langText = langEl ? langEl.textContent : 'code';
@@ -1597,7 +1619,13 @@
         newLang.className = 'tg-code-lang';
         newLang.textContent = langText;
         if (isCustom) newLang.dataset.customTitle = '1';
+        const headToggle = document.createElement('button');
+        headToggle.type = 'button';
+        headToggle.className = 'tg-code-head-toggle';
+        headToggle.textContent = '▾';
+        headToggle.title = 'Развернуть / Свернуть';
         left.appendChild(newLang);
+        left.appendChild(headToggle);
 
         const right = document.createElement('div');
         right.className = 'tg-code-head-right';
@@ -1608,43 +1636,21 @@
         head.appendChild(right);
       }
       const leftBox = head?.querySelector('.tg-code-head-left');
-      const rightBox = head?.querySelector('.tg-code-head-right');
-      const oldLeftToggle = leftBox?.querySelector('.tg-code-head-toggle');
-      if (oldLeftToggle) oldLeftToggle.remove();
-      const oldDevVer = leftBox?.querySelector('.tg-code-dev-ver');
-      if (oldDevVer) oldDevVer.remove();
-
       if (leftBox && !leftBox.querySelector('.tg-code-tag-wrap')) {
         const tagWrap = document.createElement('span');
         tagWrap.className = 'tg-code-tag-wrap is-empty';
         tagWrap.innerHTML = '• <span class="tg-code-tag" spellcheck="false"></span>';
-        leftBox.appendChild(tagWrap);
+        const toggleEl = leftBox.querySelector('.tg-code-head-toggle');
+        if (toggleEl) leftBox.insertBefore(tagWrap, toggleEl);
+        else leftBox.appendChild(tagWrap);
       }
       const tagWrapEl = leftBox?.querySelector('.tg-code-tag-wrap');
       const tagTextEl = tagWrapEl?.querySelector('.tg-code-tag');
       if (tagWrapEl && tagTextEl) {
         tagWrapEl.classList.toggle('is-empty', !tagTextEl.textContent.trim());
       }
-
-      if (rightBox) {
-        const delBtn = rightBox.querySelector('.tg-code-del');
-        if (!rightBox.querySelector('.tg-code-head-toggle')) {
-          const headToggle = document.createElement('button');
-          headToggle.type = 'button';
-          headToggle.className = 'tg-code-head-toggle';
-          headToggle.textContent = 'Свернуть ▴';
-          rightBox.insertBefore(headToggle, delBtn || null);
-        }
-                if (!rightBox.querySelector('.tg-code-edit')) {
-          const editBtn = document.createElement('button');
-          editBtn.type = 'button';
-          editBtn.className = 'tg-code-edit';
-          editBtn.title = 'Редактировать';
-          editBtn.textContent = '✎';
-          rightBox.insertBefore(editBtn, delBtn || null);
-        }
-
-      }
+            const oldDevVer = leftBox?.querySelector('.tg-code-dev-ver');
+      if (oldDevVer) oldDevVer.remove();
 
       let foot = block.querySelector('.tg-code-foot');
       if (!foot) {
@@ -1654,7 +1660,10 @@
       }
       foot.innerHTML = `
         <button type="button" class="tg-code-toggle">Развернуть ▾</button>
-        <button type="button" class="tg-code-copy" title="Скопировать">${COPY_ICON_SVG}</button>
+        <div class="tg-code-foot-right">
+          <button type="button" class="tg-code-edit" title="Редактировать код">Редактировать</button>
+          <button type="button" class="tg-code-copy" title="Скопировать">${COPY_ICON_SVG}</button>
+        </div>
       `;
 
     }
@@ -1706,16 +1715,15 @@
       const block = document.createElement('div');
       block.className = 'tg-code-block';
       block.setAttribute('contenteditable', 'false');
-            block.innerHTML = `
+      block.innerHTML = `
         <div class="tg-code-head">
           <div class="tg-code-head-left">
             <span class="tg-code-lang" contenteditable="true" spellcheck="false">code</span>
             <span class="tg-code-tag-wrap is-empty">• <span class="tg-code-tag" contenteditable="true" spellcheck="false"></span></span>
+            <button type="button" class="tg-code-head-toggle" style="display:none;" title="Свернуть">▾</button>
           </div>
           <div class="tg-code-head-right">
-                        <button type="button" class="tg-code-edit" title="Редактировать">✎</button>
             <button type="button" class="tg-code-del" title="Удалить блок">✕</button>
-
           </div>
         </div>
         <div class="tg-code-body">
@@ -1723,7 +1731,10 @@
         </div>
         <div class="tg-code-foot">
           <button type="button" class="tg-code-toggle" style="visibility:hidden;">Развернуть ▾</button>
-          <button type="button" class="tg-code-copy" title="Скопировать">${COPY_ICON_SVG}</button>
+          <div class="tg-code-foot-right">
+            <button type="button" class="tg-code-edit" title="Редактировать код">Редактировать</button>
+            <button type="button" class="tg-code-copy" title="Скопировать">${COPY_ICON_SVG}</button>
+          </div>
         </div>
       `;
 
@@ -3344,7 +3355,6 @@
         setStatus('Ошибка публикации: ' + e.message, 'error');
         updatePublishState();
       }
-
     });
   </script>
 </body>
