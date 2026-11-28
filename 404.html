@@ -152,11 +152,16 @@
       transform-origin: left center;
       transform: scaleX(1);
     }
-    .publish-btn.is-fading-out {
-      opacity: 0 !important;
-      transform: translateX(14px);
-      transition: opacity 0.35s ease, transform 0.35s ease;
+        .publish-btn.is-sliding-right {
+      transition: transform 0.42s cubic-bezier(0.22, 1, 0.36, 1), color 0.35s ease, border-color 0.35s ease;
     }
+    .cancel-edit-btn.is-hiding {
+      opacity: 0;
+      transform: scale(0.9);
+      pointer-events: none;
+      transition: opacity 0.25s ease, transform 0.25s ease;
+    }
+
     .publish-group {
       display: flex;
       align-items: center;
@@ -329,9 +334,14 @@
     @media (max-width: 960px) {
       .side-label { display: none; }
     }
-        #metaInfo { font-size: 14px; color: var(--muted); margin-bottom: 20px; min-height: 18px; }
+            #metaInfo {
+      font-size: 14px;
+      color: var(--muted);
+      margin-bottom: 20px;
+      min-height: 18px;
+      transition: margin-bottom 0.36s cubic-bezier(0.22, 1, 0.36, 1);
+    }
     #metaInfo.no-toolbar, #metaInfo.can-edit-btn { margin-bottom: 52px; }
-
 
     /* Строка с панелью инструментов и кнопкой ОПУБЛИКОВАТЬ вровень */
     .toolbar-row {
@@ -341,6 +351,18 @@
       gap: 12px;
       margin-bottom: 18px;
       min-height: 34px;
+      max-height: 120px;
+      transition: max-height 0.36s cubic-bezier(0.22, 1, 0.36, 1), margin-bottom 0.36s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    .toolbar-row.is-collapsing {
+      max-height: 0;
+      min-height: 0;
+      margin-bottom: 0;
+    }
+    .toolbar-row.is-collapsing .toolbar {
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.22s ease;
     }
     .toolbar-row.view-mode {
       position: relative;
@@ -348,6 +370,7 @@
       min-height: 0;
       margin: 0;
     }
+
         @keyframes editBtnFadeIn {
       from {
         opacity: 0;
@@ -2875,12 +2898,19 @@
         loginInput.focus();
         return;
       }
-
       if (isViewMode) {
         isViewMode = false;
+        toolbarRow.classList.add('is-collapsing');
+        cancelEditBtn.classList.add('is-hiding');
         setEditable(true);
         actionBtn.textContent = 'ОПУБЛИКОВАТЬ';
         captureInitialSnapshot();
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            toolbarRow.classList.remove('is-collapsing');
+            cancelEditBtn.classList.remove('is-hiding');
+          });
+        });
         return;
       }
 
@@ -2947,27 +2977,42 @@
         actionBtn.classList.add('is-saved');
         if (savedBtnTimer) clearTimeout(savedBtnTimer);
         savedBtnTimer = setTimeout(() => {
-          // 2. Зелёная шторка плавно уезжает вправо
+          // 2. Вычисляем точное смещение вправо до края колонки (на место кнопки РЕДАКТИРОВАТЬ)
+          const rowRect = toolbarRow.getBoundingClientRect();
+          const btnRect = actionBtn.getBoundingClientRect();
+          const shiftX = Math.max(0, rowRect.right - btnRect.right);
+
+          cancelEditBtn.classList.add('is-hiding');
+          toolbarRow.classList.add('is-collapsing');
+          metaInfoEl.classList.add('can-edit-btn');
+          if (editorHeader.classList.contains('is-fixed')) {
+            editorHeader.classList.add('is-closing');
+          }
+
+          actionBtn.classList.add('is-sliding-right');
+          if (shiftX > 0) {
+            actionBtn.style.transform = `translateX(${shiftX}px)`;
+          }
+          // Зелёная шторка уезжает вправо, а текст меняется на РЕДАКТИРОВАТЬ
           actionBtn.classList.remove('is-saved');
+          actionBtn.textContent = 'РЕДАКТИРОВАТЬ';
+
           savedBtnTimer = setTimeout(() => {
-            // 3. Кнопка плавно уходит с затуханием, а закреплённая панель редактирования уезжает вверх
-            actionBtn.classList.add('is-fading-out');
-            if (editorHeader.classList.contains('is-fixed')) {
-              editorHeader.classList.add('is-closing');
-            }
-            savedBtnTimer = setTimeout(() => {
-              savedBtnTimer = null;
-              actionBtn.classList.remove('is-fading-out');
-              editorHeader.classList.remove('is-closing');
-              isViewMode = true;
-              captureInitialSnapshot();
-              setEditable(false);
-              actionBtn.textContent = 'РЕДАКТИРОВАТЬ';
-              updateEditVisibility();
-              updateViewsBadge();
-            }, 360);
+            savedBtnTimer = null;
+            actionBtn.classList.remove('is-sliding-right');
+            actionBtn.style.transform = '';
+            cancelEditBtn.classList.remove('is-hiding');
+            toolbarRow.classList.remove('is-collapsing');
+            editorHeader.classList.remove('is-closing');
+
+            isViewMode = true;
+            captureInitialSnapshot();
+            setEditable(false);
+            updateEditVisibility();
+            updateViewsBadge();
           }, 420);
-        }, 1100);
+        }, 1150);
+
 
       } catch (e) {
         actionBtn.classList.remove('is-saving');
