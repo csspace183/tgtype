@@ -148,26 +148,61 @@
       gap: 8px;
       flex-shrink: 0;
     }
-    .cancel-edit-btn {
+        .cancel-edit-btn {
       display: none;
-      width: 31px;
-      height: 31px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.4px;
+      padding: 7px 14px;
+      cursor: pointer;
+      align-items: center;
+      justify-content: center;
+      white-space: nowrap;
+      transition: border-color 0.15s ease, color 0.15s ease;
+    }
+    .cancel-edit-btn:hover {
+      border-color: var(--text);
+      color: var(--text);
+    }
+
+    /* Кнопка «Наверх» в правом нижнем углу */
+    .scroll-top-btn {
+      position: fixed;
+      bottom: 24px;
+      right: 28px;
+      z-index: 95;
+      width: 34px;
+      height: 34px;
       border-radius: 50%;
       border: 1px solid var(--border);
       background: var(--surface);
       color: var(--muted);
-      font-size: 14px;
-      line-height: 1;
+      box-shadow: 0 2px 10px var(--shadow);
       cursor: pointer;
+      display: inline-flex;
       align-items: center;
       justify-content: center;
       padding: 0;
-      transition: border-color 0.15s ease, color 0.15s ease;
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(8px);
+      transition: opacity 0.2s ease, transform 0.2s ease, border-color 0.15s ease, color 0.15s ease;
     }
-    .cancel-edit-btn:hover {
-      border-color: #d9534f;
-      color: #d9534f;
+    .scroll-top-btn.visible {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateY(0);
     }
+    .scroll-top-btn:hover {
+      border-color: var(--text);
+      color: var(--text);
+      transform: translateY(-2px);
+    }
+
 
 
     .editable { outline: none; width: 100%; box-sizing: border-box; word-wrap: break-word; }
@@ -913,7 +948,8 @@
           </div>
                     <div class="publish-group">
             <button id="actionBtn" class="publish-btn" type="button" disabled>ОПУБЛИКОВАТЬ</button>
-            <button id="cancelEditBtn" class="cancel-edit-btn" type="button" title="Закрыть редактирование">✕</button>
+            <button id="cancelEditBtn" class="cancel-edit-btn" type="button" title="Закрыть режим редактирования">ЗАКРЫТЬ</button>
+
           </div>
         </div>
       </div>
@@ -934,7 +970,12 @@
     </div>
   </div>
 
+    <button id="scrollTopBtn" class="scroll-top-btn" type="button" title="Наверх">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+  </button>
+
   <div id="linkPopover" class="link-popover">
+
     <input type="text" id="linkUrlInput" placeholder="Вставьте или введите ссылку...">
     <button type="button" id="closeLinkPopover" title="Закрыть">✕</button>
   </div>
@@ -983,8 +1024,14 @@
     const titleSideLabel = document.getElementById('titleSideLabel');
     const metaInfoEl = document.getElementById('metaInfo');
     const storyEl = document.getElementById('story');
-    const actionBtn = document.getElementById('actionBtn');
+        const actionBtn = document.getElementById('actionBtn');
     const cancelEditBtn = document.getElementById('cancelEditBtn');
+    const scrollTopBtn = document.getElementById('scrollTopBtn');
+
+    scrollTopBtn.addEventListener('click', () => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+
     const themeBtn = document.getElementById('themeBtn');
     const newPostLink = document.getElementById('newPostLink');
     const codeBtn = document.getElementById('codeBtn');
@@ -1132,10 +1179,12 @@
       } catch (e) {}
     }
 
-        function updateFixedHeader() {
+            function updateFixedHeader() {
       const scrolled = window.scrollY > 28;
       themeBtn.classList.toggle('is-scrolled', scrolled);
       actionBtn.classList.toggle('is-scrolled', scrolled && isViewMode);
+      scrollTopBtn.classList.toggle('visible', window.scrollY > 300);
+
 
       if (!editorHeader.classList.contains('is-editing')) {
         editorHeader.classList.remove('is-fixed');
