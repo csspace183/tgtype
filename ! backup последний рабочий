@@ -5,55 +5,246 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>tgtype</title>
   <link rel="preconnect" href="https://googleapis.com" crossorigin>
+  <script>
+    if (localStorage.getItem('tgtype_theme') === 'dark') {
+      document.documentElement.classList.add('dark');
+    }
+  </script>
   <style>
+    :root {
+      --bg: #ffffff;
+      --text: #222222;
+      --muted: #888888;
+      --subtle: #999999;
+      --border: #e0e0e0;
+      --border-light: #eeeeee;
+      --surface: #fafafa;
+      --hover-bg: #f5f5f5;
+      --link: #0066cc;
+      --popover-bg: #ffffff;
+      --shadow: rgba(0, 0, 0, 0.12);
+      --code-bg: #f6f8fa;
+      --code-header: #eef1f5;
+      --code-inner-bg: #ffffff;
+      --code-border: #e1e4e8;
+      --code-text: #24292e;
+
+      --hl-kw: #d73a49;
+      --hl-str: #032f62;
+      --hl-com: #6a737d;
+      --hl-tag: #22863a;
+      --hl-num: #005cc5;
+    }
+    html.dark {
+      --bg: #1e1e1e;
+      --text: #e4e4e4;
+      --muted: #9a9a9a;
+      --subtle: #7e7e7e;
+      --border: #363636;
+      --border-light: #2b2b2b;
+      --surface: #252525;
+      --hover-bg: #2f2f2f;
+      --link: #6eb5ff;
+      --popover-bg: #262626;
+      --shadow: rgba(0, 0, 0, 0.45);
+      --code-bg: #252629;
+      --code-header: #252629;
+      --code-inner-bg: #1b1d21;
+      --code-border: #34363b;
+      --code-text: #e4e4e4;
+
+      --hl-kw: #c792ea;
+      --hl-str: #a5d6ff;
+      --hl-com: #8b949e;
+      --hl-tag: #7ee787;
+      --hl-num: #f78c6c;
+    }
+
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       margin: 0;
       padding: 40px 20px 80px;
-      color: #222;
-      background: #fff;
+      color: var(--text);
+      background: var(--bg);
+      transition: background-color 0.2s ease, color 0.2s ease;
     }
     .container { max-width: 730px; margin: 0 auto; position: relative; }
     .top-bar {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      min-height: 24px;
+      min-height: 28px;
       margin-bottom: 16px;
     }
     .top-left { display: flex; align-items: center; gap: 16px; }
-    .new-link { font-size: 13px; color: #999; text-decoration: none; }
-    .new-link:hover { color: #222; }
-    .publish-btn {
-      background: #fff;
-      border: 2px solid #222;
+    .new-link { font-size: 13px; color: var(--subtle); text-decoration: none; }
+    .new-link:hover { color: var(--text); }
+
+          /* Кнопка переключения темы в правом поле экрана (вне колонки текста) */
+    .theme-btn {
+      position: fixed;
+      top: 24px;
+      right: 28px;
+      z-index: 95;
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      box-shadow: 0 2px 10px var(--shadow);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      transition: transform 0.15s ease, border-color 0.15s ease, background-color 0.2s ease;
+    }
+
+    .theme-btn:hover {
+      border-color: var(--text);
+      transform: scale(1.06);
+    }
+    html.dark .theme-btn .icon-light { display: none; }
+    html:not(.dark) .theme-btn .icon-dark { display: none; }
+
+        .publish-btn {
+      position: relative;
+      overflow: hidden;
+      z-index: 1;
+      background: var(--bg);
+      color: var(--text);
+      border: 2px solid var(--text);
       border-radius: 20px;
       padding: 6px 18px;
       font-weight: 700;
-      font-size: 13px;
+      font-size: 12px;
       letter-spacing: 0.5px;
       cursor: pointer;
-      transition: 0.2s;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      transition: color 0.2s ease, border-color 0.2s ease, opacity 0.2s ease;
       white-space: nowrap;
       flex-shrink: 0;
     }
-    .publish-btn:hover:not(:disabled) { background: #222; color: #fff; }
-    .publish-btn:disabled { opacity: 0.35; cursor: default; }
-    .publish-btn.is-saving { opacity: 0.5; cursor: wait; }
+    .publish-btn::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: #28a745;
+      transform: scaleX(0);
+      transform-origin: right center;
+      transition: transform 0.48s cubic-bezier(0.22, 1, 0.36, 1);
+      z-index: -1;
+    }
+        .publish-btn:hover:not(:disabled):not(.is-saved):not(.is-saving) { background: var(--text); color: var(--bg); }
+    .publish-btn:disabled:not(.is-saved):not(.is-saving) { opacity: 0.35; cursor: default; }
+    .editor-header.is-editing .publish-btn:disabled:not(.is-saved):not(.is-saving) {
+      display: none !important;
+    }
+    .publish-btn.is-saving {
+      opacity: 1;
+      cursor: wait;
+      border-color: var(--text);
+      color: var(--text);
+    }
+        .publish-btn.is-saved {
+      border-color: #28a745;
+      color: #fff;
+      opacity: 1;
+      cursor: default;
+    }
+    .publish-btn.is-saved::before {
+      transform-origin: left center;
+      transform: scaleX(1);
+    }
+        .publish-btn.is-sliding-right {
+      transition: transform 0.42s cubic-bezier(0.22, 1, 0.36, 1), color 0.35s ease, border-color 0.35s ease;
+    }
+    .cancel-edit-btn.is-hiding {
+      opacity: 0;
+      transform: scale(0.9);
+      pointer-events: none;
+      transition: opacity 0.25s ease, transform 0.25s ease;
+    }
+
+    .publish-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+        .cancel-edit-btn {
+      display: none;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.4px;
+      padding: 7px 14px;
+      cursor: pointer;
+      align-items: center;
+      justify-content: center;
+      white-space: nowrap;
+      transition: border-color 0.15s ease, color 0.15s ease;
+    }
+    .cancel-edit-btn:hover {
+      border-color: var(--text);
+      color: var(--text);
+    }
+
+    /* Кнопка «Наверх» в правом нижнем углу */
+    .scroll-top-btn {
+      position: fixed;
+      bottom: 24px;
+      right: 28px;
+      z-index: 95;
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--muted);
+      box-shadow: 0 2px 10px var(--shadow);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(8px);
+      transition: opacity 0.2s ease, transform 0.2s ease, border-color 0.15s ease, color 0.15s ease;
+    }
+    .scroll-top-btn.visible {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateY(0);
+    }
+    .scroll-top-btn:hover {
+      border-color: var(--text);
+      color: var(--text);
+      transform: translateY(-2px);
+    }
+
+
+
     .editable { outline: none; width: 100%; box-sizing: border-box; word-wrap: break-word; }
     .editable:empty:before {
       content: attr(data-placeholder);
-      color: #999;
+      color: var(--subtle);
       pointer-events: none;
       display: block;
     }
-
     /* Экран загрузки страницы при обращении к базе */
     .page-loader {
       position: fixed;
       inset: 0;
       z-index: 200;
-      background: #fff;
+      background: var(--bg);
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -68,23 +259,22 @@
     .loader-spinner {
       width: 34px;
       height: 34px;
-      border: 3px solid #eaeaea;
-      border-top-color: #222;
+      border: 3px solid var(--border-light);
+      border-top-color: var(--text);
       border-radius: 50%;
       animation: tgSpin 0.75s linear infinite;
     }
     .loader-text {
       font-size: 13px;
-      color: #888;
+      color: var(--muted);
     }
     @keyframes tgSpin {
       to { transform: rotate(360deg); }
     }
-
-    /* Шапка редактора */
+       /* Шапка редактора */
     .editor-header {
-      background: #fff;
-      transition: box-shadow 0.15s ease;
+      background: var(--bg);
+      transition: box-shadow 0.2s ease, background-color 0.2s ease, transform 0.38s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.32s ease;
     }
     .editor-header-inner {
       max-width: 730px;
@@ -96,33 +286,31 @@
       left: 0;
       right: 0;
       z-index: 80;
-      background: #fff;
+      background: var(--bg);
       padding: 12px 20px 10px;
-      border-bottom: 1px solid #eee;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+      border-bottom: 1px solid var(--border-light);
+      box-shadow: 0 4px 16px var(--shadow);
+      transform: translateY(0);
+      opacity: 1;
     }
-    .editor-header.is-fixed .top-bar {
-      margin-bottom: 8px;
+    .editor-header.is-fixed.is-closing,
+    .editor-header.is-fixed.is-opening {
+      transform: translateY(-100%);
+      opacity: 0;
+      pointer-events: none;
     }
-    .editor-header.is-fixed .title-wrap {
-      margin-bottom: 4px;
-    }
+
+    .editor-header.is-fixed .top-bar { margin-bottom: 8px; }
+    .editor-header.is-fixed .title-wrap { margin-bottom: 4px; }
     .editor-header.is-fixed #title {
       font-size: 20px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
-    .editor-header.is-fixed #metaInfo {
-      margin-bottom: 10px;
-      font-size: 12px;
-    }
-    .editor-header.is-fixed .toolbar-row {
-      margin-bottom: 0;
-    }
-    .editor-header.is-fixed .side-label {
-      font-size: 18px;
-    }
+    .editor-header.is-fixed #metaInfo { margin-bottom: 10px; font-size: 12px; }
+    .editor-header.is-fixed .toolbar-row { margin-bottom: 0; }
+    .editor-header.is-fixed .side-label { font-size: 18px; }
 
     .title-wrap {
       position: relative;
@@ -142,72 +330,152 @@
       display: flex;
       align-items: center;
       padding-right: 14px;
-      border-right: 1px solid #e0e0e0;
+      border-right: 1px solid var(--border);
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      font-size: 28px;
+      font-size: 24px;
       font-weight: 400;
-      color: #bbb;
+      color: var(--subtle);
       pointer-events: none;
       user-select: none;
       opacity: 0;
       transition: opacity 0.15s ease;
     }
-    .side-label.visible { opacity: 1; }
-    @media (max-width: 900px) {
+       .side-label.visible { opacity: 1; }
+    .side-label.is-hiding { opacity: 0 !important; transition: opacity 0.2s ease; }
+    @media (max-width: 960px) {
       .side-label { display: none; }
     }
-    #metaInfo { font-size: 14px; color: #888; margin-bottom: 20px; min-height: 18px; }
-    #metaInfo.no-toolbar, #metaInfo.can-edit-btn { margin-bottom: 28px; }
+    #metaInfo {
+      font-size: 14px;
+      color: var(--muted);
+      margin-bottom: 16px;
+      min-height: 18px;
+    }
+    #metaInfo.no-toolbar { margin-bottom: 28px; }
 
-    /* Строка с панелью инструментов и кнопкой PUBLISH вровень */
+    /* Строка с панелью инструментов и кнопкой ОПУБЛИКОВАТЬ вровень (постоянная высота, чтобы текст не двигался) */
     .toolbar-row {
       display: flex;
       justify-content: space-between;
       align-items: center;
       gap: 12px;
       margin-bottom: 18px;
-      min-height: 34px;
-    }
-    .toolbar-row.view-mode {
-      position: relative;
-      height: 0;
-      min-height: 0;
-      margin: 0;
-    }
-    .toolbar-row.view-mode .publish-btn {
-      position: absolute;
-      right: 0;
-      bottom: 22px;
-    }
-    .toolbar-row.hidden {
-      display: none;
+      min-height: 64px;
     }
     .toolbar {
       display: flex;
       gap: 8px;
       flex-wrap: wrap;
       align-items: center;
+      opacity: 1;
+      transition: opacity 0.3s ease;
     }
+    .toolbar-row.view-mode .toolbar,
+    .toolbar-row.is-collapsing .toolbar {
+      opacity: 0;
+      pointer-events: none;
+    }
+    .toolbar-row.hidden { display: none; }
+
+    @keyframes editBtnFadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(-6px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    .toolbar-row.view-mode .publish-btn.is-scrolled {
+      position: fixed;
+      top: 25px;
+      right: 74px;
+      z-index: 94;
+      box-shadow: 0 2px 10px var(--shadow);
+      animation: editBtnFadeIn 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    @media (max-width: 768px) {
+      .theme-btn {
+        position: static;
+        box-shadow: none;
+        flex-shrink: 0;
+      }
+      .toolbar-row.view-mode .publish-btn.is-scrolled {
+        position: static;
+        box-shadow: none;
+        animation: none;
+      }
+      .scroll-top-btn {
+        right: 16px;
+        bottom: 16px;
+      }
+    }
+
     .tool-sep {
       width: 1px;
       height: 18px;
-      background: #e0e0e0;
+      background: var(--border);
       margin: 0 2px;
     }
     .tool-btn {
       background: none;
-      border: 1px solid #e0e0e0;
+      border: 1px solid var(--border);
       border-radius: 4px;
       padding: 4px 9px;
       cursor: pointer;
-      color: #555;
+      color: var(--muted);
       font-size: 13px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
+      gap: 4px;
       min-height: 28px;
     }
-    .tool-btn:hover { border-color: #222; color: #222; }
+    .tool-btn:hover { border-color: var(--text); color: var(--text); }
+
+    /* Выпадающее меню выравнивания */
+    .align-wrap {
+      position: relative;
+      display: inline-flex;
+    }
+    .align-popover {
+      display: none;
+      position: absolute;
+      top: calc(100% + 6px);
+      left: 0;
+      z-index: 95;
+      background: var(--popover-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 5px;
+      gap: 4px;
+      align-items: center;
+      box-shadow: 0 6px 18px var(--shadow);
+    }
+    .align-popover.open { display: flex; }
+    .align-opt {
+      background: none;
+      border: 1px solid transparent;
+      border-radius: 6px;
+      width: 32px;
+      height: 30px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--muted);
+      padding: 0;
+    }
+    .align-opt:hover {
+      background: var(--hover-bg);
+      color: var(--text);
+    }
+    .align-opt.active {
+      background: var(--hover-bg);
+      border-color: var(--border);
+      color: var(--text);
+    }
 
     /* Палитра цветов текста */
     .color-wrap {
@@ -235,36 +503,32 @@
       top: calc(100% + 6px);
       left: 0;
       z-index: 95;
-      background: #fff;
-      border: 1px solid #e0e0e0;
+      background: var(--popover-bg);
+      border: 1px solid var(--border);
       border-radius: 8px;
       padding: 7px 8px;
       gap: 6px;
       align-items: center;
-      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+      box-shadow: 0 6px 18px var(--shadow);
     }
-    .color-popover.open {
-      display: flex;
-    }
+    .color-popover.open { display: flex; }
     .color-swatch {
       width: 20px;
       height: 20px;
       border-radius: 50%;
-      border: 1px solid rgba(0, 0, 0, 0.15);
+      border: 1px solid rgba(128, 128, 128, 0.35);
       cursor: pointer;
       padding: 0;
       transition: transform 0.12s ease;
     }
-    .color-swatch:hover {
-      transform: scale(1.18);
-    }
-
-    #story {
+    .color-swatch:hover { transform: scale(1.18); }
+         #story {
       font-family: Georgia, "Times New Roman", Times, serif;
       font-size: 18px;
       line-height: 1.58;
       min-height: 350px;
     }
+
     #story p, #story div { margin: 0; line-height: 1.58; }
     #story h3 {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -273,7 +537,7 @@
       line-height: 1.3;
       margin: 18px 0 8px;
     }
-    #story blockquote { margin: 12px 0; padding-left: 16px; border-left: 3px solid #222; }
+    #story blockquote { margin: 12px 0; padding-left: 16px; border-left: 3px solid var(--text); }
     #story ul { margin: 12px 0; padding-left: 24px; }
     #story li {
       margin: 0 0 13px;
@@ -282,17 +546,279 @@
     }
     #story li:last-child { margin-bottom: 0; }
     #story img { max-width: 100%; height: auto; display: block; margin: 18px 0; border-radius: 4px; }
-    #story a { color: #0066cc; text-decoration: underline; cursor: pointer; }
+        #story a { color: var(--link); text-decoration: underline; cursor: pointer; }
+    #story a font[color], #story a span[style*="color"], #story font[color] a, #story span[style*="color"] a {
+      color: inherit;
+    }
+    html.dark #story [style*="color: rgb(34, 34, 34)"],
+    html.dark #story [style*="color: rgb(0, 0, 0)"],
+    html.dark #story [style*="color:#222"],
+    html.dark #story [style*="color: #222"],
+    html.dark #story [style*="color:#000"],
+    html.dark #story [style*="color: #000"] {
+      color: var(--text) !important;
+    }
+    /* Блок кода / промпта: карточка с заголовком, превью в несколько строк и нижней панелью */
+    #story .tg-code-block {
+      margin: 18px 0;
+      border-radius: 12px;
+      border: 1px solid var(--code-border);
+      background: var(--code-bg);
+      overflow: hidden;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    }
+      .tg-code-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 14px 4px;
+      background: var(--code-header);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      user-select: none;
+    }
+    .tg-code-head-left, .tg-code-head-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+       .tg-code-lang {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+      outline: none;
+      min-width: 40px;
+    }
+         .tg-code-tag-wrap {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 11.5px;
+      font-weight: 600;
+      color: #34c759;
+    }
+    .tg-code-tag-wrap.is-empty {
+      display: none;
+    }
+    #story[contenteditable="true"] .tg-code-tag-wrap.is-empty {
+      display: inline-flex;
+      opacity: 0.65;
+    }
+        .tg-code-tag {
+      outline: none;
+      color: #34c759;
+      min-width: 6px;
+    }
+    .tg-code-tag font[color],
+    .tg-code-tag span[style*="color"] {
+      color: inherit;
+    }
+    .tg-code-tag:empty::before {
+      content: "подпись...";
+      color: #34c759;
+      opacity: 0.7;
+      pointer-events: none;
+    }
+        .site-ver-badge {
+      display: none;
+      position: fixed;
+      top: 6px;
+      right: 112px;
+      z-index: 94;
+      font-size: 11px;
+      font-weight: 600;
+      color: #58a6ff;
+      pointer-events: none;
+      user-select: none;
+    }
+    body.is-admin-user .site-ver-badge {
+      display: inline-block;
+    }
 
-    /* Встроенный плеер Яндекс Музыки */
+    @media (max-width: 768px) {
+      .site-ver-badge {
+        position: static;
+        margin-right: 8px;
+      }
+    }
+
+    .tg-code-foot-right {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .tg-code-edit {
+      background: none;
+      color: var(--muted);
+      border: 1px solid var(--code-border);
+      border-radius: 6px;
+      padding: 3px 9px;
+      font-size: 11.5px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: color 0.15s ease, border-color 0.15s ease;
+    }
+    .tg-code-edit:hover {
+      color: var(--text);
+      border-color: var(--text);
+    }
+    #story[contenteditable="true"] .tg-code-edit,
+    .no-edit-rights .tg-code-edit {
+      display: none !important;
+    }
+
+    .tg-code-head-toggle {
+      background: none;
+      color: var(--muted);
+      border: 1px solid var(--code-border);
+      border-radius: 6px;
+      width: 24px;
+      height: 22px;
+      padding: 0;
+      font-size: 11px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: color 0.15s ease, border-color 0.15s ease, transform 0.2s ease;
+    }
+    .tg-code-head-toggle:hover {
+      color: var(--text);
+      border-color: var(--text);
+    }
+       .tg-code-block.is-collapsed .tg-code-head-toggle {
+      display: none !important;
+    }
+    .tg-code-block:not(.is-collapsed) .tg-code-head-toggle {
+      transform: rotate(180deg);
+    }
+       .tg-code-del {
+      background: none;
+      color: var(--muted);
+      border: 1px solid var(--code-border);
+      border-radius: 6px;
+      padding: 2px 8px;
+      font-size: 11px;
+      cursor: pointer;
+      opacity: 1;
+      transition: opacity 0.25s ease, border-color 0.15s ease, color 0.15s ease;
+    }
+    .tg-code-del:hover { border-color: #d9534f; color: #d9534f; }
+    #story[contenteditable="false"] .tg-code-del,
+    .is-hiding-code-del .tg-code-del {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+        .tg-code-body {
+      position: relative;
+      margin: 4px 12px 8px;
+      border-radius: 8px;
+      border: 1px solid var(--code-border);
+      background: var(--code-inner-bg);
+    }
+    #story .tg-code-block.is-collapsed .tg-code-body {
+      max-height: 58px;
+      overflow: hidden;
+    }
+    #story .tg-code-block.is-collapsed .tg-code-body::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 22px;
+      background: linear-gradient(to bottom, transparent, var(--code-inner-bg));
+      pointer-events: none;
+    }
+    #story .tg-code-block pre {
+      margin: 0;
+      padding: 10px 14px;
+      overflow-x: auto;
+      font-size: 13.5px;
+      line-height: 1.55;
+      color: var(--code-text);
+      white-space: pre-wrap;
+      word-break: break-word;
+      tab-size: 2;
+      outline: none;
+    }
+
+    #story .tg-code-block code {
+      font-family: inherit;
+      display: block;
+      min-height: 22px;
+      outline: none;
+    }
+    #story .tg-code-block code:empty::before {
+      content: "Вставьте или введите код / промпт...";
+      color: var(--subtle);
+      pointer-events: none;
+    }
+    .tg-code-foot {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 14px;
+      border-top: 1px solid var(--code-border);
+      background: var(--code-bg);
+      user-select: none;
+    }
+    .tg-code-toggle {
+      background: none;
+      border: none;
+      padding: 4px 6px;
+      color: var(--muted);
+      font-size: 12px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      border-radius: 6px;
+      transition: color 0.15s ease, background-color 0.15s ease;
+    }
+    .tg-code-toggle:hover {
+      color: var(--text);
+      background: var(--hover-bg);
+    }
+    .tg-code-copy {
+      background: none;
+      color: var(--muted);
+      border: none;
+      border-radius: 6px;
+      padding: 4px 8px;
+      font-size: 12px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: color 0.15s ease, background-color 0.15s ease;
+    }
+    .tg-code-copy:hover {
+      color: var(--text);
+      background: var(--hover-bg);
+    }
+
+    .hl-kw { color: var(--hl-kw); font-weight: 600; }
+    .hl-str { color: var(--hl-str); }
+    .hl-com { color: var(--hl-com); font-style: italic; }
+    .hl-tag { color: var(--hl-tag); }
+    .hl-num { color: var(--hl-num); }
+
+    /* Встроенный плеер */
     #story .tg-ymusic-embed {
       position: relative;
       width: 100%;
       margin: 18px 0;
       border-radius: 10px;
       overflow: hidden;
-      border: 1px solid #eee;
-      background: #fafafa;
+      border: 1px solid var(--border-light);
+      background: var(--surface);
     }
     #story .tg-ymusic-embed iframe {
       display: block;
@@ -300,9 +826,7 @@
       height: 244px;
       border: 0;
     }
-    #story .tg-ymusic-embed.is-album iframe {
-      height: 450px;
-    }
+    #story .tg-ymusic-embed.is-album iframe { height: 450px; }
     .tg-ymusic-del {
       position: absolute;
       top: 8px;
@@ -322,11 +846,9 @@
       justify-content: center;
     }
     .tg-ymusic-del:hover { background: #d93025; }
-    #story[contenteditable="false"] .tg-ymusic-del {
-      display: none;
-    }
+    #story[contenteditable="false"] .tg-ymusic-del { display: none; }
 
-    .status { font-size: 13px; color: #888; margin-top: 10px; font-weight: 500; min-height: 18px; }
+    .status { font-size: 13px; color: var(--muted); margin-top: 10px; font-weight: 500; min-height: 18px; }
     .status.error { color: #d9534f; }
     .status.ok { color: #28a745; }
     .footer-bar {
@@ -335,40 +857,156 @@
       justify-content: space-between;
       align-items: flex-start;
     }
-    .auth-bar { font-size: 12px; color: #aaa; display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
-    .auth-bar button, .auth-bar a { background: none; border: 0; padding: 0; font: inherit; color: #aaa; cursor: pointer; text-decoration: underline; }
-    .auth-bar button:hover, .auth-bar a:hover { color: #222; }
+    .auth-bar { font-size: 12px; color: var(--subtle); display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
+    .auth-bar button, .auth-bar a { background: none; border: 0; padding: 0; font: inherit; color: var(--subtle); cursor: pointer; text-decoration: underline; }
+    .auth-bar button:hover, .auth-bar a:hover { color: var(--text); }
+    .auth-bar button.is-logged-out { color: #d9534f; text-decoration: none; cursor: default; }
+    .auth-bar button.is-logged-out:hover { color: #d9534f; }
+    .auth-bar button.is-logged-in { color: #28a745; text-decoration: none; cursor: default; font-weight: 600; }
+    .auth-bar button.is-logged-in:hover { color: #28a745; }
+
     .views-badge {
       display: none;
       align-items: center;
       gap: 5px;
       font-size: 12px;
-      color: #aaa;
-      user-select: none;
+      color: var(--muted);
+      background: none;
+      border: 1px solid var(--border-light);
+      border-radius: 14px;
+      padding: 4px 10px;
+      cursor: pointer;
+      transition: 0.15s ease;
     }
-
+    .views-badge:hover {
+      border-color: var(--text);
+      color: var(--text);
+    }
     /* Список /blog */
     .blog-search {
       width: 100%; box-sizing: border-box; padding: 9px 14px; margin: 10px 0 15px;
-      border: 1px solid #ddd; border-radius: 20px; font-size: 14px; outline: none;
+      border: 1px solid var(--border); border-radius: 20px; font-size: 14px; outline: none;
+      background: var(--bg); color: var(--text);
     }
-    .blog-search:focus { border-color: #222; }
+    .blog-search:focus { border-color: var(--text); }
     .posts-list { list-style: none; padding: 0; margin: 0; }
     .post-item {
       display: flex; justify-content: space-between; align-items: center;
-      padding: 14px 0; border-bottom: 1px solid #eee; gap: 15px;
+      padding: 14px 0; border-bottom: 1px solid var(--border-light); gap: 15px;
     }
- .post-info a { font-family: Georgia, serif; font-size: 20px; font-weight: 700; color: #222; text-decoration: none; }
-    .post-info a:hover { color: #0066cc; }
-    .post-meta { font-size: 12px; color: #888; margin-top: 4px; }
-    .post-actions { display: flex; gap: 6px; flex-shrink: 0; }
+    @media (max-width: 680px) {
+      .post-item { flex-direction: column; align-items: flex-start; }
+    }
+    .post-info a { font-family: Georgia, serif; font-size: 20px; font-weight: 700; color: var(--text); text-decoration: none; }
+    .post-info a:hover { color: var(--link); }
+    .post-meta { font-size: 12px; color: var(--muted); margin-top: 4px; }
+    .blog-views-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 11px;
+      color: var(--muted);
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 2px 8px;
+      margin-left: 4px;
+      cursor: pointer;
+      vertical-align: middle;
+      transition: border-color 0.15s ease, color 0.15s ease;
+    }
+    .blog-views-link:hover {
+      border-color: var(--text);
+      color: var(--text);
+    }
+    .post-actions { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; flex-shrink: 0; }
     .mini-btn {
-      background: #fff; border: 1px solid #ddd; border-radius: 15px;
-      padding: 5px 11px; font-size: 12px; cursor: pointer; color: #333;
+      background: var(--bg); border: 1px solid var(--border); border-radius: 15px;
+      padding: 5px 11px; font-size: 12px; cursor: pointer; color: var(--text);
+      white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: 0.15s ease;
+    }
+    .mini-btn:hover { border-color: var(--text); }
+    .mini-btn.del:hover { border-color: #d9534f; color: #d9534f; }
+
+    /* Выпадающее меню доступа в стиле YouTube Studio */
+    .access-wrap { position: relative; display: inline-block; }
+    .access-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid #b7e4c7;
+      background: #ebfbee;
+      color: #1e7e34;
+      transition: all 0.18s ease;
       white-space: nowrap;
     }
-    .mini-btn:hover { border-color: #222; }
-    .mini-btn.del:hover { border-color: #d9534f; color: #d9534f; }
+    .access-pill:hover { border-color: #1e7e34; }
+    .access-pill .chevron { font-size: 10px; opacity: 0.75; margin-left: 2px; }
+    .access-pill.is-private {
+      border-color: #ffc9c9;
+      background: #fff5f5;
+      color: #c92a2a;
+    }
+    .access-pill.is-private:hover { border-color: #c92a2a; color: #a61e1e; }
+    html.dark .access-pill {
+      background: rgba(40, 167, 69, 0.16);
+      border-color: rgba(40, 167, 69, 0.45);
+      color: #69db7c;
+    }
+    html.dark .access-pill.is-private {
+      background: rgba(217, 83, 79, 0.16);
+      border-color: rgba(217, 83, 79, 0.45);
+      color: #ff8787;
+    }
+    .access-dropdown {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: calc(100% + 6px);
+      width: 280px;
+      background: var(--popover-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      box-shadow: 0 10px 28px var(--shadow);
+      z-index: 60;
+      overflow: hidden;
+      text-align: left;
+    }
+    .access-dropdown.open { display: block; }
+    .access-dropdown-header {
+      padding: 12px 14px 10px;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text);
+      border-bottom: 1px solid var(--border-light);
+    }
+    .access-option {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      width: 100%;
+      padding: 11px 14px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      text-align: left;
+      transition: background 0.12s ease;
+    }
+    .access-option:hover { background: var(--hover-bg); }
+    .access-opt-icon { color: var(--muted); display: flex; align-items: center; flex-shrink: 0; }
+    .access-opt-text { flex: 1; min-width: 0; }
+    .access-opt-title { font-size: 13px; font-weight: 600; color: var(--text); line-height: 1.25; }
+    .access-opt-desc { font-size: 11px; color: var(--muted); margin-top: 2px; line-height: 1.3; }
+    .access-opt-check { font-size: 15px; font-weight: 700; color: var(--text); width: 16px; text-align: center; flex-shrink: 0; }
 
     /* Всплывающая плашка ввода ссылки */
     .link-popover {
@@ -387,7 +1025,7 @@
       border: none;
       outline: none;
       color: #fff;
-      font-size: 16px;
+      font-size: 15px;
       width: 280px;
       font-family: inherit;
     }
@@ -403,28 +1041,53 @@
     }
     .link-popover button:hover { color: #fff; }
 
-    /* Модальное окно входа/регистрации */
+    /* Модальные окна */
     .modal-bg {
-      display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45);
-      justify-content: center; align-items: center; z-index: 100;
+      display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+      justify-content: center; align-items: center; z-index: 100; padding: 16px;
     }
     .modal-box {
-      background: #fff; padding: 24px; border-radius: 12px; width: 100%; max-width: 310px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+      background: var(--popover-bg); color: var(--text); padding: 24px; border-radius: 12px; width: 100%; max-width: 310px;
+      border: 1px solid var(--border);
+      box-shadow: 0 10px 30px var(--shadow);
     }
     .modal-box h3 { margin: 0 0 14px; font-size: 18px; }
     .modal-box input {
       width: 100%; box-sizing: border-box; padding: 9px 12px; margin-bottom: 10px;
-      border: 1px solid #ddd; border-radius: 6px; font-size: 14px; outline: none;
+      border: 1px solid var(--border); border-radius: 6px; font-size: 14px; outline: none;
+      background: var(--bg); color: var(--text);
     }
-    .modal-box input:focus { border-color: #222; }
+    .modal-box input:focus { border-color: var(--text); }
     .modal-btns { display: flex; gap: 8px; margin-top: 4px; }
     .modal-btns button {
       flex: 1; padding: 9px; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 13px;
     }
-    .btn-primary { background: #222; color: #fff; border: none; }
-    .btn-secondary { background: #fff; color: #222; border: 1px solid #222; }
-    .modal-close { display: block; width: 100%; margin-top: 10px; background: none; border: none; color: #999; font-size: 12px; cursor: pointer; }
+    .btn-primary { background: var(--text); color: var(--bg); border: none; }
+    .btn-secondary { background: var(--bg); color: var(--text); border: 1px solid var(--text); }
+    .modal-close { display: block; width: 100%; margin-top: 10px; background: none; border: none; color: var(--subtle); font-size: 12px; cursor: pointer; }
+
+    /* Список просмотров в модальном окне */
+    .views-modal-box { max-width: 380px; }
+    .views-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      max-height: 290px;
+      overflow-y: auto;
+      border-top: 1px solid var(--border-light);
+    }
+    .views-list li {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 9px 2px;
+      border-bottom: 1px solid var(--border-light);
+      font-size: 13px;
+      gap: 10px;
+    }
+    .views-user { font-weight: 600; color: var(--text); }
+    .views-user.is-guest { font-weight: 400; color: var(--muted); }
+    .views-date { font-size: 12px; color: var(--subtle); white-space: nowrap; }
   </style>
 </head>
 <body>
@@ -440,16 +1103,21 @@
       <div class="editor-header-inner">
         <div class="top-bar">
           <div class="top-left">
-            <a href="/" class="new-link">+ Новая запись</a>
+            <a href="/" id="newPostLink" class="new-link">+ Новая запись</a>
             <a href="/blog" id="adminBlogLink" class="new-link">Блог</a>
           </div>
+          <span class="site-ver-badge">build v0.0.1</span>
+          <button id="themeBtn" class="theme-btn" type="button" title="Переключить тему">
+            <svg class="icon-light" width="17" height="17" viewBox="0 0 24 24" fill="#f5b014" stroke="#e09c00" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+            <svg class="icon-dark" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#a5b4fc" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5a8.5 8.5 0 1 0 11 11z" fill="rgba(165, 180, 252, 0.2)"/><circle cx="17.5" cy="6.5" r="2" fill="#fcd34d" stroke="#fcd34d"/><path d="M14.5 8.2c2-.8 4.4-1.8 6-3.4" stroke="#fcd34d" stroke-width="1.3"/></svg>
+          </button>
         </div>
 
         <div class="title-wrap">
-          <span id="titleSideLabel" class="side-label">Title</span>
-          <div id="title" class="editable" contenteditable="true" data-placeholder="Title"></div>
+          <span id="titleSideLabel" class="side-label">Заголовок</span>
+          <div id="title" class="editable" contenteditable="true" data-placeholder="Заголовок"></div>
         </div>
-        <div id="metaInfo" class="editable" data-placeholder="Author"></div>
+        <div id="metaInfo" class="editable" data-placeholder="Автор"></div>
 
         <div id="toolbarRow" class="toolbar-row">
           <div id="toolbar" class="toolbar">
@@ -459,7 +1127,7 @@
             <button class="tool-btn" type="button" data-cmd="italic" title="Курсив">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="4" x2="10" y2="4"/><line x1="14" y1="20" x2="5" y2="20"/><line x1="15" y1="4" x2="9" y2="20"/></svg>
             </button>
-            <button class="tool-btn" type="button" data-cmd="strikeThrough" title="Зачёркнутый">
+                        <button class="tool-btn" type="button" data-cmd="strikeThrough" title="Зачёркнутый">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4H9a3 3 0 0 0-2.83 4"/><path d="M14 12a4 4 0 0 1 0 8H6"/><line x1="4" y1="12" x2="20" y2="12"/></svg>
             </button>
             <div class="color-wrap" id="colorWrap">
@@ -470,7 +1138,7 @@
                 </span>
               </button>
               <div class="color-popover" id="colorPopover">
-                <button type="button" class="color-swatch" data-color="#222222" style="background:#222222;" title="Чёрный (по умолчанию)"></button>
+                <button type="button" class="color-swatch" data-color="#222222" style="background:#222222;" title="По умолчанию"></button>
                 <button type="button" class="color-swatch" data-color="#d93025" style="background:#d93025;" title="Красный"></button>
                 <button type="button" class="color-swatch" data-color="#e37400" style="background:#e37400;" title="Оранжевый"></button>
                 <button type="button" class="color-swatch" data-color="#d4a017" style="background:#d4a017;" title="Жёлтый"></button>
@@ -484,45 +1152,76 @@
             <button class="tool-btn" type="button" data-cmd="insertUnorderedList" title="Список">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
             </button>
+            <button id="codeBtn" class="tool-btn" type="button" title="Вставить блок кода">&lt;/&gt;</button>
             <span class="tool-sep"></span>
-            <button class="tool-btn" type="button" data-cmd="justifyCenter" title="По центру">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="6"/><line x1="21" y1="12" x2="3" y2="12"/><line x1="18" y1="18" x2="6" y2="18"/></svg>
-            </button>
-            <button class="tool-btn" type="button" data-cmd="justifyRight" title="По правому краю">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="12" x2="9" y2="12"/><line x1="21" y1="18" x2="3" y2="18"/></svg>
-            </button>
+            <div class="align-wrap" id="alignWrap">
+              <button class="tool-btn" type="button" id="alignBtn" title="Выравнивание текста">
+                <svg id="alignCurrentIcon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="17" y1="6" x2="3" y2="6"/><line x1="21" y1="12" x2="3" y2="12"/><line x1="15" y1="18" x2="3" y2="18"/></svg>
+                <span style="font-size:10px; opacity:0.75;">▾</span>
+              </button>
+              <div class="align-popover" id="alignPopover">
+                <button type="button" class="align-opt" data-align="justifyLeft" title="По левому краю">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="17" y1="6" x2="3" y2="6"/><line x1="21" y1="12" x2="3" y2="12"/><line x1="15" y1="18" x2="3" y2="18"/></svg>
+                </button>
+                <button type="button" class="align-opt" data-align="justifyCenter" title="По центру">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="6"/><line x1="21" y1="12" x2="3" y2="12"/><line x1="18" y1="18" x2="6" y2="18"/></svg>
+                </button>
+                <button type="button" class="align-opt" data-align="justifyRight" title="По правому краю">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="21" y1="6" x2="7" y2="6"/><line x1="21" y1="12" x2="3" y2="12"/><line x1="21" y1="18" x2="9" y2="18"/></svg>
+                </button>
+                <button type="button" class="align-opt" data-align="justifyFull" title="По ширине">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="12" x2="3" y2="12"/><line x1="21" y1="18" x2="3" y2="18"/></svg>
+                </button>
+              </div>
+            </div>
             <span class="tool-sep"></span>
             <button id="linkBtn" class="tool-btn" type="button">🔗 Ссылка</button>
             <button id="photoBtn" class="tool-btn" type="button">📷 Фото</button>
             <input type="file" id="fileInput" accept="image/*" style="display:none">
           </div>
-          <button id="actionBtn" class="publish-btn" type="button" disabled>PUBLISH</button>
+                    <div class="publish-group">
+            <button id="actionBtn" class="publish-btn" type="button" disabled>ОПУБЛИКОВАТЬ</button>
+            <button id="cancelEditBtn" class="cancel-edit-btn" type="button" title="Закрыть режим редактирования">ЗАКРЫТЬ</button>
+
+          </div>
         </div>
       </div>
     </div>
 
-    <div id="story" class="editable" contenteditable="true" data-placeholder="Your story... (можно вставлять фото и HTML/ссылки Яндекс Музыки через Ctrl+V)"></div>
+    <div id="story" class="editable" contenteditable="true" data-placeholder="Ваша история... (можно вставлять фото и виджеты через Ctrl+V)"></div>
     <div id="status" class="status"></div>
 
     <div class="footer-bar">
       <div class="auth-bar">
         <button id="authBtn" type="button">Войти</button>
-        <a href="/start" id="faqLink">FAQ</a>
+        <a href="/start" id="faqLink">Справка</a>
       </div>
-      <div id="viewsBadge" class="views-badge" title="Уникальные просмотры">
+      <button id="viewsBadge" class="views-badge" type="button" title="Нажмите, чтобы посмотреть статистику просмотров">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
         <span id="viewsCount">0</span>
-      </div>
+      </button>
     </div>
   </div>
 
-  <!-- Всплывающее поле ввода ссылки -->
+    <button id="scrollTopBtn" class="scroll-top-btn" type="button" title="Наверх">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+  </button>
+
   <div id="linkPopover" class="link-popover">
-    <input type="text" id="linkUrlInput" placeholder="Paste or type a link...">
+
+    <input type="text" id="linkUrlInput" placeholder="Вставьте или введите ссылку...">
     <button type="button" id="closeLinkPopover" title="Закрыть">✕</button>
   </div>
 
-  <!-- Окно входа и регистрации -->
+  <div id="viewsModal" class="modal-bg">
+    <div class="modal-box views-modal-box">
+      <h3 id="viewsModalTitle">Просмотры</h3>
+      <ul id="viewsList" class="views-list"></ul>
+      <div id="viewsEmptyMsg" style="font-size:13px; color:#888; padding:10px 0; display:none;"></div>
+      <button id="closeViewsModalBtn" class="modal-close" type="button">Закрыть</button>
+    </div>
+  </div>
+
   <div id="authModal" class="modal-bg">
     <div class="modal-box">
       <h3 id="modalTitle">Вход</h3>
@@ -534,9 +1233,9 @@
           <button id="submitAuthBtn" class="btn-primary" type="submit">Войти</button>
         </div>
       </form>
-      <div style="text-align:center; margin-top:12px; font-size:12px; color:#777;">
+            <div style="text-align:center; margin-top:12px; font-size:12px; color:var(--muted);">
         <span id="switchHint">Нет аккаунта?</span>
- <button id="switchModeBtn" type="button" style="background:none; border:none; color:#222; font-weight:600; cursor:pointer; text-decoration:underline; padding:0; font-size:12px;">Регистрация</button>
+        <button id="switchModeBtn" type="button" style="background:none; border:none; color:var(--text); font-weight:600; cursor:pointer; text-decoration:underline; padding:0; font-size:12px;">Регистрация</button>
       </div>
       <button id="closeModalBtn" class="modal-close" type="button">Закрыть</button>
     </div>
@@ -548,6 +1247,7 @@
   <script>
     const ADMIN_LOGIN = 'lordman';
     const DEFAULT_RAINBOW = 'linear-gradient(90deg, #ff3b30, #ff9500, #ffcc00, #34c759, #007aff, #af52de)';
+    const DRAFT_KEY = 'tgtype_new_draft_v1';
 
     const pageLoader = document.getElementById('pageLoader');
     const editorHeader = document.getElementById('editorHeader');
@@ -557,7 +1257,21 @@
     const titleSideLabel = document.getElementById('titleSideLabel');
     const metaInfoEl = document.getElementById('metaInfo');
     const storyEl = document.getElementById('story');
-    const actionBtn = document.getElementById('actionBtn');
+        const actionBtn = document.getElementById('actionBtn');
+    const cancelEditBtn = document.getElementById('cancelEditBtn');
+    const scrollTopBtn = document.getElementById('scrollTopBtn');
+
+    scrollTopBtn.addEventListener('click', () => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+
+    const themeBtn = document.getElementById('themeBtn');
+    const newPostLink = document.getElementById('newPostLink');
+    const codeBtn = document.getElementById('codeBtn');
+    const alignWrap = document.getElementById('alignWrap');
+    const alignBtn = document.getElementById('alignBtn');
+    const alignCurrentIcon = document.getElementById('alignCurrentIcon');
+    const alignPopover = document.getElementById('alignPopover');
     const photoBtn = document.getElementById('photoBtn');
     const linkBtn = document.getElementById('linkBtn');
     const linkPopover = document.getElementById('linkPopover');
@@ -573,10 +1287,19 @@
     const authBtn = document.getElementById('authBtn');
     const viewsBadge = document.getElementById('viewsBadge');
     const viewsCountEl = document.getElementById('viewsCount');
-    const adminBlogLink = document.getElementById('adminBlogLink');
+    const viewsModal = document.getElementById('viewsModal');
+    const viewsModalTitle = document.getElementById('viewsModalTitle');
+    const viewsList = document.getElementById('viewsList');
+    const viewsEmptyMsg = document.getElementById('viewsEmptyMsg');
     const authModal = document.getElementById('authModal');
     const loginInput = document.getElementById('loginInput');
     const passInput = document.getElementById('passInput');
+
+    // Переключение тёмной / светлой темы
+    themeBtn.addEventListener('click', () => {
+      const isDark = document.documentElement.classList.toggle('dark');
+      localStorage.setItem('tgtype_theme', isDark ? 'dark' : 'light');
+    });
 
     function showLoader() {
       if (pageLoader) {
@@ -594,8 +1317,15 @@
     let currentUser = null;
     let currentArticleOwner = null;
     let currentArticleViews = 0;
+    let currentArticleViewsLog = [];
+    let currentArticleIsPrivate = false;
+    let lockedPrivateArticle = false;
     let viewCountedForSlug = false;
     let savedLinkRange = null;
+    let savedBtnTimer = null;
+    let logoutMsgTimer = null;
+    let isManualLogout = false;
+
     const pathSlug = window.location.pathname.replace(/^\/+|\/+$/g, '');
     let currentSlug = pathSlug;
     let isViewMode = false;
@@ -603,6 +1333,32 @@
     if (pathSlug) {
       showLoader();
     }
+
+    // Автосохранение и восстановление черновика для новой записи на /
+    function saveDraftToLocal() {
+      if (currentSlug || isViewMode) return;
+      const hasTitle = titleEl.innerText.trim().length > 0;
+      const hasStory = storyEl.innerText.trim().length > 0 || storyEl.querySelector('img, iframe, .tg-code-block');
+      if (!hasTitle && !hasStory) {
+        localStorage.removeItem(DRAFT_KEY);
+        return;
+      }
+      try {
+        localStorage.setItem(DRAFT_KEY, JSON.stringify({
+          title: titleEl.innerHTML,
+          story: storyEl.innerHTML,
+          at: Date.now()
+        }));
+      } catch (e) {}
+    }
+
+    function clearDraftFromLocal() {
+      localStorage.removeItem(DRAFT_KEY);
+    }
+
+    newPostLink.addEventListener('click', () => {
+      clearDraftFromLocal();
+    });
 
     let initialSnapshot = { title: '', story: '', meta: '' };
 
@@ -628,6 +1384,10 @@
     }
 
     function updatePublishState() {
+      if (actionBtn.classList.contains('is-saved')) {
+        actionBtn.disabled = false;
+        return;
+      }
       if (isViewMode) {
         actionBtn.disabled = false;
         return;
@@ -637,25 +1397,56 @@
 
     captureInitialSnapshot();
 
-    function updateFixedHeader() {
+    // Восстанавливаем черновик, если открыта главная страница /
+    if (!pathSlug) {
+      try {
+        const rawDraft = localStorage.getItem(DRAFT_KEY);
+        if (rawDraft) {
+          const parsed = JSON.parse(rawDraft);
+          if (parsed && (parsed.title || parsed.story)) {
+            titleEl.innerHTML = parsed.title || '';
+            storyEl.innerHTML = parsed.story || '';
+            updatePublishState();
+          }
+        }
+      } catch (e) {}
+    }
+        function updateFixedHeader(animateOpen = false) {
+      const scrolled = window.scrollY > 28;
+      themeBtn.classList.toggle('is-scrolled', scrolled);
+      actionBtn.classList.toggle('is-scrolled', scrolled && isViewMode);
+      scrollTopBtn.classList.toggle('visible', window.scrollY > 300);
+
       if (!editorHeader.classList.contains('is-editing')) {
-        editorHeader.classList.remove('is-fixed');
+        editorHeader.classList.remove('is-fixed', 'is-opening', 'is-closing');
         headerSpacer.style.display = 'none';
         return;
       }
-      const triggerY = 28;
+      const triggerY = 95;
       if (window.scrollY > triggerY) {
         if (!editorHeader.classList.contains('is-fixed')) {
-          headerSpacer.style.height = editorHeader.offsetHeight + 'px';
+          const fullH = editorHeader.offsetHeight;
+          headerSpacer.style.height = fullH + 'px';
           headerSpacer.style.display = 'block';
-          editorHeader.classList.add('is-fixed');
+          if (animateOpen) {
+            editorHeader.classList.add('is-fixed', 'is-opening');
+            requestAnimationFrame(() => {
+              requestAnimationFrame(() => {
+                editorHeader.classList.remove('is-opening');
+              });
+            });
+          } else {
+            editorHeader.classList.add('is-fixed');
+          }
         }
-      } else {
-        editorHeader.classList.remove('is-fixed');
+           } else {
+        editorHeader.classList.remove('is-fixed', 'is-opening');
         headerSpacer.style.display = 'none';
       }
     }
+
     window.addEventListener('scroll', updateFixedHeader, { passive: true });
+
     window.addEventListener('resize', () => {
       if (editorHeader.classList.contains('is-fixed')) {
         editorHeader.classList.remove('is-fixed');
@@ -672,21 +1463,25 @@
       const canEdit = titleEl.isContentEditable;
       titleSideLabel.classList.toggle('visible', hasText && canEdit);
     }
+    updateTitleSideLabel();
+
     titleEl.addEventListener('input', () => {
       updateTitleSideLabel();
       updatePublishState();
+      saveDraftToLocal();
     });
     metaInfoEl.addEventListener('input', updatePublishState);
+    function formatRuDate(timestamp) {
+      if (!timestamp) return '—';
+      return new Date(timestamp).toLocaleString('ru-RU', {
+        day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
+      });
+    }
 
     function renderMeta(login, timestamp) {
       const parts = [];
       if (login) parts.push(login);
-      if (timestamp) {
-        const dateStr = new Date(timestamp).toLocaleString('ru-RU', {
-          day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
-        });
-        parts.push(dateStr);
-      }
+      if (timestamp) parts.push(formatRuDate(timestamp));
       metaInfoEl.textContent = parts.join(' • ');
     }
 
@@ -713,22 +1508,328 @@
       sel.addRange(range);
     }
 
+    // Подсветка синтаксиса для блока кода с автоопределением языка
+    const COPY_ICON_SVG = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
+
+    function escapeHtml(str) {
+      return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    function detectCodeLanguage(raw) {
+      const s = (raw || '').trim();
+      if (!s) return 'code';
+      if (/<!DOCTYPE|<html|<div|<script|<style|<\/[a-z]+>/i.test(s)) return 'html';
+      if (/\b(const|let|var|function|async|await|document\.|window\.|=>)\b/.test(s)) return 'javascript';
+      if (/\b(def |import |from |elif |print\(|None|True|False)\b/.test(s)) return 'python';
+      if (/^###?\s|^\s*-\s+\*\*/m.test(s)) return 'markdown';
+      if (/\{[\s\S]*?:[\s\S]*?;[\s\S]*?\}/.test(s) && !/\bfunction\b/.test(s)) return 'css';
+      return 'code';
+    }
+
+    function highlightCodeText(raw) {
+      let html = escapeHtml(raw);
+      const tokens = [];
+      const saveTok = (cls, text) => {
+        const id = `\u0000TOK${tokens.length}\u0000`;
+        tokens.push(`<span class="${cls}">${text}</span>`);
+        return id;
+      };
+
+      html = html.replace(/(\/\/[^\n]*|\/\*[\s\S]*?\*\/|#[^\n]*)/g, m => saveTok('hl-com', m));
+      html = html.replace(/(&lt;\/?[a-zA-Z0-9-]+(?:\s+[^&]*?)?\/?&gt;)/g, m => saveTok('hl-tag', m));
+      html = html.replace(/(&quot;[^&\n]*?&quot;|'[^'\n]*?'|`[^`]*?`)/g, m => saveTok('hl-str', m));
+      html = html.replace(/\b(const|let|var|function|return|if|else|for|while|async|await|try|catch|finally|class|import|from|export|default|new|true|false|null|undefined|def|print|elif|None|True|False)\b/g, '<span class="hl-kw">$1</span>');
+      html = html.replace(/\b(\d+(?:\.\d+)?)\b/g, '<span class="hl-num">$1</span>');
+
+      return html.replace(/\u0000TOK(\d+)\u0000/g, (_, idx) => tokens[Number(idx)]);
+    }
+
+    function getCaretOffsetIn(root) {
+      const sel = window.getSelection();
+      if (!sel || !sel.rangeCount || !root.contains(sel.anchorNode)) return null;
+      const range = sel.getRangeAt(0);
+      const pre = range.cloneRange();
+      pre.selectNodeContents(root);
+      pre.setEnd(range.endContainer, range.endOffset);
+      return pre.toString().length;
+    }
+
+    function setCaretOffsetIn(root, offset) {
+      if (offset === null || offset === undefined) return;
+      const sel = window.getSelection();
+      const range = document.createRange();
+      let current = 0;
+      const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null);
+      let node;
+      while ((node = walker.nextNode())) {
+        const next = current + node.nodeValue.length;
+        if (offset <= next) {
+          range.setStart(node, Math.max(0, offset - current));
+          range.collapse(true);
+          sel.removeAllRanges();
+          sel.addRange(range);
+          return;
+        }
+        current = next;
+      }
+      range.selectNodeContents(root);
+      range.collapse(false);
+      sel.removeAllRanges();
+      sel.addRange(range);
+    }
+    function updateCodeToggleUI(block) {
+      if (!block) return;
+      const toggleBtn = block.querySelector('.tg-code-toggle');
+      const headToggleBtn = block.querySelector('.tg-code-head-toggle');
+      const preEl = block.querySelector('pre');
+      if (!preEl) return;
+      const isShort = preEl.scrollHeight <= 60;
+      if (isShort) {
+        block.classList.remove('is-collapsed');
+        if (toggleBtn) toggleBtn.style.visibility = 'hidden';
+        if (headToggleBtn) headToggleBtn.style.display = 'none';
+        return;
+      }
+      if (toggleBtn) toggleBtn.style.visibility = 'visible';
+      if (headToggleBtn) headToggleBtn.style.display = 'inline-flex';
+      const collapsed = block.classList.contains('is-collapsed');
+      if (toggleBtn) toggleBtn.textContent = collapsed ? 'Развернуть ▾' : 'Свернуть ▴';
+      if (headToggleBtn) headToggleBtn.title = collapsed ? 'Развернуть' : 'Свернуть';
+    }
+
+    function normalizeCodeBlockStructure(block) {
+      if (!block) return;
+      const head = block.querySelector('.tg-code-head');
+      const pre = block.querySelector('pre');
+      if (head && pre && !block.querySelector('.tg-code-body')) {
+        const bodyWrap = document.createElement('div');
+        bodyWrap.className = 'tg-code-body';
+        pre.replaceWith(bodyWrap);
+        bodyWrap.appendChild(pre);
+      }
+           if (head && !head.querySelector('.tg-code-head-left')) {
+        const langEl = head.querySelector('.tg-code-lang');
+        const delBtn = head.querySelector('.tg-code-del');
+        const langText = langEl ? langEl.textContent : 'code';
+        const isCustom = langEl?.dataset?.customTitle === '1';
+
+        const left = document.createElement('div');
+        left.className = 'tg-code-head-left';
+        const newLang = document.createElement('span');
+        newLang.className = 'tg-code-lang';
+        newLang.textContent = langText;
+        if (isCustom) newLang.dataset.customTitle = '1';
+        const headToggle = document.createElement('button');
+        headToggle.type = 'button';
+        headToggle.className = 'tg-code-head-toggle';
+        headToggle.textContent = '▾';
+        headToggle.title = 'Развернуть / Свернуть';
+        left.appendChild(newLang);
+        left.appendChild(headToggle);
+
+        const right = document.createElement('div');
+        right.className = 'tg-code-head-right';
+        if (delBtn) right.appendChild(delBtn);
+
+        head.innerHTML = '';
+        head.appendChild(left);
+        head.appendChild(right);
+      }
+      const leftBox = head?.querySelector('.tg-code-head-left');
+      if (leftBox && !leftBox.querySelector('.tg-code-tag-wrap')) {
+        const tagWrap = document.createElement('span');
+        tagWrap.className = 'tg-code-tag-wrap is-empty';
+        tagWrap.innerHTML = '• <span class="tg-code-tag" spellcheck="false"></span>';
+        const toggleEl = leftBox.querySelector('.tg-code-head-toggle');
+        if (toggleEl) leftBox.insertBefore(tagWrap, toggleEl);
+        else leftBox.appendChild(tagWrap);
+      }
+      const tagWrapEl = leftBox?.querySelector('.tg-code-tag-wrap');
+      const tagTextEl = tagWrapEl?.querySelector('.tg-code-tag');
+      if (tagWrapEl && tagTextEl) {
+        tagWrapEl.classList.toggle('is-empty', !tagTextEl.textContent.trim());
+      }
+            const oldDevVer = leftBox?.querySelector('.tg-code-dev-ver');
+      if (oldDevVer) oldDevVer.remove();
+
+      let foot = block.querySelector('.tg-code-foot');
+      if (!foot) {
+        foot = document.createElement('div');
+        foot.className = 'tg-code-foot';
+        block.appendChild(foot);
+      }
+      foot.innerHTML = `
+        <button type="button" class="tg-code-toggle">Развернуть ▾</button>
+        <div class="tg-code-foot-right">
+          <button type="button" class="tg-code-edit" title="Редактировать код">Редактировать</button>
+          <button type="button" class="tg-code-copy" title="Скопировать">${COPY_ICON_SVG}</button>
+        </div>
+      `;
+
+    }
+
+    function applyCodeHighlight(codeEl, preserveCaret = false) {
+      if (!codeEl) return;
+      const caretPos = preserveCaret ? getCaretOffsetIn(codeEl) : null;
+      const raw = (codeEl.textContent || '').replace(/class="hl-(?:com|str|tag|kw|num)">/g, '');
+      codeEl.innerHTML = raw ? highlightCodeText(raw) : '';
+      const block = codeEl.closest('.tg-code-block');
+      normalizeCodeBlockStructure(block);
+      const langLabel = block?.querySelector('.tg-code-lang');
+      if (langLabel && !langLabel.dataset.customTitle) {
+        langLabel.textContent = detectCodeLanguage(raw);
+      }
+      updateCodeToggleUI(block);
+      if (preserveCaret && caretPos !== null) {
+        setCaretOffsetIn(codeEl, caretPos);
+      }
+    }
+
+    function refreshAllCodeBlocks(collapseAll = false) {
+      storyEl.querySelectorAll('.tg-code-block').forEach(block => {
+        normalizeCodeBlockStructure(block);
+        const code = block.querySelector('code');
+        if (code) applyCodeHighlight(code, false);
+        if (collapseAll) block.classList.add('is-collapsed');
+        updateCodeToggleUI(block);
+      });
+    }
+    function syncCodeEditableState() {
+      const canEdit = storyEl.isContentEditable;
+      storyEl.querySelectorAll('.tg-code-block code').forEach(code => {
+        code.contentEditable = canEdit ? 'true' : 'false';
+      });
+      storyEl.querySelectorAll('.tg-code-block .tg-code-lang').forEach(lang => {
+        lang.contentEditable = canEdit ? 'true' : 'false';
+      });
+      storyEl.querySelectorAll('.tg-code-block .tg-code-tag').forEach(tag => {
+        tag.contentEditable = canEdit ? 'true' : 'false';
+      });
+    }
+
+    codeBtn.addEventListener('mousedown', e => e.preventDefault());
+    codeBtn.addEventListener('click', () => {
+      colorPopover.classList.remove('open');
+      alignPopover.classList.remove('open');
+
+      const block = document.createElement('div');
+      block.className = 'tg-code-block';
+      block.setAttribute('contenteditable', 'false');
+      block.innerHTML = `
+        <div class="tg-code-head">
+          <div class="tg-code-head-left">
+            <span class="tg-code-lang" contenteditable="true" spellcheck="false">code</span>
+            <span class="tg-code-tag-wrap is-empty">• <span class="tg-code-tag" contenteditable="true" spellcheck="false"></span></span>
+            <button type="button" class="tg-code-head-toggle" style="display:none;" title="Свернуть">▾</button>
+          </div>
+          <div class="tg-code-head-right">
+            <button type="button" class="tg-code-del" title="Удалить блок">✕</button>
+          </div>
+        </div>
+        <div class="tg-code-body">
+          <pre><code contenteditable="true" spellcheck="false"></code></pre>
+        </div>
+        <div class="tg-code-foot">
+          <button type="button" class="tg-code-toggle" style="visibility:hidden;">Развернуть ▾</button>
+          <div class="tg-code-foot-right">
+            <button type="button" class="tg-code-edit" title="Редактировать код">Редактировать</button>
+            <button type="button" class="tg-code-copy" title="Скопировать">${COPY_ICON_SVG}</button>
+          </div>
+        </div>
+      `;
+
+      const afterP = document.createElement('p');
+      afterP.innerHTML = '<br>';
+
+      const sel = window.getSelection();
+      if (sel && sel.rangeCount && storyEl.contains(sel.anchorNode)) {
+        const range = sel.getRangeAt(0);
+        range.deleteContents();
+        range.insertNode(afterP);
+        range.insertNode(block);
+      } else {
+        storyEl.appendChild(block);
+        storyEl.appendChild(afterP);
+      }
+
+      const codeEl = block.querySelector('code');
+      codeEl.focus();
+      updatePublishState();
+      saveDraftToLocal();
+    });
+
+    storyEl.addEventListener('focusout', e => {
+      const codeEl = e.target.closest('.tg-code-block code');
+      if (codeEl && storyEl.contains(codeEl)) {
+        applyCodeHighlight(codeEl, false);
+        updatePublishState();
+        saveDraftToLocal();
+      }
+    });
+    // Выпадающее меню выравнивания
+    alignBtn.addEventListener('mousedown', e => e.preventDefault());
+    alignBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      colorPopover.classList.remove('open');
+      alignPopover.classList.toggle('open');
+    });
+
+    document.querySelectorAll('.align-opt').forEach(opt => {
+      opt.addEventListener('mousedown', e => e.preventDefault());
+      opt.addEventListener('click', e => {
+        e.stopPropagation();
+        const cmd = opt.dataset.align;
+        storyEl.focus();
+        document.execCommand(cmd, false, null);
+        alignCurrentIcon.innerHTML = opt.querySelector('svg').innerHTML;
+        document.querySelectorAll('.align-opt').forEach(b => b.classList.toggle('active', b === opt));
+        alignPopover.classList.remove('open');
+        updatePublishState();
+        saveDraftToLocal();
+      });
+    });
+
     // Палитра цветов текста
     colorBtn.addEventListener('mousedown', e => e.preventDefault());
     colorBtn.addEventListener('click', e => {
       e.stopPropagation();
+      alignPopover.classList.remove('open');
       colorPopover.classList.toggle('open');
     });
-
     document.querySelectorAll('.color-swatch').forEach(swatch => {
       swatch.addEventListener('mousedown', e => e.preventDefault());
       swatch.addEventListener('click', e => {
         e.stopPropagation();
         const color = swatch.dataset.color;
+        const activeSel = window.getSelection();
+        const tagNode = activeSel?.anchorNode?.parentElement?.closest('.tg-code-tag') || activeSel?.focusNode?.parentElement?.closest('.tg-code-tag');
+        if (tagNode && storyEl.contains(tagNode)) {
+          const wrap = tagNode.closest('.tg-code-tag-wrap');
+          const applied = color === '#222222' ? '#34c759' : color;
+          tagNode.style.color = applied;
+          if (wrap) wrap.style.color = applied;
+          if (color === '#222222') {
+            colorBar.style.backgroundColor = 'transparent';
+            colorBar.style.backgroundImage = DEFAULT_RAINBOW;
+          } else {
+            colorBar.style.backgroundImage = 'none';
+            colorBar.style.backgroundColor = color;
+          }
+          colorPopover.classList.remove('open');
+          updatePublishState();
+          saveDraftToLocal();
+          return;
+        }
         storyEl.focus();
         document.execCommand('styleWithCSS', false, true);
         document.execCommand('foreColor', false, color);
         document.execCommand('styleWithCSS', false, false);
+        const sel = window.getSelection();
+        const anchor = sel?.anchorNode?.parentElement?.closest('a') || sel?.focusNode?.parentElement?.closest('a');
+        if (anchor && storyEl.contains(anchor)) {
+          anchor.style.color = color === '#222222' ? '' : color;
+        }
+
         if (color === '#222222') {
           colorBar.style.backgroundColor = 'transparent';
           colorBar.style.backgroundImage = DEFAULT_RAINBOW;
@@ -738,18 +1839,20 @@
         }
         colorPopover.classList.remove('open');
         updatePublishState();
+        saveDraftToLocal();
       });
     });
 
     document.addEventListener('click', e => {
-      if (!colorWrap.contains(e.target)) {
-        colorPopover.classList.remove('open');
-      }
+      if (!colorWrap.contains(e.target)) colorPopover.classList.remove('open');
+      if (!alignWrap.contains(e.target)) alignPopover.classList.remove('open');
     });
-document.querySelectorAll('.tool-btn[data-cmd]').forEach(btn => {
+
+    document.querySelectorAll('.tool-btn[data-cmd]').forEach(btn => {
       btn.addEventListener('mousedown', e => e.preventDefault());
       btn.addEventListener('click', () => {
         colorPopover.classList.remove('open');
+        alignPopover.classList.remove('open');
         storyEl.focus();
         const cmd = btn.dataset.cmd;
         const arg = btn.dataset.arg || null;
@@ -760,7 +1863,6 @@ document.querySelectorAll('.tool-btn[data-cmd]').forEach(btn => {
           const node = sel.anchorNode;
           const el = node?.nodeType === 3 ? node.parentElement : node;
 
-          // 1. Если строка уже заголовок/цитата — превращаем обратно в обычный абзац <p> через историю Undo
           const existingBlock = el?.closest(arg.toLowerCase());
           if (existingBlock && storyEl.contains(existingBlock)) {
             const range = document.createRange();
@@ -770,12 +1872,12 @@ document.querySelectorAll('.tool-btn[data-cmd]').forEach(btn => {
             const inner = existingBlock.innerHTML || '<br>';
             document.execCommand('insertHTML', false, `<p>${inner}</p>`);
             updatePublishState();
+            saveDraftToLocal();
             return;
           }
 
-          // 2. Ищем текущий строчный блок (p, div, blockquote, h3) внутри #story
           let lineBlock = el?.closest('p, div, blockquote, h3');
-          if (lineBlock === storyEl) lineBlock = null;
+          if (lineBlock === storyEl || lineBlock?.closest('.tg-code-block')) lineBlock = null;
 
           if (lineBlock && storyEl.contains(lineBlock)) {
             const range = document.createRange();
@@ -786,10 +1888,10 @@ document.querySelectorAll('.tool-btn[data-cmd]').forEach(btn => {
             const inner = lineBlock.innerHTML || '<br>';
             document.execCommand('insertHTML', false, `<${tag}>${inner}</${tag}>`);
             updatePublishState();
+            saveDraftToLocal();
             return;
           }
 
-          // 3. Если текст лежит прямо в корне #story без <p>/<div> — выделяем строку и оборачиваем через execCommand
           if (node && storyEl.contains(node)) {
             let startNode = node;
             while (startNode.previousSibling && startNode.previousSibling.nodeName !== 'BR' && !/^(P|DIV|H3|BLOCKQUOTE|UL)$/i.test(startNode.previousSibling.nodeName)) {
@@ -813,14 +1915,9 @@ document.querySelectorAll('.tool-btn[data-cmd]').forEach(btn => {
             const inner = temp.innerHTML || '<br>';
             document.execCommand('insertHTML', false, `<${tag}>${inner}</${tag}>`);
             updatePublishState();
+            saveDraftToLocal();
             return;
           }
-        }
-
-        if ((cmd === 'justifyCenter' || cmd === 'justifyRight') && document.queryCommandState(cmd)) {
-          document.execCommand('justifyLeft', false, null);
-          updatePublishState();
-          return;
         }
 
         if (cmd === 'insertUnorderedList') {
@@ -831,16 +1928,16 @@ document.querySelectorAll('.tool-btn[data-cmd]').forEach(btn => {
             const curNode = window.getSelection()?.anchorNode;
             const curEl = curNode?.nodeType === 3 ? curNode.parentElement : curNode;
             const li = curEl?.closest('li');
-            if (li && storyEl.contains(li)) {
-              placeCaretAtEnd(li);
-            }
+            if (li && storyEl.contains(li)) placeCaretAtEnd(li);
           }
           updatePublishState();
+          saveDraftToLocal();
           return;
         }
 
         document.execCommand(cmd, false, arg);
         updatePublishState();
+        saveDraftToLocal();
       });
     });
 
@@ -853,6 +1950,7 @@ document.querySelectorAll('.tool-btn[data-cmd]').forEach(btn => {
     linkBtn.addEventListener('mousedown', e => e.preventDefault());
     linkBtn.addEventListener('click', () => {
       colorPopover.classList.remove('open');
+      alignPopover.classList.remove('open');
       const sel = window.getSelection();
       if (!sel || !sel.rangeCount) return;
 
@@ -867,6 +1965,7 @@ document.querySelectorAll('.tool-btn[data-cmd]').forEach(btn => {
         document.execCommand('unlink', false, null);
         hideLinkPopover();
         updatePublishState();
+        saveDraftToLocal();
         return;
       }
 
@@ -910,6 +2009,7 @@ document.querySelectorAll('.tool-btn[data-cmd]').forEach(btn => {
 
         hideLinkPopover();
         updatePublishState();
+        saveDraftToLocal();
       } else if (e.key === 'Escape') {
         hideLinkPopover();
       }
@@ -919,13 +2019,13 @@ document.querySelectorAll('.tool-btn[data-cmd]').forEach(btn => {
 
     photoBtn.addEventListener('click', () => {
       colorPopover.classList.remove('open');
+      alignPopover.classList.remove('open');
       fileInput.click();
     });
     fileInput.addEventListener('change', e => {
       for (const f of e.target.files || []) compressAndInsertImage(f);
       fileInput.value = '';
     });
-
     let resetAfterBlockBreak = false;
 
     function getActiveStoryBlock() {
@@ -956,9 +2056,9 @@ document.querySelectorAll('.tool-btn[data-cmd]').forEach(btn => {
         sel.addRange(range);
       }
       updatePublishState();
+      saveDraftToLocal();
     }
 
-    // Встраивание виджета только по готовому HTML-коду <iframe>
     function parseYandexMusicEmbed(text) {
       const trimmed = (text || '').trim();
       const iframeMatch = trimmed.match(/<iframe\b[^>]*\bsrc=["'](https?:\/\/[^"']+)["'][^>]*>/i);
@@ -971,10 +2071,7 @@ document.querySelectorAll('.tool-btn[data-cmd]').forEach(btn => {
         if (!allowedHosts.test(urlObj.hostname)) return null;
 
         const isTall = /\/iframe\/album\/\d+\/?(?:$|\?)/i.test(src) || /video|embed|map-widget/i.test(src);
-        return {
-          src: src,
-          isAlbum: isTall
-        };
+        return { src: src, isAlbum: isTall };
       } catch (e) {
         return null;
       }
@@ -1005,14 +2102,16 @@ document.querySelectorAll('.tool-btn[data-cmd]').forEach(btn => {
       }
 
       const newRange = document.createRange();
-newRange.setStart(afterP, 0);
+      newRange.setStart(afterP, 0);
       newRange.collapse(true);
       const sel = window.getSelection();
       sel.removeAllRanges();
       sel.addRange(newRange);
       updatePublishState();
+      saveDraftToLocal();
     }
 
+    // Клики внутри статьи: удаление плеера, копирование или удаление блока кода
     storyEl.addEventListener('click', e => {
       const delBtn = e.target.closest('.tg-ymusic-del');
       if (delBtn && storyEl.contains(delBtn)) {
@@ -1020,10 +2119,82 @@ newRange.setStart(afterP, 0);
         e.stopPropagation();
         delBtn.closest('.tg-ymusic-embed')?.remove();
         updatePublishState();
+        saveDraftToLocal();
+        return;
       }
-    });
 
-    storyEl.addEventListener('keydown', e => {
+      const codeDelBtn = e.target.closest('.tg-code-del');
+      if (codeDelBtn && storyEl.contains(codeDelBtn)) {
+        e.preventDefault();
+        e.stopPropagation();
+        codeDelBtn.closest('.tg-code-block')?.remove();
+        updatePublishState();
+        saveDraftToLocal();
+        return;
+      }
+      const copyCodeBtn = e.target.closest('.tg-code-copy');
+      if (copyCodeBtn && storyEl.contains(copyCodeBtn)) {
+        e.preventDefault();
+        e.stopPropagation();
+        const block = copyCodeBtn.closest('.tg-code-block');
+        const codeText = block?.querySelector('code')?.textContent || '';
+        navigator.clipboard?.writeText(codeText);
+        copyCodeBtn.innerHTML = `${COPY_ICON_SVG}<span>Скопировано!</span>`;
+        setTimeout(() => {
+          copyCodeBtn.innerHTML = COPY_ICON_SVG;
+        }, 1500);
+        return;
+      }
+            const editCodeBtn = e.target.closest('.tg-code-edit');
+      if (editCodeBtn && storyEl.contains(editCodeBtn)) {
+        e.preventDefault();
+        e.stopPropagation();
+        const block = editCodeBtn.closest('.tg-code-block');
+        if (isViewMode && currentUser && (currentUser.uid === currentArticleOwner || isAdmin(currentUser))) {
+          block.classList.remove('is-collapsed');
+          updateCodeToggleUI(block);
+          actionBtn.click();
+          setTimeout(() => {
+            const codeEl = block.querySelector('code');
+            if (codeEl) {
+              codeEl.focus();
+              placeCaretAtEnd(codeEl);
+            }
+          }, 60);
+        }
+        return;
+      }
+      const toggleCodeBtn = e.target.closest('.tg-code-toggle, .tg-code-head-toggle');
+
+      if (toggleCodeBtn && storyEl.contains(toggleCodeBtn)) {
+        e.preventDefault();
+        e.stopPropagation();
+        const block = toggleCodeBtn.closest('.tg-code-block');
+        block.classList.toggle('is-collapsed');
+        updateCodeToggleUI(block);
+      }
+
+    });
+        storyEl.addEventListener('keydown', e => {
+      const activeCode = e.target.closest('.tg-code-block code');
+      if (activeCode && storyEl.contains(activeCode)) {
+        if ((e.ctrlKey || e.metaKey) && (e.key === 'a' || e.key === 'A' || e.key === 'ф' || e.key === 'Ф')) {
+          e.preventDefault();
+          e.stopPropagation();
+          const range = document.createRange();
+          range.selectNodeContents(activeCode);
+          const sel = window.getSelection();
+          sel.removeAllRanges();
+          sel.addRange(range);
+          return;
+        }
+        if (e.key === 'Tab') {
+          e.preventDefault();
+          document.execCommand('insertText', false, '  ');
+        }
+        return;
+      }
+
       if (e.key === 'Enter' && !e.shiftKey) {
         const sel = window.getSelection();
         const node = sel?.anchorNode;
@@ -1055,6 +2226,7 @@ newRange.setStart(afterP, 0);
 
     storyEl.addEventListener('beforeinput', e => {
       if (e.defaultPrevented) return;
+      if (e.target.closest('.tg-code-block code')) return;
       if (e.inputType === 'insertParagraph' || e.inputType === 'insertLineBreak') {
         const block = getActiveStoryBlock();
         if (block && storyEl.contains(block)) {
@@ -1062,8 +2234,30 @@ newRange.setStart(afterP, 0);
         }
       }
     });
+    storyEl.addEventListener('input', e => {
+      const tagEdit = e.target.closest('.tg-code-tag');
+      if (tagEdit && storyEl.contains(tagEdit)) {
+        const wrap = tagEdit.closest('.tg-code-tag-wrap');
+        if (wrap) wrap.classList.toggle('is-empty', !tagEdit.textContent.trim());
+        updatePublishState();
+        saveDraftToLocal();
+        return;
+      }
+      const langEdit = e.target.closest('.tg-code-lang');
+      if (langEdit && storyEl.contains(langEdit)) {
+        langEdit.dataset.customTitle = '1';
+        updatePublishState();
+        saveDraftToLocal();
+        return;
+      }
 
-    storyEl.addEventListener('input', () => {
+      if (e.target.closest('.tg-code-block code')) {
+        updatePublishState();
+        saveDraftToLocal();
+        return;
+      }
+
+
       if (resetAfterBlockBreak) {
         resetAfterBlockBreak = false;
 
@@ -1094,18 +2288,18 @@ newRange.setStart(afterP, 0);
         }
       }
       updatePublishState();
+      saveDraftToLocal();
     });
 
-    // Вставка в заголовок строго чистым текстом в одну строку
     titleEl.addEventListener('paste', e => {
       e.preventDefault();
       const text = (e.clipboardData || window.clipboardData).getData('text/plain').replace(/\r?\n/g, ' ');
       document.execCommand('insertText', false, text);
       updateTitleSideLabel();
       updatePublishState();
+      saveDraftToLocal();
     });
 
-    // Очистка вставляемого HTML: сохраняем базовое форматирование и цвета текста, но убираем фоны и чужие стили
     function sanitizePastedHtml(rawHtml) {
       const doc = new DOMParser().parseFromString(rawHtml, 'text/html');
       const allowedTags = new Set([
@@ -1175,9 +2369,23 @@ newRange.setStart(afterP, 0);
       return container.innerHTML;
     }
 
-    // Вставка в основной текст: картинки сжимаем, HTML-виджеты превращаем в плеер, форматирование чистим от фонов
     storyEl.addEventListener('paste', e => {
       const cd = e.clipboardData || window.clipboardData;
+
+      // Вставка внутрь блока кода — чистым текстом 1-в-1 с мгновенной подсветкой
+      const targetCode = e.target.closest('.tg-code-block code');
+      if (targetCode && storyEl.contains(targetCode)) {
+        e.preventDefault();
+        const plainCode = cd ? cd.getData('text/plain') : '';
+        if (plainCode) {
+          document.execCommand('insertText', false, plainCode);
+          applyCodeHighlight(targetCode, true);
+          updatePublishState();
+          saveDraftToLocal();
+        }
+        return;
+      }
+
       const items = cd ? cd.items : [];
       for (const item of items) {
         if (item.kind === 'file' && item.type.indexOf('image') === 0) {
@@ -1203,6 +2411,7 @@ newRange.setStart(afterP, 0);
         if (cleanHtml.trim()) {
           document.execCommand('insertHTML', false, cleanHtml);
           updatePublishState();
+          saveDraftToLocal();
           return;
         }
       }
@@ -1210,6 +2419,7 @@ newRange.setStart(afterP, 0);
       if (text) {
         document.execCommand('insertText', false, text);
         updatePublishState();
+        saveDraftToLocal();
       }
     });
 
@@ -1238,6 +2448,7 @@ newRange.setStart(afterP, 0);
           storyEl.focus();
           document.execCommand('insertHTML', false, `<img src="${dataUrl}"><br>`);
           updatePublishState();
+          saveDraftToLocal();
         };
         img.src = event.target.result;
       };
@@ -1260,27 +2471,109 @@ newRange.setStart(afterP, 0);
       }
     }
 
+    function openViewsModal(viewsCount = currentArticleViews, viewsLog = currentArticleViewsLog) {
+      viewsModalTitle.textContent = `Просмотры (${viewsCount})`;
+      viewsList.innerHTML = '';
+
+      if (!viewsLog || viewsLog.length === 0) {
+        viewsEmptyMsg.style.display = 'block';
+        viewsEmptyMsg.textContent = viewsCount > 0
+          ? 'Детальная история ведётся только для новых просмотров.'
+          : 'Пока никто не просматривал эту статью.';
+      } else {
+        viewsEmptyMsg.style.display = 'none';
+        const sorted = [...viewsLog].sort((a, b) => (b.at || 0) - (a.at || 0));
+        sorted.forEach(item => {
+          const li = document.createElement('li');
+          const who = item.user ? item.user : 'Гость';
+          const isGuest = !item.user;
+          li.innerHTML = `<span class="views-user${isGuest ? ' is-guest' : ''}">${who}</span><span class="views-date">${formatRuDate(item.at)}</span>`;
+          viewsList.appendChild(li);
+        });
+      }
+
+      viewsModal.style.display = 'flex';
+    }
+
+    viewsBadge.addEventListener('click', () => {
+      if (currentUser && isAdmin(currentUser)) {
+        openViewsModal();
+      }
+    });
+
+    document.getElementById('closeViewsModalBtn').addEventListener('click', () => {
+      viewsModal.style.display = 'none';
+    });
+
+    viewsModal.addEventListener('click', e => {
+      if (e.target === viewsModal) viewsModal.style.display = 'none';
+    });
     async function trackArticleView(slug) {
-      if (!db || !slug || viewCountedForSlug || !isViewMode) return;
-      if (currentUser && (currentUser.uid === currentArticleOwner || isAdmin(currentUser))) return;
+      if (!db || !slug || !isViewMode || lockedPrivateArticle) return;
 
       const key = 'tgtype_v_' + slug;
+      const guestTs = Number(localStorage.getItem(key + '_guest_at') || 0);
+      const viewerLogin = currentUser ? getLoginName(currentUser) : '';
+
+      // Если пользователь раньше открыл эту статью как Гость, а затем вошёл в аккаунт — заменяем Гостя на его логин
+      if (viewerLogin && guestTs > 0) {
+        localStorage.removeItem(key + '_guest_at');
+        if (currentUser.uid !== currentArticleOwner && !isAdmin(currentUser)) {
+          try {
+            const snap = await db.collection('articles').doc(slug).get();
+            if (snap.exists) {
+              const log = Array.isArray(snap.data().viewsLog) ? [...snap.data().viewsLog] : [];
+              const idx = log.findIndex(item => !item.user && item.at === guestTs);
+              if (idx > -1) {
+                log[idx] = { user: viewerLogin, at: guestTs };
+                await db.collection('articles').doc(slug).update({ viewsLog: log });
+                currentArticleViewsLog = log;
+                updateViewsBadge();
+              }
+            }
+          } catch (e) {}
+        }
+        return;
+      }
+
+      if (viewCountedForSlug) return;
+      if (currentUser && (currentUser.uid === currentArticleOwner || isAdmin(currentUser))) return;
       if (localStorage.getItem(key)) return;
 
       viewCountedForSlug = true;
       localStorage.setItem(key, '1');
+      const nowTs = Date.now();
+      if (!viewerLogin) {
+        localStorage.setItem(key + '_guest_at', String(nowTs));
+      }
+      const entry = { user: viewerLogin, at: nowTs };
+
       try {
         await db.collection('articles').doc(slug).update({
-          views: firebase.firestore.FieldValue.increment(1)
+          views: firebase.firestore.FieldValue.increment(1),
+          viewsLog: firebase.firestore.FieldValue.arrayUnion(entry)
         });
         currentArticleViews += 1;
+        currentArticleViewsLog.push(entry);
         updateViewsBadge();
       } catch (e) {
         localStorage.removeItem(key);
+        localStorage.removeItem(key + '_guest_at');
         viewCountedForSlug = false;
       }
     }
 
+    function showAuthButtonNotice(text, cssClass, fallbackText) {
+      if (logoutMsgTimer) clearTimeout(logoutMsgTimer);
+      authBtn.classList.remove('is-logged-out', 'is-logged-in');
+      authBtn.classList.add(cssClass);
+      authBtn.textContent = text;
+      logoutMsgTimer = setTimeout(() => {
+        logoutMsgTimer = null;
+        authBtn.classList.remove('is-logged-out', 'is-logged-in');
+        authBtn.textContent = fallbackText;
+      }, 2500);
+    }
     window.addEventListener('DOMContentLoaded', () => {
       if (typeof firebase !== 'undefined') {
         firebase.initializeApp({
@@ -1293,15 +2586,24 @@ newRange.setStart(afterP, 0);
         });
         db = firebase.firestore();
         auth = firebase.auth();
-
-        auth.onAuthStateChanged(user => {
+                  auth.onAuthStateChanged(user => {
           currentUser = user;
           const login = getLoginName(user);
-
+          document.body.classList.toggle('is-admin-user', Boolean(user && isAdmin(user)));
           if (user) {
-            authBtn.textContent = `Выйти (${login})`;
-          } else {
-  authBtn.textContent = 'Войти';
+            isManualLogout = false;
+            if (!logoutMsgTimer) {
+              authBtn.classList.remove('is-logged-out', 'is-logged-in');
+              authBtn.textContent = `Выйти (${login})`;
+            }
+          } else if (!logoutMsgTimer) {
+            authBtn.classList.remove('is-logged-out', 'is-logged-in');
+            authBtn.textContent = 'Войти';
+          }
+
+          if (lockedPrivateArticle && currentSlug) {
+            loadArticle(currentSlug);
+            return;
           }
 
           updateEditVisibility();
@@ -1312,7 +2614,10 @@ newRange.setStart(afterP, 0);
           }
 
           if (pathSlug === 'blog') {
-            loadBlogPage();
+            if (!isManualLogout) {
+              loadBlogPage();
+            }
+            isManualLogout = false;
           } else if (isViewMode && currentSlug) {
             trackArticleView(currentSlug);
           }
@@ -1364,16 +2669,20 @@ newRange.setStart(afterP, 0);
         passInput.setAttribute('autocomplete', 'current-password');
         passInput.placeholder = 'Пароль';
       }
-    }  
+    }
 
     switchModeBtn.addEventListener('click', () => {
       setAuthMode(!isRegMode);
       loginInput.focus();
     });
 
-    authBtn.addEventListener('click', () => {
+    authBtn.addEventListener('click', async () => {
+      if (authBtn.classList.contains('is-logged-out') || authBtn.classList.contains('is-logged-in')) return;
+
       if (currentUser) {
-        auth.signOut();
+        isManualLogout = true;
+        showAuthButtonNotice('Вы вышли из системы', 'is-logged-out', 'Войти');
+        await auth.signOut();
       } else {
         setAuthMode(false);
         authModal.style.display = 'flex';
@@ -1417,7 +2726,7 @@ newRange.setStart(afterP, 0);
           await auth.createUserWithEmailAndPassword(`${login}@tgtype.local`, pass);
           localStorage.setItem('tgtype_last_reg', String(Date.now()));
           authModal.style.display = 'none';
-          setStatus(`Аккаунт ${login} зарегистрирован!`, 'ok');
+          showAuthButtonNotice(`Аккаунт создан: ${login}`, 'is-logged-in', `Выйти (${login})`);
         } catch (err) {
           if (err.code === 'auth/email-already-in-use') {
             modalMsg.textContent = 'Этот логин уже занят. Придумайте другой.';
@@ -1448,7 +2757,7 @@ newRange.setStart(afterP, 0);
           localStorage.removeItem('tgtype_login_fails');
           localStorage.removeItem('tgtype_login_lock');
           authModal.style.display = 'none';
-          setStatus(`Вход выполнен: ${login}`, 'ok');
+          showAuthButtonNotice(`Вход выполнен: ${login}`, 'is-logged-in', `Выйти (${login})`);
         } catch (err) {
           if (err.code === 'auth/too-many-requests') {
             localStorage.setItem('tgtype_login_lock', String(Date.now() + ONE_HOUR));
@@ -1469,8 +2778,7 @@ newRange.setStart(afterP, 0);
         }
       }
     });
-
-    function updateEditVisibility() {
+        function updateEditVisibility() {
       if (!isViewMode) {
         actionBtn.style.display = 'inline-block';
         toolbarRow.classList.remove('hidden', 'view-mode');
@@ -1479,15 +2787,18 @@ newRange.setStart(afterP, 0);
         return;
       }
       const canEdit = currentUser && (currentUser.uid === currentArticleOwner || isAdmin(currentUser));
+      storyEl.classList.toggle('no-edit-rights', !canEdit);
       actionBtn.style.display = canEdit ? 'inline-block' : 'none';
+      actionBtn.textContent = 'РЕДАКТИРОВАТЬ';
       actionBtn.disabled = false;
+
       toolbarRow.classList.add('view-mode');
       toolbarRow.classList.toggle('hidden', !canEdit);
       metaInfoEl.classList.toggle('no-toolbar', !canEdit);
       metaInfoEl.classList.toggle('can-edit-btn', canEdit);
     }
 
-    async function loadBlogPage() {
+    async function loadBlogPage(skipAutoModal = false) {
       metaInfoEl.style.display = 'none';
       toolbarRow.style.display = 'none';
       storyEl.style.display = 'none';
@@ -1504,9 +2815,13 @@ newRange.setStart(afterP, 0);
         hideLoader();
         titleEl.textContent = 'Мои публикации';
         document.title = 'Мои публикации — tgtype';
-        setStatus('Войдите в аккаунт, чтобы увидеть свои публикации.', 'error');
-        setAuthMode(false);
-        authModal.style.display = 'flex';
+        if (skipAutoModal) {
+          setStatus('Вы вышли из системы.');
+        } else {
+          setStatus('Войдите в аккаунт, чтобы увидеть свои публикации.', 'error');
+          setAuthMode(false);
+          authModal.style.display = 'flex';
+        }
         return;
       }
 
@@ -1541,6 +2856,25 @@ newRange.setStart(afterP, 0);
         const ul = document.createElement('ul');
         ul.className = 'posts-list';
 
+        const globeSvg = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>';
+        const lockSvg = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>';
+
+        function closeAllAccessMenus() {
+          document.querySelectorAll('.access-dropdown.open').forEach(d => d.classList.remove('open'));
+        }
+        document.addEventListener('click', closeAllAccessMenus);
+
+        function updateAccessUI(wrap, isPrivate) {
+          const btn = wrap.querySelector('.access-pill');
+          const checks = wrap.querySelectorAll('.access-opt-check');
+          btn.classList.toggle('is-private', Boolean(isPrivate));
+          btn.innerHTML = isPrivate
+            ? `${lockSvg}<span>Ограниченный доступ</span><span class="chevron">▾</span>`
+            : `${globeSvg}<span>Открытый доступ</span><span class="chevron">▾</span>`;
+          if (checks[0]) checks[0].textContent = isPrivate ? '' : '✓';
+          if (checks[1]) checks[1].textContent = isPrivate ? '✓' : '';
+        }
+
         function renderList(filterText = '') {
           ul.innerHTML = '';
           const q = filterText.toLowerCase().trim();
@@ -1557,12 +2891,11 @@ newRange.setStart(afterP, 0);
             }
             count++;
 
-            const dateStr = post.updatedAt ? new Date(post.updatedAt).toLocaleString('ru-RU', {
-              day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
-            }) : '—';
+            const dateStr = formatRuDate(post.updatedAt);
             const fullUrl = `${window.location.origin}/${post.id}`;
             const authorPart = adminMode ? ` • Автор: <b>${ownerName}</b>` : '';
- const viewsPart = adminMode ? ` • 👁 ${Number(post.views) || 0}` : '';
+            const eyeSvg = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+            const viewsPart = adminMode ? ` • <button type="button" class="blog-views-link" title="Показать историю просмотров">${eyeSvg}<span>${Number(post.views) || 0}</span></button>` : '';
 
             const li = document.createElement('li');
             li.className = 'post-item';
@@ -1572,10 +2905,74 @@ newRange.setStart(afterP, 0);
                 <div class="post-meta">/${post.id}${authorPart} • Изменено: ${dateStr}${viewsPart}</div>
               </div>
               <div class="post-actions">
+                <div class="access-wrap">
+                  <button class="access-pill" type="button"></button>
+                  <div class="access-dropdown">
+                    <div class="access-dropdown-header">Параметры доступа</div>
+                    <button class="access-option" type="button" data-private="false">
+                      <span class="access-opt-icon">${globeSvg}</span>
+                      <span class="access-opt-text">
+                        <div class="access-opt-title">Открытый доступ</div>
+                        <div class="access-opt-desc">Посмотреть сможет любой по ссылке</div>
+                      </span>
+                      <span class="access-opt-check"></span>
+                    </button>
+                    <button class="access-option" type="button" data-private="true">
+                      <span class="access-opt-icon">${lockSvg}</span>
+                      <span class="access-opt-text">
+                        <div class="access-opt-title">Ограниченный доступ</div>
+                        <div class="access-opt-desc">Статья доступна только вам</div>
+                      </span>
+                      <span class="access-opt-check"></span>
+                    </button>
+                  </div>
+                </div>
                 <button class="mini-btn copy-btn" type="button">Копировать ссылку</button>
                 <button class="mini-btn del del-btn" type="button">Удалить</button>
               </div>
             `;
+
+            const blogViewsBtn = li.querySelector('.blog-views-link');
+            if (blogViewsBtn) {
+              blogViewsBtn.addEventListener('click', () => {
+                openViewsModal(Number(post.views) || 0, Array.isArray(post.viewsLog) ? post.viewsLog : []);
+              });
+            }
+
+            const accessWrap = li.querySelector('.access-wrap');
+            const accessBtn = accessWrap.querySelector('.access-pill');
+            const dropdown = accessWrap.querySelector('.access-dropdown');
+            updateAccessUI(accessWrap, Boolean(post.isPrivate));
+
+            accessBtn.addEventListener('click', (e) => {
+              e.stopPropagation();
+              const wasOpen = dropdown.classList.contains('open');
+              closeAllAccessMenus();
+              if (!wasOpen) dropdown.classList.add('open');
+            });
+
+            dropdown.addEventListener('click', (e) => e.stopPropagation());
+
+            accessWrap.querySelectorAll('.access-option').forEach(opt => {
+              opt.addEventListener('click', async () => {
+                const nextState = opt.dataset.private === 'true';
+                closeAllAccessMenus();
+                if (Boolean(post.isPrivate) === nextState) return;
+
+                accessBtn.disabled = true;
+                try {
+                  await db.collection('articles').doc(post.id).update({
+                    isPrivate: nextState
+                  });
+                  post.isPrivate = nextState;
+                  updateAccessUI(accessWrap, nextState);
+                } catch (err) {
+                  alert('Ошибка изменения доступа: ' + err.message);
+                } finally {
+                  accessBtn.disabled = false;
+                }
+              });
+            });
 
             li.querySelector('.copy-btn').addEventListener('click', (e) => {
               navigator.clipboard?.writeText(fullUrl);
@@ -1626,6 +3023,14 @@ newRange.setStart(afterP, 0);
         if ('doubleValue' in v) return Number(v.doubleValue);
         if ('booleanValue' in v) return Boolean(v.booleanValue);
         if ('arrayValue' in v) return (v.arrayValue.values || []).map(readVal);
+        if ('mapValue' in v) {
+          const obj = {};
+          const mapFields = v.mapValue.fields || {};
+          for (const mk of Object.keys(mapFields)) {
+            obj[mk] = readVal(mapFields[mk]);
+          }
+          return obj;
+        }
         return undefined;
       };
       const out = {};
@@ -1663,10 +3068,43 @@ newRange.setStart(afterP, 0);
         }
 
         if (exists && data) {
-          titleEl.innerHTML = data.title || '';
-          storyEl.innerHTML = data.story || '';
           currentArticleOwner = data.ownerUid || null;
+          currentArticleIsPrivate = Boolean(data.isPrivate);
+
+          if (currentArticleIsPrivate) {
+            const hasAccess = currentUser && (currentUser.uid === currentArticleOwner || isAdmin(currentUser));
+            if (!hasAccess) {
+              lockedPrivateArticle = true;
+              titleEl.innerHTML = '';
+              storyEl.innerHTML = '';
+              metaInfoEl.style.display = 'none';
+              toolbarRow.style.display = 'none';
+              storyEl.style.display = 'none';
+              actionBtn.style.display = 'none';
+              titleEl.contentEditable = false;
+              editorHeader.classList.remove('is-editing');
+              updateFixedHeader();
+              updateTitleSideLabel();
+              titleEl.textContent = 'Доступ ограничен';
+              document.title = 'Доступ ограничен — tgtype';
+              setStatus('Автор закрыл доступ к этой публикации.', 'error');
+              return;
+            }
+          }
+
+          lockedPrivateArticle = false;
+          metaInfoEl.style.display = '';
+          toolbarRow.style.display = '';
+          storyEl.style.display = '';
+
+                    titleEl.innerHTML = data.title || '';
+          storyEl.innerHTML = data.story || '';
+          refreshAllCodeBlocks(true);
+          syncCodeEditableState();
+
           currentArticleViews = Number(data.views) || 0;
+          currentArticleViewsLog = Array.isArray(data.viewsLog) ? data.viewsLog : [];
+
           if (data.customMeta !== undefined) {
             metaInfoEl.textContent = data.customMeta;
           } else {
@@ -1677,7 +3115,7 @@ newRange.setStart(afterP, 0);
 
           document.title = titleEl.innerText || 'tgtype';
           setStatus('');
-          actionBtn.textContent = 'EDIT';
+          actionBtn.textContent = 'РЕДАКТИРОВАТЬ';
           isViewMode = true;
           captureInitialSnapshot();
           updateEditVisibility();
@@ -1702,11 +3140,84 @@ newRange.setStart(afterP, 0);
         hideLoader();
       }
     }
+        function finishEditingTransition(restoreInitial = false) {
+      const keepY = window.scrollY;
+      if (restoreInitial) {
+        titleEl.innerHTML = initialSnapshot.title;
+        storyEl.innerHTML = initialSnapshot.story;
+        if (currentUser && isAdmin(currentUser)) {
+          metaInfoEl.textContent = initialSnapshot.meta;
+        }
+        refreshAllCodeBlocks(true);
+      }
 
-    function setEditable(canEdit) {
+      const rowRect = toolbarRow.getBoundingClientRect();
+      const btnRect = actionBtn.getBoundingClientRect();
+      const shiftX = Math.max(0, rowRect.right - btnRect.right);
+
+      titleSideLabel.classList.add('is-hiding');
+      storyEl.classList.add('is-hiding-code-del');
+      toolbarRow.classList.add('is-collapsing');
+
+      if (editorHeader.classList.contains('is-fixed')) {
+        editorHeader.classList.add('is-closing');
+      }
+
+      // Если кнопка ОПУБЛИКОВАТЬ была скрыта (правок не было) — плавно превращаем саму кнопку ЗАКРЫТЬ в РЕДАКТИРОВАТЬ без пустоты
+              const publishWasHidden = getComputedStyle(actionBtn).display === 'none';
+      if (publishWasHidden) {
+        cancelEditBtn.style.transition = 'opacity 0.24s ease';
+        cancelEditBtn.style.opacity = '0';
+        actionBtn.textContent = 'РЕДАКТИРОВАТЬ';
+      } else {
+
+        cancelEditBtn.classList.add('is-hiding');
+        actionBtn.classList.add('is-sliding-right');
+        if (shiftX > 0 && !editorHeader.classList.contains('is-fixed')) {
+          actionBtn.style.transform = `translateX(${shiftX}px)`;
+        }
+        actionBtn.classList.remove('is-saved');
+        actionBtn.textContent = 'РЕДАКТИРОВАТЬ';
+      }
+
+      savedBtnTimer = setTimeout(() => {
+        savedBtnTimer = null;
+        actionBtn.classList.remove('is-sliding-right');
+        actionBtn.style.transform = '';
+        actionBtn.style.opacity = '';
+        actionBtn.style.transition = '';
+        cancelEditBtn.classList.remove('is-hiding');
+        cancelEditBtn.style.opacity = '';
+        cancelEditBtn.style.transform = '';
+        cancelEditBtn.style.transition = '';
+        titleSideLabel.classList.remove('is-hiding');
+        storyEl.classList.remove('is-hiding-code-del');
+        toolbarRow.classList.remove('is-collapsing');
+        editorHeader.classList.remove('is-closing');
+
+        isViewMode = true;
+        if (!restoreInitial) captureInitialSnapshot();
+        setEditable(false);
+        updateEditVisibility();
+        updateViewsBadge();
+        setStatus('');
+        if (keepY > 28) {
+          window.scrollTo({ top: keepY, behavior: 'instant' });
+        }
+      }, 280);
+    }
+
+    cancelEditBtn.addEventListener('click', () => {
+      if (isViewMode || !currentSlug) return;
+      if (savedBtnTimer) clearTimeout(savedBtnTimer);
+      finishEditingTransition(true);
+    });
+
+    function setEditable(canEdit, animateOpen = false) {
       titleEl.contentEditable = Boolean(canEdit);
       storyEl.contentEditable = Boolean(canEdit);
-      toolbar.style.display = canEdit ? 'flex' : 'none';
+      syncCodeEditableState();
+      cancelEditBtn.style.display = (canEdit && currentSlug) ? 'inline-flex' : 'none';
       toolbarRow.classList.toggle('view-mode', !canEdit);
       if (canEdit) {
         toolbarRow.classList.remove('hidden');
@@ -1714,11 +3225,10 @@ newRange.setStart(afterP, 0);
       }
       metaInfoEl.contentEditable = Boolean(canEdit && currentUser && isAdmin(currentUser));
       editorHeader.classList.toggle('is-editing', canEdit);
-      updateFixedHeader();
+      updateFixedHeader(animateOpen);
       updateTitleSideLabel();
       updatePublishState();
     }
-
     function slugify(text) {
       const map = {'а':'a','б':'b','в':'v','г':'g','д':'d','е':'e','ё':'yo','ж':'zh','з':'z','и':'i','й':'y','к':'k','л':'l','м':'m','н':'n','о':'o','п':'p','р':'r','с':'s','т':'t','у':'u','ф':'f','х':'h','ц':'ts','ч':'ch','ш':'sh','щ':'sch','ъ':'','ы':'y','ь':'','э':'e','ю':'yu','я':'ya'};
       return text.toLowerCase().split('').map(c => map[c] || c).join('')
@@ -1727,6 +3237,7 @@ newRange.setStart(afterP, 0);
 
     actionBtn.addEventListener('click', async () => {
       if (!db || !auth) return;
+      if (actionBtn.classList.contains('is-saved')) return;
 
       if (!currentUser) {
         setAuthMode(false);
@@ -1734,12 +3245,41 @@ newRange.setStart(afterP, 0);
         loginInput.focus();
         return;
       }
-
-      if (isViewMode) {
+            if (isViewMode) {
+        const savedScrollY = window.scrollY;
+        actionBtn.blur();
         isViewMode = false;
-        setEditable(true);
-        actionBtn.textContent = 'PUBLISH';
+        const inMiddle = savedScrollY > 95;
+        if (!inMiddle) {
+          toolbarRow.classList.add('is-collapsing');
+          cancelEditBtn.classList.add('is-hiding');
+          titleSideLabel.classList.add('is-hiding');
+          storyEl.classList.add('is-hiding-code-del');
+        }
+        setEditable(true, inMiddle);
+        actionBtn.textContent = 'ОПУБЛИКОВАТЬ';
         captureInitialSnapshot();
+                if (inMiddle) {
+          let frames = 0;
+          const lockScroll = () => {
+            if (window.scrollY !== savedScrollY) {
+              window.scrollTo({ top: savedScrollY, behavior: 'instant' });
+            }
+            if (++frames < 6) requestAnimationFrame(lockScroll);
+          };
+          lockScroll();
+        }
+
+        if (!inMiddle) {
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+              toolbarRow.classList.remove('is-collapsing');
+              cancelEditBtn.classList.remove('is-hiding');
+              titleSideLabel.classList.remove('is-hiding');
+              storyEl.classList.remove('is-hiding-code-del');
+            });
+          });
+        }
         return;
       }
 
@@ -1747,13 +3287,14 @@ newRange.setStart(afterP, 0);
 
       const titleText = titleEl.innerText.trim();
       if (!titleText) {
-        alert('Введите заголовок (Title)!');
+        alert('Введите заголовок!');
         return;
       }
-
+            refreshAllCodeBlocks(false);
       actionBtn.disabled = true;
       actionBtn.classList.add('is-saving');
-      setStatus('Публикация...');
+      actionBtn.textContent = 'СОХРАНЕНИЕ...';
+      setStatus('');
 
       try {
         let targetSlug = currentSlug;
@@ -1786,6 +3327,7 @@ newRange.setStart(afterP, 0);
         }
 
         await db.collection('articles').doc(targetSlug).set(payload, { merge: true });
+        clearDraftFromLocal();
 
         if (isAdmin(currentUser)) {
           metaInfoEl.textContent = payload.customMeta;
@@ -1796,33 +3338,27 @@ newRange.setStart(afterP, 0);
         currentSlug = targetSlug;
         window.history.pushState({}, '', '/' + targetSlug);
         document.title = titleText;
-        isViewMode = true;
-        captureInitialSnapshot();
-        setEditable(false);
-        actionBtn.textContent = 'EDIT';
-        updateEditVisibility();
-        updateViewsBadge();
-        setStatus('Опубликовано!', 'ok');
-      } catch (e) {
-        setStatus('Ошибка публикации: ' + e.message, 'error');
-      } finally {
+        setStatus('');
+                // 1. Заливаем кнопку зелёным слева направо
         actionBtn.classList.remove('is-saving');
+        actionBtn.disabled = false;
+        actionBtn.textContent = 'СОХРАНЕНО';
+        actionBtn.classList.add('is-saved');
+        if (savedBtnTimer) clearTimeout(savedBtnTimer);
+        savedBtnTimer = setTimeout(() => {
+          finishEditingTransition(false);
+        }, 1100);
+
+      } catch (e) {
+        actionBtn.classList.remove('is-saving');
+        actionBtn.textContent = 'ОПУБЛИКОВАТЬ';
+        setStatus('Ошибка публикации: ' + e.message, 'error');
         updatePublishState();
       }
     });
   </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
 
 
 
