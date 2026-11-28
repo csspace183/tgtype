@@ -124,7 +124,7 @@
       align-items: center;
       justify-content: center;
       gap: 7px;
-      transition: color 0.35s ease, border-color 0.35s ease, background-color 0.25s ease, opacity 0.2s ease;
+      transition: color 0.2s ease, border-color 0.2s ease, opacity 0.2s ease;
       white-space: nowrap;
       flex-shrink: 0;
     }
@@ -138,8 +138,11 @@
       transition: transform 0.48s cubic-bezier(0.22, 1, 0.36, 1);
       z-index: -1;
     }
-    .publish-btn:hover:not(:disabled):not(.is-saved):not(.is-saving) { background: var(--text); color: var(--bg); }
+        .publish-btn:hover:not(:disabled):not(.is-saved):not(.is-saving) { background: var(--text); color: var(--bg); }
     .publish-btn:disabled:not(.is-saved):not(.is-saving) { opacity: 0.35; cursor: default; }
+    .editor-header.is-editing .publish-btn:disabled:not(.is-saved):not(.is-saving) {
+      display: none !important;
+    }
     .publish-btn.is-saving {
       opacity: 1;
       cursor: wait;
@@ -345,42 +348,36 @@
     #metaInfo {
       font-size: 14px;
       color: var(--muted);
-      margin-bottom: 20px;
+      margin-bottom: 16px;
       min-height: 18px;
-      transition: margin-bottom 0.36s cubic-bezier(0.22, 1, 0.36, 1);
     }
-    #metaInfo.no-toolbar, #metaInfo.can-edit-btn { margin-bottom: 38px; }
+    #metaInfo.no-toolbar { margin-bottom: 28px; }
 
-    /* Строка с панелью инструментов и кнопкой ОПУБЛИКОВАТЬ вровень */
+    /* Строка с панелью инструментов и кнопкой ОПУБЛИКОВАТЬ вровень (постоянная высота, чтобы текст не двигался) */
     .toolbar-row {
       display: flex;
       justify-content: space-between;
       align-items: center;
       gap: 12px;
       margin-bottom: 18px;
-      min-height: 34px;
-      max-height: 44px;
-      transition: max-height 0.36s cubic-bezier(0.22, 1, 0.36, 1), margin-bottom 0.36s cubic-bezier(0.22, 1, 0.36, 1), min-height 0.36s cubic-bezier(0.22, 1, 0.36, 1);
+      min-height: 64px;
     }
-    .toolbar-row.is-collapsing {
-      max-height: 0;
-      min-height: 0;
-      margin-bottom: 0;
+    .toolbar {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+      opacity: 1;
+      transition: opacity 0.3s ease;
     }
-
+    .toolbar-row.view-mode .toolbar,
     .toolbar-row.is-collapsing .toolbar {
       opacity: 0;
       pointer-events: none;
-      transition: opacity 0.22s ease;
     }
-    .toolbar-row.view-mode {
-      position: relative;
-      height: 0;
-      min-height: 0;
-      margin: 0;
-    }
+    .toolbar-row.hidden { display: none; }
 
-        @keyframes editBtnFadeIn {
+    @keyframes editBtnFadeIn {
       from {
         opacity: 0;
         transform: translateY(-6px);
@@ -390,17 +387,9 @@
         transform: translateY(0);
       }
     }
-        .toolbar-row.view-mode .publish-btn {
-      position: absolute;
-      right: 0;
-      bottom: -16px;
-      transition: opacity 0.3s ease, transform 0.3s ease, background-color 0.25s ease, color 0.25s ease;
-    }
-
     .toolbar-row.view-mode .publish-btn.is-scrolled {
       position: fixed;
       top: 25px;
-      bottom: auto;
       right: 74px;
       z-index: 94;
       box-shadow: 0 2px 10px var(--shadow);
@@ -412,29 +401,17 @@
         box-shadow: none;
         flex-shrink: 0;
       }
-              .toolbar-row.view-mode .publish-btn.is-scrolled {
-        position: absolute;
-        top: auto;
-        bottom: -16px;
-        right: 0;
+      .toolbar-row.view-mode .publish-btn.is-scrolled {
+        position: static;
         box-shadow: none;
         animation: none;
       }
-
       .scroll-top-btn {
         right: 16px;
         bottom: 16px;
       }
     }
 
-
-    .toolbar-row.hidden { display: none; }
-    .toolbar {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      align-items: center;
-    }
     .tool-sep {
       width: 1px;
       height: 18px;
@@ -545,15 +522,11 @@
       transition: transform 0.12s ease;
     }
     .color-swatch:hover { transform: scale(1.18); }
-       #story {
+         #story {
       font-family: Georgia, "Times New Roman", Times, serif;
       font-size: 18px;
       line-height: 1.58;
       min-height: 350px;
-      padding-top: 24px;
-    }
-    .editor-header.is-editing + #story {
-      padding-top: 0;
     }
 
     #story p, #story div { margin: 0; line-height: 1.58; }
@@ -609,13 +582,90 @@
       align-items: center;
       gap: 8px;
     }
-    .tg-code-lang {
+       .tg-code-lang {
       font-size: 14px;
       font-weight: 700;
       color: var(--text);
       outline: none;
       min-width: 40px;
     }
+         .tg-code-tag-wrap {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 11.5px;
+      font-weight: 600;
+      color: #34c759;
+    }
+    .tg-code-tag-wrap.is-empty {
+      display: none;
+    }
+    #story[contenteditable="true"] .tg-code-tag-wrap.is-empty {
+      display: inline-flex;
+      opacity: 0.65;
+    }
+        .tg-code-tag {
+      outline: none;
+      color: #34c759;
+      min-width: 6px;
+    }
+    .tg-code-tag font[color],
+    .tg-code-tag span[style*="color"] {
+      color: inherit;
+    }
+    .tg-code-tag:empty::before {
+      content: "подпись...";
+      color: #34c759;
+      opacity: 0.7;
+      pointer-events: none;
+    }
+    .site-ver-badge {
+      position: fixed;
+      top: 6px;
+      right: 118px;
+      z-index: 94;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--muted);
+      opacity: 0.7;
+      pointer-events: none;
+      user-select: none;
+    }
+    @media (max-width: 768px) {
+      .site-ver-badge {
+        position: static;
+        margin-right: 8px;
+      }
+    }
+
+    .tg-code-foot-right {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .tg-code-edit {
+      background: none;
+      color: var(--muted);
+      border: 1px solid var(--code-border);
+      border-radius: 6px;
+      padding: 3px 9px;
+      font-size: 11.5px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: color 0.15s ease, border-color 0.15s ease;
+    }
+    .tg-code-edit:hover {
+      color: var(--text);
+      border-color: var(--text);
+    }
+    #story[contenteditable="true"] .tg-code-edit,
+    .no-edit-rights .tg-code-edit {
+      display: none !important;
+    }
+
     .tg-code-head-toggle {
       background: none;
       color: var(--muted);
@@ -1052,6 +1102,7 @@
             <a href="/" id="newPostLink" class="new-link">+ Новая запись</a>
             <a href="/blog" id="adminBlogLink" class="new-link">Блог</a>
           </div>
+            <span class="site-ver-badge">v1</span>
           <button id="themeBtn" class="theme-btn" type="button" title="Переключить тему">
             <svg class="icon-light" width="17" height="17" viewBox="0 0 24 24" fill="#f5b014" stroke="#e09c00" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
             <svg class="icon-dark" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#a5b4fc" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5a8.5 8.5 0 1 0 11 11z" fill="rgba(165, 180, 252, 0.2)"/><circle cx="17.5" cy="6.5" r="2" fill="#fcd34d" stroke="#fcd34d"/><path d="M14.5 8.2c2-.8 4.4-1.8 6-3.4" stroke="#fcd34d" stroke-width="1.3"/></svg>
@@ -1367,25 +1418,27 @@
         headerSpacer.style.display = 'none';
         return;
       }
-
-            const triggerY = 28;
+      const triggerY = 95;
       if (window.scrollY > triggerY) {
         if (!editorHeader.classList.contains('is-fixed')) {
-          headerSpacer.style.display = 'none';
-          editorHeader.classList.add('is-fixed', 'is-opening');
-          requestAnimationFrame(() => {
+          const fullH = editorHeader.offsetHeight;
+          headerSpacer.style.height = fullH + 'px';
+          headerSpacer.style.display = 'block';
+          if (animateOpen) {
+            editorHeader.classList.add('is-fixed', 'is-opening');
             requestAnimationFrame(() => {
-              editorHeader.classList.remove('is-opening');
+              requestAnimationFrame(() => {
+                editorHeader.classList.remove('is-opening');
+              });
             });
-          });
+          } else {
+            editorHeader.classList.add('is-fixed');
+          }
         }
-      }
-
-      else {
+      } else {
         editorHeader.classList.remove('is-fixed', 'is-opening');
         headerSpacer.style.display = 'none';
       }
-    }
 
     window.addEventListener('scroll', updateFixedHeader, { passive: true });
     window.addEventListener('resize', () => {
@@ -1548,7 +1601,7 @@
         pre.replaceWith(bodyWrap);
         bodyWrap.appendChild(pre);
       }
-      if (head && !head.querySelector('.tg-code-head-left')) {
+           if (head && !head.querySelector('.tg-code-head-left')) {
         const langEl = head.querySelector('.tg-code-lang');
         const delBtn = head.querySelector('.tg-code-del');
         const langText = langEl ? langEl.textContent : 'code';
@@ -1576,18 +1629,37 @@
         head.appendChild(left);
         head.appendChild(right);
       }
+      const leftBox = head?.querySelector('.tg-code-head-left');
+      if (leftBox && !leftBox.querySelector('.tg-code-tag-wrap')) {
+        const tagWrap = document.createElement('span');
+        tagWrap.className = 'tg-code-tag-wrap is-empty';
+        tagWrap.innerHTML = '• <span class="tg-code-tag" spellcheck="false"></span>';
+        const toggleEl = leftBox.querySelector('.tg-code-head-toggle');
+        if (toggleEl) leftBox.insertBefore(tagWrap, toggleEl);
+        else leftBox.appendChild(tagWrap);
+      }
+      const tagWrapEl = leftBox?.querySelector('.tg-code-tag-wrap');
+      const tagTextEl = tagWrapEl?.querySelector('.tg-code-tag');
+      if (tagWrapEl && tagTextEl) {
+        tagWrapEl.classList.toggle('is-empty', !tagTextEl.textContent.trim());
+      }
+            const oldDevVer = leftBox?.querySelector('.tg-code-dev-ver');
+      if (oldDevVer) oldDevVer.remove();
+
       let foot = block.querySelector('.tg-code-foot');
       if (!foot) {
         foot = document.createElement('div');
         foot.className = 'tg-code-foot';
         block.appendChild(foot);
       }
-      if (!foot.querySelector('.tg-code-toggle')) {
-        foot.innerHTML = `
-          <button type="button" class="tg-code-toggle">Развернуть ▾</button>
+      foot.innerHTML = `
+        <button type="button" class="tg-code-toggle">Развернуть ▾</button>
+        <div class="tg-code-foot-right">
+          <button type="button" class="tg-code-edit" title="Редактировать код">Редактировать</button>
           <button type="button" class="tg-code-copy" title="Скопировать">${COPY_ICON_SVG}</button>
-        `;
-      }
+        </div>
+      `;
+
     }
 
     function applyCodeHighlight(codeEl, preserveCaret = false) {
@@ -1616,7 +1688,6 @@
         updateCodeToggleUI(block);
       });
     }
-
     function syncCodeEditableState() {
       const canEdit = storyEl.isContentEditable;
       storyEl.querySelectorAll('.tg-code-block code').forEach(code => {
@@ -1624,6 +1695,9 @@
       });
       storyEl.querySelectorAll('.tg-code-block .tg-code-lang').forEach(lang => {
         lang.contentEditable = canEdit ? 'true' : 'false';
+      });
+      storyEl.querySelectorAll('.tg-code-block .tg-code-tag').forEach(tag => {
+        tag.contentEditable = canEdit ? 'true' : 'false';
       });
     }
 
@@ -1639,6 +1713,7 @@
         <div class="tg-code-head">
           <div class="tg-code-head-left">
             <span class="tg-code-lang" contenteditable="true" spellcheck="false">code</span>
+            <span class="tg-code-tag-wrap is-empty">• <span class="tg-code-tag" contenteditable="true" spellcheck="false"></span></span>
             <button type="button" class="tg-code-head-toggle" style="display:none;" title="Свернуть">▾</button>
           </div>
           <div class="tg-code-head-right">
@@ -1650,7 +1725,10 @@
         </div>
         <div class="tg-code-foot">
           <button type="button" class="tg-code-toggle" style="visibility:hidden;">Развернуть ▾</button>
-          <button type="button" class="tg-code-copy" title="Скопировать">${COPY_ICON_SVG}</button>
+          <div class="tg-code-foot-right">
+            <button type="button" class="tg-code-edit" title="Редактировать код">Редактировать</button>
+            <button type="button" class="tg-code-copy" title="Скопировать">${COPY_ICON_SVG}</button>
+          </div>
         </div>
       `;
 
@@ -1712,12 +1790,30 @@
       alignPopover.classList.remove('open');
       colorPopover.classList.toggle('open');
     });
-
     document.querySelectorAll('.color-swatch').forEach(swatch => {
       swatch.addEventListener('mousedown', e => e.preventDefault());
       swatch.addEventListener('click', e => {
         e.stopPropagation();
         const color = swatch.dataset.color;
+        const activeSel = window.getSelection();
+        const tagNode = activeSel?.anchorNode?.parentElement?.closest('.tg-code-tag') || activeSel?.focusNode?.parentElement?.closest('.tg-code-tag');
+        if (tagNode && storyEl.contains(tagNode)) {
+          const wrap = tagNode.closest('.tg-code-tag-wrap');
+          const applied = color === '#222222' ? '#34c759' : color;
+          tagNode.style.color = applied;
+          if (wrap) wrap.style.color = applied;
+          if (color === '#222222') {
+            colorBar.style.backgroundColor = 'transparent';
+            colorBar.style.backgroundImage = DEFAULT_RAINBOW;
+          } else {
+            colorBar.style.backgroundImage = 'none';
+            colorBar.style.backgroundColor = color;
+          }
+          colorPopover.classList.remove('open');
+          updatePublishState();
+          saveDraftToLocal();
+          return;
+        }
         storyEl.focus();
         document.execCommand('styleWithCSS', false, true);
         document.execCommand('foreColor', false, color);
@@ -2043,7 +2139,27 @@
         }, 1500);
         return;
       }
+            const editCodeBtn = e.target.closest('.tg-code-edit');
+      if (editCodeBtn && storyEl.contains(editCodeBtn)) {
+        e.preventDefault();
+        e.stopPropagation();
+        const block = editCodeBtn.closest('.tg-code-block');
+        if (isViewMode && currentUser && (currentUser.uid === currentArticleOwner || isAdmin(currentUser))) {
+          block.classList.remove('is-collapsed');
+          updateCodeToggleUI(block);
+          actionBtn.click();
+          setTimeout(() => {
+            const codeEl = block.querySelector('code');
+            if (codeEl) {
+              codeEl.focus();
+              placeCaretAtEnd(codeEl);
+            }
+          }, 60);
+        }
+        return;
+      }
       const toggleCodeBtn = e.target.closest('.tg-code-toggle, .tg-code-head-toggle');
+
       if (toggleCodeBtn && storyEl.contains(toggleCodeBtn)) {
         e.preventDefault();
         e.stopPropagation();
@@ -2053,11 +2169,19 @@
       }
 
     });
-
-
-    storyEl.addEventListener('keydown', e => {
+        storyEl.addEventListener('keydown', e => {
       const activeCode = e.target.closest('.tg-code-block code');
       if (activeCode && storyEl.contains(activeCode)) {
+        if ((e.ctrlKey || e.metaKey) && (e.key === 'a' || e.key === 'A' || e.key === 'ф' || e.key === 'Ф')) {
+          e.preventDefault();
+          e.stopPropagation();
+          const range = document.createRange();
+          range.selectNodeContents(activeCode);
+          const sel = window.getSelection();
+          sel.removeAllRanges();
+          sel.addRange(range);
+          return;
+        }
         if (e.key === 'Tab') {
           e.preventDefault();
           document.execCommand('insertText', false, '  ');
@@ -2104,8 +2228,15 @@
         }
       }
     });
-
-        storyEl.addEventListener('input', e => {
+    storyEl.addEventListener('input', e => {
+      const tagEdit = e.target.closest('.tg-code-tag');
+      if (tagEdit && storyEl.contains(tagEdit)) {
+        const wrap = tagEdit.closest('.tg-code-tag-wrap');
+        if (wrap) wrap.classList.toggle('is-empty', !tagEdit.textContent.trim());
+        updatePublishState();
+        saveDraftToLocal();
+        return;
+      }
       const langEdit = e.target.closest('.tg-code-lang');
       if (langEdit && storyEl.contains(langEdit)) {
         langEdit.dataset.customTitle = '1';
@@ -2113,6 +2244,7 @@
         saveDraftToLocal();
         return;
       }
+
       if (e.target.closest('.tg-code-block code')) {
         updatePublishState();
         saveDraftToLocal();
@@ -2370,18 +2502,45 @@
     viewsModal.addEventListener('click', e => {
       if (e.target === viewsModal) viewsModal.style.display = 'none';
     });
-
     async function trackArticleView(slug) {
-      if (!db || !slug || viewCountedForSlug || !isViewMode || lockedPrivateArticle) return;
-      if (currentUser && (currentUser.uid === currentArticleOwner || isAdmin(currentUser))) return;
+      if (!db || !slug || !isViewMode || lockedPrivateArticle) return;
 
       const key = 'tgtype_v_' + slug;
+      const guestTs = Number(localStorage.getItem(key + '_guest_at') || 0);
+      const viewerLogin = currentUser ? getLoginName(currentUser) : '';
+
+      // Если пользователь раньше открыл эту статью как Гость, а затем вошёл в аккаунт — заменяем Гостя на его логин
+      if (viewerLogin && guestTs > 0) {
+        localStorage.removeItem(key + '_guest_at');
+        if (currentUser.uid !== currentArticleOwner && !isAdmin(currentUser)) {
+          try {
+            const snap = await db.collection('articles').doc(slug).get();
+            if (snap.exists) {
+              const log = Array.isArray(snap.data().viewsLog) ? [...snap.data().viewsLog] : [];
+              const idx = log.findIndex(item => !item.user && item.at === guestTs);
+              if (idx > -1) {
+                log[idx] = { user: viewerLogin, at: guestTs };
+                await db.collection('articles').doc(slug).update({ viewsLog: log });
+                currentArticleViewsLog = log;
+                updateViewsBadge();
+              }
+            }
+          } catch (e) {}
+        }
+        return;
+      }
+
+      if (viewCountedForSlug) return;
+      if (currentUser && (currentUser.uid === currentArticleOwner || isAdmin(currentUser))) return;
       if (localStorage.getItem(key)) return;
 
       viewCountedForSlug = true;
       localStorage.setItem(key, '1');
-      const viewerLogin = currentUser ? getLoginName(currentUser) : '';
-      const entry = { user: viewerLogin, at: Date.now() };
+      const nowTs = Date.now();
+      if (!viewerLogin) {
+        localStorage.setItem(key + '_guest_at', String(nowTs));
+      }
+      const entry = { user: viewerLogin, at: nowTs };
 
       try {
         await db.collection('articles').doc(slug).update({
@@ -2393,6 +2552,7 @@
         updateViewsBadge();
       } catch (e) {
         localStorage.removeItem(key);
+        localStorage.removeItem(key + '_guest_at');
         viewCountedForSlug = false;
       }
     }
@@ -2420,11 +2580,10 @@
         });
         db = firebase.firestore();
         auth = firebase.auth();
-
-        auth.onAuthStateChanged(user => {
+                  auth.onAuthStateChanged(user => {
           currentUser = user;
           const login = getLoginName(user);
-
+          document.body.classList.toggle('is-admin-user', Boolean(user && isAdmin(user)));
           if (user) {
             isManualLogout = false;
             if (!logoutMsgTimer) {
@@ -2621,8 +2780,10 @@
         updatePublishState();
         return;
       }
-      const canEdit = currentUser && (currentUser.uid === currentArticleOwner || isAdmin(currentUser));
+            const canEdit = currentUser && (currentUser.uid === currentArticleOwner || isAdmin(currentUser));
+      storyEl.classList.toggle('no-edit-rights', !canEdit);
       actionBtn.style.display = canEdit ? 'inline-block' : 'none';
+
       actionBtn.disabled = false;
       toolbarRow.classList.add('view-mode');
       toolbarRow.classList.toggle('hidden', !canEdit);
@@ -2972,7 +3133,8 @@
         hideLoader();
       }
     }
-    function finishEditingTransition(restoreInitial = false) {
+        function finishEditingTransition(restoreInitial = false) {
+      const keepY = window.scrollY;
       if (restoreInitial) {
         titleEl.innerHTML = initialSnapshot.title;
         storyEl.innerHTML = initialSnapshot.story;
@@ -2986,28 +3148,39 @@
       const btnRect = actionBtn.getBoundingClientRect();
       const shiftX = Math.max(0, rowRect.right - btnRect.right);
 
-      cancelEditBtn.classList.add('is-hiding');
       titleSideLabel.classList.add('is-hiding');
       storyEl.classList.add('is-hiding-code-del');
       toolbarRow.classList.add('is-collapsing');
-      metaInfoEl.classList.add('can-edit-btn');
 
       if (editorHeader.classList.contains('is-fixed')) {
         editorHeader.classList.add('is-closing');
       }
 
-      actionBtn.classList.add('is-sliding-right');
-      if (shiftX > 0 && !editorHeader.classList.contains('is-fixed')) {
-        actionBtn.style.transform = `translateX(${shiftX}px)`;
+      // Если кнопка ОПУБЛИКОВАТЬ была скрыта (правок не было) — плавно превращаем саму кнопку ЗАКРЫТЬ в РЕДАКТИРОВАТЬ без пустоты
+           const publishWasHidden = getComputedStyle(actionBtn).display === 'none';
+      if (publishWasHidden) {
+        cancelEditBtn.style.transition = 'opacity 0.24s ease';
+        cancelEditBtn.style.opacity = '0';
+      } else {
+        cancelEditBtn.classList.add('is-hiding');
+        actionBtn.classList.add('is-sliding-right');
+        if (shiftX > 0 && !editorHeader.classList.contains('is-fixed')) {
+          actionBtn.style.transform = `translateX(${shiftX}px)`;
+        }
+        actionBtn.classList.remove('is-saved');
+        actionBtn.textContent = 'РЕДАКТИРОВАТЬ';
       }
-      actionBtn.classList.remove('is-saved');
-      actionBtn.textContent = 'РЕДАКТИРОВАТЬ';
 
       savedBtnTimer = setTimeout(() => {
         savedBtnTimer = null;
         actionBtn.classList.remove('is-sliding-right');
         actionBtn.style.transform = '';
+        actionBtn.style.opacity = '';
+        actionBtn.style.transition = '';
         cancelEditBtn.classList.remove('is-hiding');
+        cancelEditBtn.style.opacity = '';
+        cancelEditBtn.style.transform = '';
+        cancelEditBtn.style.transition = '';
         titleSideLabel.classList.remove('is-hiding');
         storyEl.classList.remove('is-hiding-code-del');
         toolbarRow.classList.remove('is-collapsing');
@@ -3019,7 +3192,10 @@
         updateEditVisibility();
         updateViewsBadge();
         setStatus('');
-      }, 380);
+        if (keepY > 28) {
+          window.scrollTo({ top: keepY, behavior: 'instant' });
+        }
+      }, 280);
     }
 
     cancelEditBtn.addEventListener('click', () => {
@@ -3032,7 +3208,6 @@
       titleEl.contentEditable = Boolean(canEdit);
       storyEl.contentEditable = Boolean(canEdit);
       syncCodeEditableState();
-      toolbar.style.display = canEdit ? 'flex' : 'none';
       cancelEditBtn.style.display = (canEdit && currentSlug) ? 'inline-flex' : 'none';
       toolbarRow.classList.toggle('view-mode', !canEdit);
       if (canEdit) {
@@ -3045,7 +3220,6 @@
       updateTitleSideLabel();
       updatePublishState();
     }
-
     function slugify(text) {
       const map = {'а':'a','б':'b','в':'v','г':'g','д':'d','е':'e','ё':'yo','ж':'zh','з':'z','и':'i','й':'y','к':'k','л':'l','м':'m','н':'n','о':'o','п':'p','р':'r','с':'s','т':'t','у':'u','ф':'f','х':'h','ц':'ts','ч':'ch','ш':'sh','щ':'sch','ъ':'','ы':'y','ь':'','э':'e','ю':'yu','я':'ya'};
       return text.toLowerCase().split('').map(c => map[c] || c).join('')
@@ -3063,8 +3237,10 @@
         return;
       }
             if (isViewMode) {
+        const savedScrollY = window.scrollY;
+        actionBtn.blur();
         isViewMode = false;
-        const inMiddle = window.scrollY > 28;
+        const inMiddle = savedScrollY > 95;
         if (!inMiddle) {
           toolbarRow.classList.add('is-collapsing');
           cancelEditBtn.classList.add('is-hiding');
@@ -3074,6 +3250,17 @@
         setEditable(true, inMiddle);
         actionBtn.textContent = 'ОПУБЛИКОВАТЬ';
         captureInitialSnapshot();
+                if (inMiddle) {
+          let frames = 0;
+          const lockScroll = () => {
+            if (window.scrollY !== savedScrollY) {
+              window.scrollTo({ top: savedScrollY, behavior: 'instant' });
+            }
+            if (++frames < 6) requestAnimationFrame(lockScroll);
+          };
+          lockScroll();
+        }
+
         if (!inMiddle) {
           requestAnimationFrame(() => {
             requestAnimationFrame(() => {
