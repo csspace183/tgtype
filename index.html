@@ -138,8 +138,11 @@
       transition: transform 0.48s cubic-bezier(0.22, 1, 0.36, 1);
       z-index: -1;
     }
-    .publish-btn:hover:not(:disabled):not(.is-saved):not(.is-saving) { background: var(--text); color: var(--bg); }
+        .publish-btn:hover:not(:disabled):not(.is-saved):not(.is-saving) { background: var(--text); color: var(--bg); }
     .publish-btn:disabled:not(.is-saved):not(.is-saving) { opacity: 0.35; cursor: default; }
+    .editor-header.is-editing .publish-btn:disabled:not(.is-saved):not(.is-saving) {
+      display: none !important;
+    }
     .publish-btn.is-saving {
       opacity: 1;
       cursor: wait;
@@ -586,14 +589,49 @@
       outline: none;
       min-width: 40px;
     }
-      .tg-code-lang::after {
-      content: " • v3";
+         .tg-code-lang::after {
+      content: " • v4";
       font-size: 11px;
       font-weight: 600;
       color: #34c759;
       margin-left: 4px;
       user-select: none;
     }
+    .tg-code-foot-right {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .tg-code-edit, .tg-code-save {
+      background: none;
+      color: var(--muted);
+      border: 1px solid var(--code-border);
+      border-radius: 6px;
+      padding: 3px 9px;
+      font-size: 11.5px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: color 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
+    }
+    .tg-code-edit:hover {
+      color: var(--text);
+      border-color: var(--text);
+    }
+    .tg-code-save {
+      background: #28a745;
+      border-color: #28a745;
+      color: #fff;
+      font-weight: 600;
+    }
+    .tg-code-save:hover {
+      opacity: 0.9;
+    }
+    #story[contenteditable="true"] .tg-code-edit { display: none; }
+    #story[contenteditable="false"] .tg-code-save { display: none; }
+    .no-edit-rights .tg-code-edit { display: none !important; }
 
     .tg-code-head-toggle {
       background: none;
@@ -1561,12 +1599,17 @@
         foot.className = 'tg-code-foot';
         block.appendChild(foot);
       }
-      if (!foot.querySelector('.tg-code-toggle')) {
+            if (!foot.querySelector('.tg-code-foot-right')) {
         foot.innerHTML = `
           <button type="button" class="tg-code-toggle">Развернуть ▾</button>
-          <button type="button" class="tg-code-copy" title="Скопировать">${COPY_ICON_SVG}</button>
+          <div class="tg-code-foot-right">
+            <button type="button" class="tg-code-save" title="Сохранить статью и свернуть код">Сохранить</button>
+            <button type="button" class="tg-code-edit" title="Редактировать код">✎ Изменить</button>
+            <button type="button" class="tg-code-copy" title="Скопировать">${COPY_ICON_SVG}</button>
+          </div>
         `;
       }
+
     }
 
     function applyCodeHighlight(codeEl, preserveCaret = false) {
@@ -1627,10 +1670,15 @@
         <div class="tg-code-body">
           <pre><code contenteditable="true" spellcheck="false"></code></pre>
         </div>
-        <div class="tg-code-foot">
+                <div class="tg-code-foot">
           <button type="button" class="tg-code-toggle" style="visibility:hidden;">Развернуть ▾</button>
-          <button type="button" class="tg-code-copy" title="Скопировать">${COPY_ICON_SVG}</button>
+          <div class="tg-code-foot-right">
+            <button type="button" class="tg-code-save" title="Сохранить статью и свернуть код">Сохранить</button>
+            <button type="button" class="tg-code-edit" title="Редактировать код">✎ Изменить</button>
+            <button type="button" class="tg-code-copy" title="Скопировать">${COPY_ICON_SVG}</button>
+          </div>
         </div>
+
       `;
 
       const afterP = document.createElement('p');
@@ -2022,6 +2070,43 @@
         }, 1500);
         return;
       }
+            const editCodeBtn = e.target.closest('.tg-code-edit');
+      if (editCodeBtn && storyEl.contains(editCodeBtn)) {
+        e.preventDefault();
+        e.stopPropagation();
+        const block = editCodeBtn.closest('.tg-code-block');
+        if (isViewMode && currentUser && (currentUser.uid === currentArticleOwner || isAdmin(currentUser))) {
+          block.classList.remove('is-collapsed');
+          updateCodeToggleUI(block);
+          actionBtn.click();
+          setTimeout(() => {
+            const codeEl = block.querySelector('code');
+            if (codeEl) {
+              codeEl.focus();
+              placeCaretAtEnd(codeEl);
+            }
+          }, 60);
+        }
+        return;
+      }
+
+      const saveCodeBtn = e.target.closest('.tg-code-save');
+      if (saveCodeBtn && storyEl.contains(saveCodeBtn)) {
+        e.preventDefault();
+        e.stopPropagation();
+        const block = saveCodeBtn.closest('.tg-code-block');
+        block.classList.add('is-collapsed');
+        updateCodeToggleUI(block);
+        if (!isViewMode) {
+          if (hasUnsavedChanges()) {
+            actionBtn.click();
+          } else {
+            finishEditingTransition(false);
+          }
+        }
+        return;
+      }
+
       const toggleCodeBtn = e.target.closest('.tg-code-toggle, .tg-code-head-toggle');
       if (toggleCodeBtn && storyEl.contains(toggleCodeBtn)) {
         e.preventDefault();
@@ -2032,11 +2117,19 @@
       }
 
     });
-
-
-    storyEl.addEventListener('keydown', e => {
+        storyEl.addEventListener('keydown', e => {
       const activeCode = e.target.closest('.tg-code-block code');
       if (activeCode && storyEl.contains(activeCode)) {
+        if ((e.ctrlKey || e.metaKey) && (e.key === 'a' || e.key === 'A' || e.key === 'ф' || e.key === 'Ф')) {
+          e.preventDefault();
+          e.stopPropagation();
+          const range = document.createRange();
+          range.selectNodeContents(activeCode);
+          const sel = window.getSelection();
+          sel.removeAllRanges();
+          sel.addRange(range);
+          return;
+        }
         if (e.key === 'Tab') {
           e.preventDefault();
           document.execCommand('insertText', false, '  ');
@@ -2600,8 +2693,10 @@
         updatePublishState();
         return;
       }
-      const canEdit = currentUser && (currentUser.uid === currentArticleOwner || isAdmin(currentUser));
+            const canEdit = currentUser && (currentUser.uid === currentArticleOwner || isAdmin(currentUser));
+      storyEl.classList.toggle('no-edit-rights', !canEdit);
       actionBtn.style.display = canEdit ? 'inline-block' : 'none';
+
       actionBtn.disabled = false;
       toolbarRow.classList.add('view-mode');
       toolbarRow.classList.toggle('hidden', !canEdit);
@@ -3038,7 +3133,7 @@
         loginInput.focus();
         return;
       }
-             if (isViewMode) {
+            if (isViewMode) {
         const savedScrollY = window.scrollY;
         actionBtn.blur();
         isViewMode = false;
@@ -3052,8 +3147,11 @@
         setEditable(true, inMiddle);
         actionBtn.textContent = 'ОПУБЛИКОВАТЬ';
         captureInitialSnapshot();
-        if (inMiddle && window.scrollY !== savedScrollY) {
+        if (inMiddle) {
           window.scrollTo({ top: savedScrollY, behavior: 'instant' });
+          requestAnimationFrame(() => {
+            window.scrollTo({ top: savedScrollY, behavior: 'instant' });
+          });
         }
 
         if (!inMiddle) {
