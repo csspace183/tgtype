@@ -79,12 +79,11 @@
     .top-left { display: flex; align-items: center; gap: 16px; }
     .new-link { font-size: 13px; color: var(--subtle); text-decoration: none; }
     .new-link:hover { color: var(--text); }
-
-          /* Кнопка переключения темы в правом поле экрана (вне колонки текста) */
+    /* Кнопка переключения темы рядом с правой границей колонки текста */
     .theme-btn {
       position: fixed;
-      top: 24px;
-      right: 28px;
+      top: 32px;
+      left: calc(50% + 395px);
       z-index: 95;
       width: 34px;
       height: 34px;
@@ -106,8 +105,7 @@
     }
     html.dark .theme-btn .icon-light { display: none; }
     html:not(.dark) .theme-btn .icon-dark { display: none; }
-
-        .publish-btn {
+    .publish-btn {
       position: relative;
       overflow: hidden;
       z-index: 1;
@@ -115,19 +113,20 @@
       color: var(--text);
       border: 2px solid var(--text);
       border-radius: 20px;
-      padding: 6px 18px;
+      padding: 6px 14px;
       font-weight: 700;
-      font-size: 12px;
-      letter-spacing: 0.5px;
+      font-size: 11.5px;
+      letter-spacing: 0.4px;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 7px;
+      gap: 6px;
       transition: color 0.2s ease, border-color 0.2s ease, opacity 0.2s ease;
       white-space: nowrap;
       flex-shrink: 0;
     }
+
     .publish-btn::before {
       content: "";
       position: absolute;
@@ -175,7 +174,7 @@
       gap: 8px;
       flex-shrink: 0;
     }
-        .cancel-edit-btn {
+         .cancel-edit-btn {
       display: none;
       border-radius: 20px;
       border: 1px solid var(--border);
@@ -184,24 +183,25 @@
       font-size: 11px;
       font-weight: 700;
       letter-spacing: 0.4px;
-      padding: 7px 14px;
+      padding: 6px 11px;
       cursor: pointer;
       align-items: center;
       justify-content: center;
       white-space: nowrap;
       transition: border-color 0.15s ease, color 0.15s ease;
     }
+
     .cancel-edit-btn:hover {
       border-color: var(--text);
       color: var(--text);
     }
-
-    /* Кнопка «Наверх» в правом нижнем углу */
+    /* Кнопка «Наверх» на одной линии с кнопками справа от текста */
     .scroll-top-btn {
       position: fixed;
-      bottom: 24px;
-      right: 28px;
+      bottom: 28px;
+      left: calc(50% + 395px);
       z-index: 95;
+
       width: 34px;
       height: 34px;
       border-radius: 50%;
@@ -352,61 +352,131 @@
       min-height: 18px;
     }
     #metaInfo.no-toolbar { margin-bottom: 28px; }
-
-    /* Строка с панелью инструментов и кнопкой ОПУБЛИКОВАТЬ вровень (постоянная высота, чтобы текст не двигался) */
+    /* Строка с панелью инструментов и кнопкой ОПУБЛИКОВАТЬ вровень (всегда в 1 линию) */
     .toolbar-row {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      gap: 12px;
+      gap: 8px;
       margin-bottom: 18px;
-      min-height: 64px;
+      min-height: 44px;
     }
     .toolbar {
       display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
+      gap: 5px;
+      flex-wrap: nowrap;
       align-items: center;
       opacity: 1;
       transition: opacity 0.3s ease;
     }
+    .toolbar::-webkit-scrollbar {
+      display: none;
+    }
+
     .toolbar-row.view-mode .toolbar,
     .toolbar-row.is-collapsing .toolbar {
       opacity: 0;
       pointer-events: none;
     }
     .toolbar-row.hidden { display: none; }
-
-    @keyframes editBtnFadeIn {
+    .publish-btn .edit-pencil-icon {
+      display: none;
+    }
+       @keyframes editBtnSlideOut {
       from {
-        opacity: 0;
-        transform: translateY(-6px);
+        opacity: 0.7;
+        transform: translateX(-140px);
       }
       to {
         opacity: 1;
-        transform: translateY(0);
+        transform: translateX(0);
+      }
+    }
+    @keyframes editBtnSlideIn {
+      from {
+        opacity: 0.7;
+        transform: translateX(140px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
       }
     }
     .toolbar-row.view-mode .publish-btn.is-scrolled {
       position: fixed;
-      top: 25px;
-      right: 74px;
+      top: 108px;
+      left: calc(50% + 395px);
       z-index: 94;
       box-shadow: 0 2px 10px var(--shadow);
-      animation: editBtnFadeIn 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+      animation: editBtnSlideOut 0.36s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    .toolbar-row.view-mode .publish-btn.is-slide-back {
+      animation: editBtnSlideIn 0.36s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    @media (max-width: 1180px) {
+      .theme-btn {
+        left: auto;
+        right: 24px;
+      }
+      .toolbar-row.view-mode .publish-btn.is-scrolled {
+        left: auto;
+        right: 24px;
+      }
+      .scroll-top-btn {
+        left: auto;
+        right: 24px;
+      }
     }
     @media (max-width: 768px) {
       .theme-btn {
-        position: static;
-        box-shadow: none;
-        flex-shrink: 0;
+        position: fixed;
+        top: 16px;
+        left: auto;
+        right: 16px;
+        z-index: 95;
+      }
+      .toolbar-row {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+      }
+      .publish-group {
+        justify-content: flex-end;
+      }
+      .toolbar {
+        overflow-x: auto;
+        scrollbar-width: none;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: 2px;
       }
       .toolbar-row.view-mode .publish-btn.is-scrolled {
-        position: static;
-        box-shadow: none;
-        animation: none;
+        position: fixed;
+        top: 16px;
+        left: auto;
+        right: 58px;
+        z-index: 94;
+        width: 34px;
+        height: 34px;
+        padding: 0;
+        border-radius: 50%;
+        border: 1px solid var(--border);
+        background: var(--surface);
+        color: var(--text);
+        box-shadow: 0 2px 10px var(--shadow);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        animation: editBtnFadeIn 0.25s ease;
+      }
+      .toolbar-row.view-mode .publish-btn.is-scrolled .btn-label {
+        display: none;
+      }
+      .toolbar-row.view-mode .publish-btn.is-scrolled .edit-pencil-icon {
+        display: block;
       }
       .scroll-top-btn {
+        left: auto;
         right: 16px;
         bottom: 16px;
       }
@@ -416,13 +486,14 @@
       width: 1px;
       height: 18px;
       background: var(--border);
-      margin: 0 2px;
+      margin: 0 1px;
+      flex-shrink: 0;
     }
     .tool-btn {
       background: none;
       border: 1px solid var(--border);
       border-radius: 4px;
-      padding: 4px 9px;
+      padding: 4px 7px;
       cursor: pointer;
       color: var(--muted);
       font-size: 13px;
@@ -431,8 +502,9 @@
       justify-content: center;
       gap: 4px;
       min-height: 28px;
+      white-space: nowrap;
+      flex-shrink: 0;
     }
-    .tool-btn:hover { border-color: var(--text); color: var(--text); }
 
     /* Выпадающее меню выравнивания */
     .align-wrap {
@@ -559,14 +631,16 @@
       color: var(--text) !important;
     }
     /* Блок кода / промпта: карточка с заголовком, превью в несколько строк и нижней панелью */
-    #story .tg-code-block {
+        #story .tg-code-block {
       margin: 18px 0;
       border-radius: 12px;
       border: 1px solid var(--code-border);
       background: var(--code-bg);
+      background-clip: padding-box;
       overflow: hidden;
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
     }
+
       .tg-code-head {
       display: flex;
       justify-content: space-between;
@@ -595,7 +669,7 @@
       gap: 4px;
       font-size: 11.5px;
       font-weight: 600;
-      color: #34c759;
+      color: #1e8e3e;
     }
     .tg-code-tag-wrap.is-empty {
       display: none;
@@ -604,9 +678,9 @@
       display: inline-flex;
       opacity: 0.65;
     }
-        .tg-code-tag {
+    .tg-code-tag {
       outline: none;
-      color: #34c759;
+      color: #1e8e3e;
       min-width: 6px;
     }
     .tg-code-tag font[color],
@@ -615,15 +689,15 @@
     }
     .tg-code-tag:empty::before {
       content: "подпись...";
-      color: #34c759;
+      color: #1e8e3e;
       opacity: 0.7;
       pointer-events: none;
     }
-        .site-ver-badge {
+         .site-ver-badge {
       display: none;
       position: fixed;
-      top: 6px;
-      right: 112px;
+      top: 12px;
+      left: calc(50% + 395px);
       z-index: 94;
       font-size: 11px;
       font-weight: 600;
@@ -634,7 +708,12 @@
     body.is-admin-user .site-ver-badge {
       display: inline-block;
     }
-
+    @media (max-width: 1180px) {
+      .site-ver-badge {
+        left: auto;
+        right: 24px;
+      }
+    }
     @media (max-width: 768px) {
       .site-ver-badge {
         position: static;
@@ -727,28 +806,7 @@
       opacity: 0;
       pointer-events: none;
     }
-
-        .tg-code-body {
-      position: relative;
-      margin: 4px 12px 8px;
-      border-radius: 8px;
-      border: 1px solid var(--code-border);
-      background: var(--code-inner-bg);
-    }
-    #story .tg-code-block.is-collapsed .tg-code-body {
-      max-height: 58px;
-      overflow: hidden;
-    }
-    #story .tg-code-block.is-collapsed .tg-code-body::after {
-      content: "";
-      position: absolute;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      height: 22px;
-      background: linear-gradient(to bottom, transparent, var(--code-inner-bg));
-      pointer-events: none;
-    }
+.tg-code-body {
     #story .tg-code-block pre {
       margin: 0;
       padding: 10px 14px;
@@ -1121,7 +1179,7 @@
             <a href="/" id="newPostLink" class="new-link">+ Новая запись</a>
             <a href="/blog" id="adminBlogLink" class="new-link">Блог</a>
           </div>
-          <span class="site-ver-badge">build v0.0.4</span>
+          <span class="site-ver-badge">build v0.1.3</span>
           <button id="themeBtn" class="theme-btn" type="button" title="Переключить тему">
             <svg class="icon-light" width="17" height="17" viewBox="0 0 24 24" fill="#f5b014" stroke="#e09c00" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
             <svg class="icon-dark" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#a5b4fc" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5a8.5 8.5 0 1 0 11 11z" fill="rgba(165, 180, 252, 0.2)"/><circle cx="17.5" cy="6.5" r="2" fill="#fcd34d" stroke="#fcd34d"/><path d="M14.5 8.2c2-.8 4.4-1.8 6-3.4" stroke="#fcd34d" stroke-width="1.3"/></svg>
@@ -1167,7 +1225,11 @@
             <button class="tool-btn" type="button" data-cmd="insertUnorderedList" title="Список">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
             </button>
+                       <button id="clearFormatBtn" class="tool-btn" type="button" title="Очистить форматирование">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7V4h16v3"/><path d="M9 20h6"/><path d="M13 4 8 20"/><line x1="16" y1="15" x2="21" y2="20"/><line x1="21" y1="15" x2="16" y2="20"/></svg>
+            </button>
             <button id="codeBtn" class="tool-btn" type="button" title="Вставить блок кода">&lt;/&gt;</button>
+
             <span class="tool-sep"></span>
             <div class="align-wrap" id="alignWrap">
               <button class="tool-btn" type="button" id="alignBtn" title="Выравнивание текста">
@@ -1195,7 +1257,7 @@
             <input type="file" id="fileInput" accept="image/*" style="display:none">
           </div>
                     <div class="publish-group">
-            <button id="actionBtn" class="publish-btn" type="button" disabled>ОПУБЛИКОВАТЬ</button>
+                        <button id="actionBtn" class="publish-btn" type="button" disabled><span class="btn-label">ОПУБЛИКОВАТЬ</span><svg class="edit-pencil-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></button>
             <button id="cancelEditBtn" class="cancel-edit-btn" type="button" title="Закрыть режим редактирования">ЗАКРЫТЬ</button>
 
           </div>
@@ -1272,8 +1334,14 @@
     const titleSideLabel = document.getElementById('titleSideLabel');
     const metaInfoEl = document.getElementById('metaInfo');
     const storyEl = document.getElementById('story');
-        const actionBtn = document.getElementById('actionBtn');
+       const actionBtn = document.getElementById('actionBtn');
+    const setActionBtnText = (txt) => {
+      const lbl = actionBtn.querySelector('.btn-label');
+      if (lbl) lbl.textContent = txt;
+      else actionBtn.textContent = txt;
+    };
     const cancelEditBtn = document.getElementById('cancelEditBtn');
+
     const scrollTopBtn = document.getElementById('scrollTopBtn');
 
     scrollTopBtn.addEventListener('click', () => {
@@ -1281,8 +1349,10 @@
     });
 
     const themeBtn = document.getElementById('themeBtn');
-    const newPostLink = document.getElementById('newPostLink');
+       const newPostLink = document.getElementById('newPostLink');
+    const clearFormatBtn = document.getElementById('clearFormatBtn');
     const codeBtn = document.getElementById('codeBtn');
+
     const alignWrap = document.getElementById('alignWrap');
     const alignBtn = document.getElementById('alignBtn');
     const alignCurrentIcon = document.getElementById('alignCurrentIcon');
@@ -1338,7 +1408,9 @@
     let viewCountedForSlug = false;
     let savedLinkRange = null;
     let savedBtnTimer = null;
+    let slideBackTimer = null;
     let logoutMsgTimer = null;
+
     let isManualLogout = false;
 
     const pathSlug = window.location.pathname.replace(/^\/+|\/+$/g, '');
@@ -1426,11 +1498,27 @@
         }
       } catch (e) {}
     }
-        function updateFixedHeader(animateOpen = false) {
+    function updateFixedHeader(animateOpen = false) {
       const scrolled = window.scrollY > 28;
+      const wasScrolled = actionBtn.classList.contains('is-scrolled');
+      const nextScrolled = scrolled && isViewMode;
+
       themeBtn.classList.toggle('is-scrolled', scrolled);
-      actionBtn.classList.toggle('is-scrolled', scrolled && isViewMode);
+      actionBtn.classList.toggle('is-scrolled', nextScrolled);
       scrollTopBtn.classList.toggle('visible', window.scrollY > 300);
+
+      if (wasScrolled && !nextScrolled && isViewMode) {
+        actionBtn.classList.remove('is-slide-back');
+        void actionBtn.offsetWidth;
+        actionBtn.classList.add('is-slide-back');
+        if (slideBackTimer) clearTimeout(slideBackTimer);
+        slideBackTimer = setTimeout(() => {
+          slideBackTimer = null;
+          actionBtn.classList.remove('is-slide-back');
+        }, 380);
+      } else if (nextScrolled) {
+        actionBtn.classList.remove('is-slide-back');
+      }
 
       if (!editorHeader.classList.contains('is-editing')) {
         editorHeader.classList.remove('is-fixed', 'is-opening', 'is-closing');
@@ -1831,9 +1919,10 @@
         const color = swatch.dataset.color;
         const activeSel = window.getSelection();
         const tagNode = activeSel?.anchorNode?.parentElement?.closest('.tg-code-tag') || activeSel?.focusNode?.parentElement?.closest('.tg-code-tag');
-        if (tagNode && storyEl.contains(tagNode)) {
+               if (tagNode && storyEl.contains(tagNode)) {
           const wrap = tagNode.closest('.tg-code-tag-wrap');
-          const applied = color === '#222222' ? '#34c759' : color;
+          const applied = color === '#222222' ? '#1e8e3e' : color;
+
           tagNode.style.color = applied;
           if (wrap) wrap.style.color = applied;
           if (color === '#222222') {
@@ -1870,6 +1959,72 @@
         saveDraftToLocal();
       });
     });
+    function updateActiveFormatButtons() {
+      if (!storyEl.isContentEditable) {
+        document.querySelectorAll('.tool-btn.active').forEach(b => b.classList.remove('active'));
+        return;
+      }
+      const sel = window.getSelection();
+      const node = sel && sel.rangeCount ? sel.anchorNode : null;
+      const insideStory = node && storyEl.contains(node);
+      const el = insideStory ? (node.nodeType === 3 ? node.parentElement : node) : null;
+
+      const boldBtn = document.querySelector('.tool-btn[data-cmd="bold"]');
+      const italicBtn = document.querySelector('.tool-btn[data-cmd="italic"]');
+      const strikeBtn = document.querySelector('.tool-btn[data-cmd="strikeThrough"]');
+      const listBtn = document.querySelector('.tool-btn[data-cmd="insertUnorderedList"]');
+      const hBtn = document.querySelector('.tool-btn[data-cmd="formatBlock"][data-arg="H3"]');
+      const quoteBtn = document.querySelector('.tool-btn[data-cmd="formatBlock"][data-arg="BLOCKQUOTE"]');
+
+      if (!insideStory) {
+        [boldBtn, italicBtn, strikeBtn, listBtn, hBtn, quoteBtn, linkBtn].forEach(b => b?.classList.remove('active'));
+        return;
+      }
+
+      try {
+        boldBtn?.classList.toggle('active', document.queryCommandState('bold'));
+        italicBtn?.classList.toggle('active', document.queryCommandState('italic'));
+        strikeBtn?.classList.toggle('active', document.queryCommandState('strikeThrough'));
+        listBtn?.classList.toggle('active', document.queryCommandState('insertUnorderedList'));
+      } catch (e) {}
+
+      hBtn?.classList.toggle('active', Boolean(el?.closest('h3')));
+      quoteBtn?.classList.toggle('active', Boolean(el?.closest('blockquote')));
+      linkBtn?.classList.toggle('active', Boolean(el?.closest('a')));
+    }
+
+    document.addEventListener('selectionchange', updateActiveFormatButtons);
+    storyEl.addEventListener('keyup', updateActiveFormatButtons);
+    storyEl.addEventListener('mouseup', updateActiveFormatButtons);
+
+    clearFormatBtn.addEventListener('mousedown', e => e.preventDefault());
+    clearFormatBtn.addEventListener('click', () => {
+      colorPopover.classList.remove('open');
+      alignPopover.classList.remove('open');
+      storyEl.focus();
+
+      const sel = window.getSelection();
+      if (!sel || !sel.rangeCount) return;
+
+      document.execCommand('removeFormat', false, null);
+      document.execCommand('unlink', false, null);
+
+      const node = sel.anchorNode;
+      const el = node?.nodeType === 3 ? node.parentElement : node;
+      const block = el?.closest('h3, blockquote');
+      if (block && storyEl.contains(block)) {
+        const p = document.createElement('p');
+        p.innerHTML = block.innerHTML || '<br>';
+        block.replaceWith(p);
+        placeCaretAtEnd(p);
+      }
+
+      colorBar.style.backgroundColor = 'transparent';
+      colorBar.style.backgroundImage = DEFAULT_RAINBOW;
+      updateActiveFormatButtons();
+      updatePublishState();
+      saveDraftToLocal();
+    });
 
     document.addEventListener('click', e => {
       if (!colorWrap.contains(e.target)) colorPopover.classList.remove('open');
@@ -1884,69 +2039,57 @@
         storyEl.focus();
         const cmd = btn.dataset.cmd;
         const arg = btn.dataset.arg || null;
-
-        if (cmd === 'formatBlock' && arg) {
+                if (cmd === 'formatBlock' && arg) {
           const sel = window.getSelection();
           if (!sel || !sel.rangeCount) return;
           const node = sel.anchorNode;
-          const el = node?.nodeType === 3 ? node.parentElement : node;
+          if (!node || !storyEl.contains(node)) return;
+          const el = node.nodeType === 3 ? node.parentElement : node;
+          if (el?.closest('.tg-code-block')) return;
 
-          const existingBlock = el?.closest(arg.toLowerCase());
+          const targetTag = arg.toLowerCase();
+          const existingBlock = el?.closest(targetTag);
+
           if (existingBlock && storyEl.contains(existingBlock)) {
-            const range = document.createRange();
-            range.selectNode(existingBlock);
-            sel.removeAllRanges();
-            sel.addRange(range);
-            const inner = existingBlock.innerHTML || '<br>';
-            document.execCommand('insertHTML', false, `<p>${inner}</p>`);
-            updatePublishState();
-            saveDraftToLocal();
-            return;
-          }
+            const p = document.createElement('p');
+            p.innerHTML = existingBlock.innerHTML || '<br>';
+            existingBlock.replaceWith(p);
+            placeCaretAtEnd(p);
+          } else {
+            let lineBlock = el?.closest('p, div, h3, blockquote, li');
+            if (lineBlock === storyEl) lineBlock = null;
 
-          let lineBlock = el?.closest('p, div, blockquote, h3');
-          if (lineBlock === storyEl || lineBlock?.closest('.tg-code-block')) lineBlock = null;
-
-          if (lineBlock && storyEl.contains(lineBlock)) {
-            const range = document.createRange();
-            range.selectNode(lineBlock);
-            sel.removeAllRanges();
-            sel.addRange(range);
-            const tag = arg.toLowerCase();
-            const inner = lineBlock.innerHTML || '<br>';
-            document.execCommand('insertHTML', false, `<${tag}>${inner}</${tag}>`);
-            updatePublishState();
-            saveDraftToLocal();
-            return;
-          }
-
-          if (node && storyEl.contains(node)) {
-            let startNode = node;
-            while (startNode.previousSibling && startNode.previousSibling.nodeName !== 'BR' && !/^(P|DIV|H3|BLOCKQUOTE|UL)$/i.test(startNode.previousSibling.nodeName)) {
-              startNode = startNode.previousSibling;
+            if (lineBlock && storyEl.contains(lineBlock)) {
+              const newEl = document.createElement(targetTag === 'blockquote' ? 'blockquote' : 'h3');
+              newEl.innerHTML = lineBlock.innerHTML || '<br>';
+              if (lineBlock.tagName === 'LI') {
+                lineBlock.innerHTML = '';
+                lineBlock.appendChild(newEl);
+              } else {
+                lineBlock.replaceWith(newEl);
+              }
+              placeCaretAtEnd(newEl);
+            } else {
+              const newEl = document.createElement(targetTag === 'blockquote' ? 'blockquote' : 'h3');
+              if (!sel.isCollapsed) {
+                const range = sel.getRangeAt(0);
+                newEl.appendChild(range.extractContents());
+                range.insertNode(newEl);
+              } else {
+                newEl.innerHTML = '<br>';
+                const range = sel.getRangeAt(0);
+                range.insertNode(newEl);
+              }
+              placeCaretAtEnd(newEl);
             }
-            let endNode = startNode;
-            while (endNode.nextSibling && endNode.nextSibling.nodeName !== 'BR' && !/^(P|DIV|H3|BLOCKQUOTE|UL)$/i.test(endNode.nextSibling.nodeName)) {
-              endNode = endNode.nextSibling;
-            }
-
-            const range = document.createRange();
-            range.setStartBefore(startNode);
-            range.setEndAfter(endNode);
-            sel.removeAllRanges();
-            sel.addRange(range);
-
-            const frag = range.cloneContents();
-            const temp = document.createElement('div');
-            temp.appendChild(frag);
-            const tag = arg.toLowerCase();
-            const inner = temp.innerHTML || '<br>';
-            document.execCommand('insertHTML', false, `<${tag}>${inner}</${tag}>`);
-            updatePublishState();
-            saveDraftToLocal();
-            return;
           }
+
+          updateActiveFormatButtons();
+          updatePublishState();
+          saveDraftToLocal();
+          return;
         }
+
 
         if (cmd === 'insertUnorderedList') {
           const sel = window.getSelection();
@@ -2814,11 +2957,12 @@
         updatePublishState();
         return;
       }
-      const canEdit = currentUser && (currentUser.uid === currentArticleOwner || isAdmin(currentUser));
+            const canEdit = currentUser && (currentUser.uid === currentArticleOwner || isAdmin(currentUser));
       storyEl.classList.toggle('no-edit-rights', !canEdit);
-      actionBtn.style.display = canEdit ? 'inline-block' : 'none';
-      actionBtn.textContent = 'РЕДАКТИРОВАТЬ';
+      actionBtn.style.display = canEdit ? 'inline-flex' : 'none';
+      setActionBtnText('РЕДАКТИРОВАТЬ');
       actionBtn.disabled = false;
+
 
       toolbarRow.classList.add('view-mode');
       toolbarRow.classList.toggle('hidden', !canEdit);
@@ -3140,11 +3284,11 @@
             const authorDisplay = rawAuthor || (data.author ? data.author.replace(/<[^>]*>/g, '').trim() : '');
             renderMeta(authorDisplay, data.updatedAt);
           }
-
           document.title = titleEl.innerText || 'tgtype';
           setStatus('');
-          actionBtn.textContent = 'РЕДАКТИРОВАТЬ';
+          setActionBtnText('РЕДАКТИРОВАТЬ');
           isViewMode = true;
+
           captureInitialSnapshot();
           updateEditVisibility();
           updateViewsBadge();
@@ -3170,6 +3314,7 @@
     }
         function finishEditingTransition(restoreInitial = false) {
       const keepY = window.scrollY;
+      const storyTopBefore = storyEl.getBoundingClientRect().top;
       if (restoreInitial) {
         titleEl.innerHTML = initialSnapshot.title;
         storyEl.innerHTML = initialSnapshot.story;
@@ -3191,21 +3336,19 @@
         editorHeader.classList.add('is-closing');
       }
 
-      // Если кнопка ОПУБЛИКОВАТЬ была скрыта (правок не было) — плавно превращаем саму кнопку ЗАКРЫТЬ в РЕДАКТИРОВАТЬ без пустоты
-              const publishWasHidden = getComputedStyle(actionBtn).display === 'none';
+      const publishWasHidden = getComputedStyle(actionBtn).display === 'none';
       if (publishWasHidden) {
         cancelEditBtn.style.transition = 'opacity 0.24s ease';
         cancelEditBtn.style.opacity = '0';
-        actionBtn.textContent = 'РЕДАКТИРОВАТЬ';
+        setActionBtnText('РЕДАКТИРОВАТЬ');
       } else {
-
         cancelEditBtn.classList.add('is-hiding');
         actionBtn.classList.add('is-sliding-right');
         if (shiftX > 0 && !editorHeader.classList.contains('is-fixed')) {
           actionBtn.style.transform = `translateX(${shiftX}px)`;
         }
         actionBtn.classList.remove('is-saved');
-        actionBtn.textContent = 'РЕДАКТИРОВАТЬ';
+        setActionBtnText('РЕДАКТИРОВАТЬ');
       }
 
       savedBtnTimer = setTimeout(() => {
@@ -3229,8 +3372,12 @@
         updateEditVisibility();
         updateViewsBadge();
         setStatus('');
-        if (keepY > 28) {
-          window.scrollTo({ top: keepY, behavior: 'instant' });
+        if (keepY > 95) {
+          const storyTopAfter = storyEl.getBoundingClientRect().top;
+          const diff = storyTopAfter - storyTopBefore;
+          if (Math.abs(diff) > 0.5) {
+            window.scrollBy({ top: diff, behavior: 'instant' });
+          }
         }
       }, 280);
     }
@@ -3275,6 +3422,7 @@
       }
             if (isViewMode) {
         const savedScrollY = window.scrollY;
+        const storyTopBefore = storyEl.getBoundingClientRect().top;
         actionBtn.blur();
         isViewMode = false;
         const inMiddle = savedScrollY > 95;
@@ -3285,17 +3433,14 @@
           storyEl.classList.add('is-hiding-code-del');
         }
         setEditable(true, inMiddle);
-        actionBtn.textContent = 'ОПУБЛИКОВАТЬ';
+        setActionBtnText('ОПУБЛИКОВАТЬ');
         captureInitialSnapshot();
-                if (inMiddle) {
-          let frames = 0;
-          const lockScroll = () => {
-            if (window.scrollY !== savedScrollY) {
-              window.scrollTo({ top: savedScrollY, behavior: 'instant' });
-            }
-            if (++frames < 6) requestAnimationFrame(lockScroll);
-          };
-          lockScroll();
+        if (inMiddle) {
+          const storyTopAfter = storyEl.getBoundingClientRect().top;
+          const diff = storyTopAfter - storyTopBefore;
+          if (Math.abs(diff) > 0.5) {
+            window.scrollBy({ top: diff, behavior: 'instant' });
+          }
         }
 
         if (!inMiddle) {
@@ -3321,9 +3466,8 @@
             refreshAllCodeBlocks(false);
       actionBtn.disabled = true;
       actionBtn.classList.add('is-saving');
-      actionBtn.textContent = 'СОХРАНЕНИЕ...';
-      setStatus('');
-
+      setActionBtnText('СОХРАНЕНИЕ...');
+      setStatus('')
       try {
         let targetSlug = currentSlug;
         if (!targetSlug) {
@@ -3370,7 +3514,7 @@
                 // 1. Заливаем кнопку зелёным слева направо
         actionBtn.classList.remove('is-saving');
         actionBtn.disabled = false;
-        actionBtn.textContent = 'СОХРАНЕНО';
+        setActionBtnText('СОХРАНЕНО');
         actionBtn.classList.add('is-saved');
         if (savedBtnTimer) clearTimeout(savedBtnTimer);
         savedBtnTimer = setTimeout(() => {
@@ -3379,10 +3523,11 @@
 
       } catch (e) {
         actionBtn.classList.remove('is-saving');
-        actionBtn.textContent = 'ОПУБЛИКОВАТЬ';
+        setActionBtnText('ОПУБЛИКОВАТЬ');
         setStatus('Ошибка публикации: ' + e.message, 'error');
         updatePublishState();
       }
+
     });
   </script>
 </body>
