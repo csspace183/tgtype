@@ -381,13 +381,12 @@
         transform: translateY(0);
       }
     }
-        .toolbar-row.view-mode .publish-btn {
+          .toolbar-row.view-mode .publish-btn {
       position: absolute;
       right: 0;
-      bottom: 18px;
+      bottom: 4px;
       transition: opacity 0.3s ease, transform 0.3s ease, background-color 0.25s ease, color 0.25s ease;
     }
-
     .toolbar-row.view-mode .publish-btn.is-scrolled {
       position: fixed;
       top: 25px;
@@ -397,6 +396,26 @@
       box-shadow: 0 2px 10px var(--shadow);
       animation: editBtnFadeIn 0.32s cubic-bezier(0.22, 1, 0.36, 1);
     }
+    @media (max-width: 768px) {
+      .theme-btn {
+        position: static;
+        box-shadow: none;
+        flex-shrink: 0;
+      }
+      .toolbar-row.view-mode .publish-btn.is-scrolled {
+        position: absolute;
+        top: auto;
+        bottom: 4px;
+        right: 0;
+        box-shadow: none;
+        animation: none;
+      }
+      .scroll-top-btn {
+        right: 16px;
+        bottom: 16px;
+      }
+    }
+
 
     .toolbar-row.hidden { display: none; }
     .toolbar {
@@ -550,97 +569,63 @@
     html.dark #story [style*="color: #000"] {
       color: var(--text) !important;
     }
-
-    /* Блок кода / промпта: компактный свёрнутый вид со стрелкой и копированием в 1 клик */
+    /* Блок кода / промпта: карточка с заголовком, превью в несколько строк и нижней панелью */
     #story .tg-code-block {
-      margin: 14px 0;
+      margin: 18px 0;
       border-radius: 12px;
       border: 1px solid var(--code-border);
       background: var(--code-bg);
       overflow: hidden;
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
     }
-        .tg-code-head {
+    .tg-code-head {
       display: flex;
       justify-content: space-between;
       align-items: center;
       gap: 10px;
-      height: 40px;
-      box-sizing: border-box;
-      padding: 0 14px;
+      padding: 12px 16px 6px;
       background: var(--code-header);
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      font-size: 13px;
-      color: var(--text);
-      cursor: pointer;
       user-select: none;
     }
-
-    .tg-code-left {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      min-width: 0;
-      flex: 1;
-    }
-    .tg-code-arrow {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 18px;
-      height: 18px;
-      color: var(--muted);
-      transition: transform 0.2s ease, color 0.15s ease;
-      flex-shrink: 0;
-    }
-    .tg-code-block:not(.is-collapsed) .tg-code-arrow {
-      transform: rotate(90deg);
-      color: var(--text);
-    }
     .tg-code-lang {
-      font-size: 11px;
+      font-size: 14px;
       font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.4px;
-      color: var(--muted);
-      flex-shrink: 0;
-    }
-    .tg-code-preview {
-      font-size: 13px;
       color: var(--text);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      opacity: 0.85;
-    }
-    .tg-code-block:not(.is-collapsed) .tg-code-preview {
-      display: none;
-    }
-    .tg-code-head-actions {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      flex-shrink: 0;
+      outline: none;
+      min-width: 40px;
     }
     .tg-code-del {
       background: none;
       color: var(--muted);
       border: 1px solid var(--code-border);
       border-radius: 6px;
-      padding: 3px 8px;
+      padding: 2px 8px;
       font-size: 11px;
       cursor: pointer;
     }
     .tg-code-del:hover { border-color: #d9534f; color: #d9534f; }
     #story[contenteditable="false"] .tg-code-del { display: none; }
-    #story .tg-code-block.is-collapsed pre,
-    #story .tg-code-block.is-collapsed .tg-code-foot {
-      display: none;
+    .tg-code-body {
+      position: relative;
+    }
+    #story .tg-code-block.is-collapsed .tg-code-body {
+      max-height: 98px;
+      overflow: hidden;
+    }
+    #story .tg-code-block.is-collapsed .tg-code-body::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 34px;
+      background: linear-gradient(to bottom, transparent, var(--code-bg));
+      pointer-events: none;
     }
     #story .tg-code-block pre {
       margin: 0;
-      padding: 10px 16px 14px;
-      border-top: 1px solid var(--code-border);
+      padding: 6px 16px 14px;
       overflow-x: auto;
       font-size: 13.5px;
       line-height: 1.55;
@@ -663,30 +648,48 @@
     }
     .tg-code-foot {
       display: flex;
-      justify-content: flex-end;
+      justify-content: space-between;
       align-items: center;
-      padding: 7px 14px;
+      padding: 8px 14px;
       border-top: 1px solid var(--code-border);
       background: var(--code-bg);
       user-select: none;
     }
-    .tg-code-copy {
-      background: var(--bg);
+    .tg-code-toggle {
+      background: none;
+      border: none;
+      padding: 4px 6px;
       color: var(--muted);
-      border: 1px solid var(--code-border);
-      border-radius: 6px;
-      padding: 3px 9px;
-      font-size: 11.5px;
+      font-size: 12px;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
       gap: 5px;
-      transition: color 0.15s ease, border-color 0.15s ease;
+      border-radius: 6px;
+      transition: color 0.15s ease, background-color 0.15s ease;
+    }
+    .tg-code-toggle:hover {
+      color: var(--text);
+      background: var(--hover-bg);
+    }
+    .tg-code-copy {
+      background: none;
+      color: var(--muted);
+      border: none;
+      border-radius: 6px;
+      padding: 4px 8px;
+      font-size: 12px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: color 0.15s ease, background-color 0.15s ease;
     }
     .tg-code-copy:hover {
       color: var(--text);
-      border-color: var(--text);
+      background: var(--hover-bg);
     }
 
     .hl-kw { color: var(--hl-kw); font-weight: 600; }
@@ -1459,44 +1462,54 @@
       sel.removeAllRanges();
       sel.addRange(range);
     }
+       function updateCodeToggleUI(block) {
+      if (!block) return;
+      const toggleBtn = block.querySelector('.tg-code-toggle');
+      const preEl = block.querySelector('pre');
+      if (!toggleBtn || !preEl) return;
+      const isShort = preEl.scrollHeight <= 104 && !block.classList.contains('is-collapsed');
+      if (preEl.scrollHeight <= 104) {
+        block.classList.remove('is-collapsed');
+        toggleBtn.style.visibility = 'hidden';
+        return;
+      }
+      toggleBtn.style.visibility = 'visible';
+      const collapsed = block.classList.contains('is-collapsed');
+      toggleBtn.textContent = collapsed ? 'Развернуть ▾' : 'Свернуть ▴';
+    }
+
     function normalizeCodeBlockStructure(block) {
       if (!block) return;
       const head = block.querySelector('.tg-code-head');
-      if (!head) return;
-      if (!head.querySelector('.tg-code-left')) {
-        const lang = head.querySelector('.tg-code-lang');
-        const copyBtn = head.querySelector('.tg-code-copy');
-        const delBtn = head.querySelector('.tg-code-del');
-
-        const left = document.createElement('div');
-        left.className = 'tg-code-left';
-        left.innerHTML = '<span class="tg-code-arrow">▸</span>';
-        if (lang) left.appendChild(lang);
-        const prev = document.createElement('span');
-        prev.className = 'tg-code-preview';
-        left.appendChild(prev);
-
-        const actions = document.createElement('div');
-        actions.className = 'tg-code-head-actions';
-        if (copyBtn) {
-          copyBtn.innerHTML = `${COPY_ICON_SVG}<span>Копировать</span>`;
-          actions.appendChild(copyBtn);
-        }
-        if (delBtn) actions.appendChild(delBtn);
-
-        head.innerHTML = '';
-        head.appendChild(left);
-        head.appendChild(actions);
+      const pre = block.querySelector('pre');
+      if (head && pre && !block.querySelector('.tg-code-body')) {
+        const bodyWrap = document.createElement('div');
+        bodyWrap.className = 'tg-code-body';
+        pre.replaceWith(bodyWrap);
+        bodyWrap.appendChild(pre);
       }
-    }
-
-    function updateCodeBlockPreview(block, rawText) {
-      if (!block) return;
-      normalizeCodeBlockStructure(block);
-      const previewEl = block.querySelector('.tg-code-preview');
-      if (previewEl) {
-        const firstLine = (rawText || '').split(/\r?\n/).map(s => s.trim()).find(Boolean) || 'Пустой блок';
-        previewEl.textContent = firstLine;
+      if (head) {
+        const langEl = head.querySelector('.tg-code-lang');
+        const delBtn = head.querySelector('.tg-code-del');
+        const langText = langEl ? langEl.textContent : 'code';
+        head.innerHTML = '';
+        const newLang = document.createElement('span');
+        newLang.className = 'tg-code-lang';
+        newLang.textContent = langText;
+        head.appendChild(newLang);
+        if (delBtn) head.appendChild(delBtn);
+      }
+      let foot = block.querySelector('.tg-code-foot');
+      if (!foot) {
+        foot = document.createElement('div');
+        foot.className = 'tg-code-foot';
+        block.appendChild(foot);
+      }
+      if (!foot.querySelector('.tg-code-toggle')) {
+        foot.innerHTML = `
+          <button type="button" class="tg-code-toggle">Развернуть ▾</button>
+          <button type="button" class="tg-code-copy" title="Скопировать">${COPY_ICON_SVG}</button>
+        `;
       }
     }
 
@@ -1506,11 +1519,12 @@
       const raw = codeEl.textContent || '';
       codeEl.innerHTML = raw ? highlightCodeText(raw) : '';
       const block = codeEl.closest('.tg-code-block');
+      normalizeCodeBlockStructure(block);
       const langLabel = block?.querySelector('.tg-code-lang');
-      if (langLabel) {
+      if (langLabel && !langLabel.dataset.customTitle) {
         langLabel.textContent = detectCodeLanguage(raw);
       }
-      updateCodeBlockPreview(block, raw);
+      updateCodeToggleUI(block);
       if (preserveCaret && caretPos !== null) {
         setCaretOffsetIn(codeEl, caretPos);
       }
@@ -1518,9 +1532,11 @@
 
     function refreshAllCodeBlocks(collapseAll = false) {
       storyEl.querySelectorAll('.tg-code-block').forEach(block => {
+        normalizeCodeBlockStructure(block);
         const code = block.querySelector('code');
         if (code) applyCodeHighlight(code, false);
         if (collapseAll) block.classList.add('is-collapsed');
+        updateCodeToggleUI(block);
       });
     }
 
@@ -1528,6 +1544,9 @@
       const canEdit = storyEl.isContentEditable;
       storyEl.querySelectorAll('.tg-code-block code').forEach(code => {
         code.contentEditable = canEdit ? 'true' : 'false';
+      });
+      storyEl.querySelectorAll('.tg-code-block .tg-code-lang').forEach(lang => {
+        lang.contentEditable = canEdit ? 'true' : 'false';
       });
     }
 
@@ -1540,20 +1559,16 @@
       block.className = 'tg-code-block';
       block.setAttribute('contenteditable', 'false');
       block.innerHTML = `
-        <div class="tg-code-head" title="Нажмите, чтобы свернуть или развернуть">
-          <div class="tg-code-left">
-            <span class="tg-code-arrow">▸</span>
-            <span class="tg-code-lang">code</span>
-            <span class="tg-code-preview">Пустой блок</span>
-          </div>
-          <div class="tg-code-head-actions">
-            <button type="button" class="tg-code-copy" title="Скопировать">${COPY_ICON_SVG}<span>Копировать</span></button>
-            <button type="button" class="tg-code-del" title="Удалить блок">✕</button>
-          </div>
+        <div class="tg-code-head">
+          <span class="tg-code-lang" contenteditable="true" spellcheck="false">code</span>
+          <button type="button" class="tg-code-del" title="Удалить блок">✕</button>
         </div>
-        <pre><code contenteditable="true" spellcheck="false"></code></pre>
+        <div class="tg-code-body">
+          <pre><code contenteditable="true" spellcheck="false"></code></pre>
+        </div>
         <div class="tg-code-foot">
-          <button type="button" class="tg-code-copy" title="Скопировать">${COPY_ICON_SVG}<span>Копировать</span></button>
+          <button type="button" class="tg-code-toggle" style="visibility:hidden;">Развернуть ▾</button>
+          <button type="button" class="tg-code-copy" title="Скопировать">${COPY_ICON_SVG}</button>
         </div>
       `;
 
@@ -1933,35 +1948,29 @@
         saveDraftToLocal();
         return;
       }
-
-           const copyCodeBtn = e.target.closest('.tg-code-copy');
+      const copyCodeBtn = e.target.closest('.tg-code-copy');
       if (copyCodeBtn && storyEl.contains(copyCodeBtn)) {
         e.preventDefault();
         e.stopPropagation();
         const block = copyCodeBtn.closest('.tg-code-block');
         const codeText = block?.querySelector('code')?.textContent || '';
         navigator.clipboard?.writeText(codeText);
-        block.querySelectorAll('.tg-code-copy').forEach(btn => {
-          btn.innerHTML = `${COPY_ICON_SVG}<span>Скопировано!</span>`;
-        });
+        copyCodeBtn.innerHTML = `${COPY_ICON_SVG}<span>Скопировано!</span>`;
         setTimeout(() => {
-          block.querySelectorAll('.tg-code-copy').forEach(btn => {
-            btn.innerHTML = `${COPY_ICON_SVG}<span>Копировать</span>`;
-          });
+          copyCodeBtn.innerHTML = COPY_ICON_SVG;
         }, 1500);
         return;
       }
 
-      const codeHead = e.target.closest('.tg-code-head');
-      if (codeHead && storyEl.contains(codeHead)) {
+      const toggleCodeBtn = e.target.closest('.tg-code-toggle');
+      if (toggleCodeBtn && storyEl.contains(toggleCodeBtn)) {
         e.preventDefault();
         e.stopPropagation();
-        const block = codeHead.closest('.tg-code-block');
+        const block = toggleCodeBtn.closest('.tg-code-block');
         block.classList.toggle('is-collapsed');
-        if (!block.classList.contains('is-collapsed') && storyEl.isContentEditable) {
-          block.querySelector('code')?.focus();
-        }
+        updateCodeToggleUI(block);
       }
+
     });
 
 
@@ -2015,12 +2024,20 @@
       }
     });
 
-    storyEl.addEventListener('input', e => {
+        storyEl.addEventListener('input', e => {
+      const langEdit = e.target.closest('.tg-code-lang');
+      if (langEdit && storyEl.contains(langEdit)) {
+        langEdit.dataset.customTitle = '1';
+        updatePublishState();
+        saveDraftToLocal();
+        return;
+      }
       if (e.target.closest('.tg-code-block code')) {
         updatePublishState();
         saveDraftToLocal();
         return;
       }
+
 
       if (resetAfterBlockBreak) {
         resetAfterBlockBreak = false;
