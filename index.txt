@@ -76,13 +76,18 @@
     .new-link { font-size: 13px; color: var(--subtle); text-decoration: none; }
     .new-link:hover { color: var(--text); }
 
-    /* Кнопка переключения темы в правом верхнем углу */
+          /* Кнопка переключения темы в правом поле экрана (вне колонки текста) */
     .theme-btn {
-      width: 32px;
-      height: 32px;
+      position: fixed;
+      top: 24px;
+      right: 28px;
+      z-index: 95;
+      width: 34px;
+      height: 34px;
       border-radius: 50%;
       border: 1px solid var(--border);
       background: var(--surface);
+      box-shadow: 0 2px 10px var(--shadow);
       cursor: pointer;
       display: inline-flex;
       align-items: center;
@@ -90,6 +95,7 @@
       padding: 0;
       transition: transform 0.15s ease, border-color 0.15s ease, background-color 0.2s ease;
     }
+
     .theme-btn:hover {
       border-color: var(--text);
       transform: scale(1.06);
@@ -133,9 +139,71 @@
       opacity: 1;
       cursor: default;
     }
-    .publish-btn.is-saved::before {
+        .publish-btn.is-saved::before {
       transform: scaleX(1);
     }
+    .publish-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+        .cancel-edit-btn {
+      display: none;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.4px;
+      padding: 7px 14px;
+      cursor: pointer;
+      align-items: center;
+      justify-content: center;
+      white-space: nowrap;
+      transition: border-color 0.15s ease, color 0.15s ease;
+    }
+    .cancel-edit-btn:hover {
+      border-color: var(--text);
+      color: var(--text);
+    }
+
+    /* Кнопка «Наверх» в правом нижнем углу */
+    .scroll-top-btn {
+      position: fixed;
+      bottom: 24px;
+      right: 28px;
+      z-index: 95;
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--muted);
+      box-shadow: 0 2px 10px var(--shadow);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(8px);
+      transition: opacity 0.2s ease, transform 0.2s ease, border-color 0.15s ease, color 0.15s ease;
+    }
+    .scroll-top-btn.visible {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateY(0);
+    }
+    .scroll-top-btn:hover {
+      border-color: var(--text);
+      color: var(--text);
+      transform: translateY(-2px);
+    }
+
+
 
     .editable { outline: none; width: 100%; box-sizing: border-box; word-wrap: break-word; }
     .editable:empty:before {
@@ -259,10 +327,18 @@
       min-height: 0;
       margin: 0;
     }
-    .toolbar-row.view-mode .publish-btn {
+           .toolbar-row.view-mode .publish-btn {
       position: absolute;
       right: 0;
       bottom: 22px;
+    }
+    .toolbar-row.view-mode .publish-btn.is-scrolled {
+      position: fixed;
+      top: 25px;
+      bottom: auto;
+      right: 74px;
+      z-index: 94;
+      box-shadow: 0 2px 10px var(--shadow);
     }
     .toolbar-row.hidden { display: none; }
     .toolbar {
@@ -405,6 +481,14 @@
     #story li:last-child { margin-bottom: 0; }
     #story img { max-width: 100%; height: auto; display: block; margin: 18px 0; border-radius: 4px; }
     #story a { color: var(--link); text-decoration: underline; cursor: pointer; }
+    html.dark #story [style*="color: rgb(34, 34, 34)"],
+    html.dark #story [style*="color: rgb(0, 0, 0)"],
+    html.dark #story [style*="color:#222"],
+    html.dark #story [style*="color: #222"],
+    html.dark #story [style*="color:#000"],
+    html.dark #story [style*="color: #000"] {
+      color: var(--text) !important;
+    }
 
     /* Блок кода с автоподсветкой и нижней панелью как на скриншоте */
     #story .tg-code-block {
@@ -810,8 +894,7 @@
             <button class="tool-btn" type="button" data-cmd="italic" title="Курсив">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="4" x2="10" y2="4"/><line x1="14" y1="20" x2="5" y2="20"/><line x1="15" y1="4" x2="9" y2="20"/></svg>
             </button>
-            <button class="tool-btn" type="button" data-cmd="strikeThrough" title="Зачёркнутый">
-            <button class="tool-btn" type="button" data-cmd="strikeThrough" title="Зачёркнутый">
+                        <button class="tool-btn" type="button" data-cmd="strikeThrough" title="Зачёркнутый">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4H9a3 3 0 0 0-2.83 4"/><path d="M14 12a4 4 0 0 1 0 8H6"/><line x1="4" y1="12" x2="20" y2="12"/></svg>
             </button>
             <div class="color-wrap" id="colorWrap">
@@ -863,7 +946,11 @@
             <button id="photoBtn" class="tool-btn" type="button">📷 Фото</button>
             <input type="file" id="fileInput" accept="image/*" style="display:none">
           </div>
-          <button id="actionBtn" class="publish-btn" type="button" disabled>ОПУБЛИКОВАТЬ</button>
+                    <div class="publish-group">
+            <button id="actionBtn" class="publish-btn" type="button" disabled>ОПУБЛИКОВАТЬ</button>
+            <button id="cancelEditBtn" class="cancel-edit-btn" type="button" title="Закрыть режим редактирования">ЗАКРЫТЬ</button>
+
+          </div>
         </div>
       </div>
     </div>
@@ -883,7 +970,12 @@
     </div>
   </div>
 
+    <button id="scrollTopBtn" class="scroll-top-btn" type="button" title="Наверх">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+  </button>
+
   <div id="linkPopover" class="link-popover">
+
     <input type="text" id="linkUrlInput" placeholder="Вставьте или введите ссылку...">
     <button type="button" id="closeLinkPopover" title="Закрыть">✕</button>
   </div>
@@ -908,9 +1000,9 @@
           <button id="submitAuthBtn" class="btn-primary" type="submit">Войти</button>
         </div>
       </form>
-      <div style="text-align:center; margin-top:12px; font-size:12px; color:#777;">
+            <div style="text-align:center; margin-top:12px; font-size:12px; color:var(--muted);">
         <span id="switchHint">Нет аккаунта?</span>
-        <button id="switchModeBtn" type="button" style="background:none; border:none; color:#222; font-weight:600; cursor:pointer; text-decoration:underline; padding:0; font-size:12px;">Регистрация</button>
+        <button id="switchModeBtn" type="button" style="background:none; border:none; color:var(--text); font-weight:600; cursor:pointer; text-decoration:underline; padding:0; font-size:12px;">Регистрация</button>
       </div>
       <button id="closeModalBtn" class="modal-close" type="button">Закрыть</button>
     </div>
@@ -932,7 +1024,14 @@
     const titleSideLabel = document.getElementById('titleSideLabel');
     const metaInfoEl = document.getElementById('metaInfo');
     const storyEl = document.getElementById('story');
-    const actionBtn = document.getElementById('actionBtn');
+        const actionBtn = document.getElementById('actionBtn');
+    const cancelEditBtn = document.getElementById('cancelEditBtn');
+    const scrollTopBtn = document.getElementById('scrollTopBtn');
+
+    scrollTopBtn.addEventListener('click', () => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+
     const themeBtn = document.getElementById('themeBtn');
     const newPostLink = document.getElementById('newPostLink');
     const codeBtn = document.getElementById('codeBtn');
@@ -1080,7 +1179,13 @@
       } catch (e) {}
     }
 
-    function updateFixedHeader() {
+            function updateFixedHeader() {
+      const scrolled = window.scrollY > 28;
+      themeBtn.classList.toggle('is-scrolled', scrolled);
+      actionBtn.classList.toggle('is-scrolled', scrolled && isViewMode);
+      scrollTopBtn.classList.toggle('visible', window.scrollY > 300);
+
+
       if (!editorHeader.classList.contains('is-editing')) {
         editorHeader.classList.remove('is-fixed');
         headerSpacer.style.display = 'none';
@@ -1188,8 +1293,8 @@
       };
 
       html = html.replace(/(\/\/[^\n]*|\/\*[\s\S]*?\*\/|#[^\n]*)/g, m => saveTok('hl-com', m));
-      html = html.replace(/(&quot;[^&\n]*?&quot;|'[^'\n]*?'|`[^`]*?`)/g, m => saveTok('hl-str', m));
       html = html.replace(/(&lt;\/?[a-zA-Z0-9-]+(?:\s+[^&]*?)?\/?&gt;)/g, m => saveTok('hl-tag', m));
+      html = html.replace(/(&quot;[^&\n]*?&quot;|'[^'\n]*?'|`[^`]*?`)/g, m => saveTok('hl-str', m));
       html = html.replace(/\b(const|let|var|function|return|if|else|for|while|async|await|try|catch|finally|class|import|from|export|default|new|true|false|null|undefined|def|print|elif|None|True|False)\b/g, '<span class="hl-kw">$1</span>');
       html = html.replace(/\b(\d+(?:\.\d+)?)\b/g, '<span class="hl-num">$1</span>');
 
@@ -2565,11 +2670,28 @@
       }
     }
 
+        cancelEditBtn.addEventListener('click', () => {
+      if (isViewMode || !currentSlug) return;
+      titleEl.innerHTML = initialSnapshot.title;
+      storyEl.innerHTML = initialSnapshot.story;
+      if (currentUser && isAdmin(currentUser)) {
+        metaInfoEl.textContent = initialSnapshot.meta;
+      }
+      refreshAllCodeBlocks();
+      isViewMode = true;
+      setEditable(false);
+      actionBtn.textContent = 'РЕДАКТИРОВАТЬ';
+      updateEditVisibility();
+      updateViewsBadge();
+      setStatus('');
+    });
+
     function setEditable(canEdit) {
       titleEl.contentEditable = Boolean(canEdit);
       storyEl.contentEditable = Boolean(canEdit);
       syncCodeEditableState();
       toolbar.style.display = canEdit ? 'flex' : 'none';
+      cancelEditBtn.style.display = (canEdit && currentSlug) ? 'inline-flex' : 'none';
       toolbarRow.classList.toggle('view-mode', !canEdit);
       if (canEdit) {
         toolbarRow.classList.remove('hidden');
