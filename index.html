@@ -805,11 +805,6 @@
     #story .tg-code-block.is-short .tg-code-foot {
       display: none;
     }
-    #story .tg-code-block.is-collapsed,
-    #story .tg-code-block.is-short {
-      padding-bottom: 6px;
-    }
-
        .tg-code-del {
       background: none;
       color: var(--muted);
@@ -1227,7 +1222,7 @@
             <a href="/" id="newPostLink" class="new-link">+ Новая запись</a>
             <a href="/blog" id="adminBlogLink" class="new-link">Блог</a>
           </div>
-          <span class="site-ver-badge">build v0.1.6</span>
+          <span class="site-ver-badge">build v0.1.7</span>
           <button id="themeBtn" class="theme-btn" type="button" title="Переключить тему">
             <svg class="icon-light" width="17" height="17" viewBox="0 0 24 24" fill="#f5b014" stroke="#e09c00" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
             <svg class="icon-dark" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#a5b4fc" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5a8.5 8.5 0 1 0 11 11z" fill="rgba(165, 180, 252, 0.2)"/><circle cx="17.5" cy="6.5" r="2" fill="#fcd34d" stroke="#fcd34d"/><path d="M14.5 8.2c2-.8 4.4-1.8 6-3.4" stroke="#fcd34d" stroke-width="1.3"/></svg>
@@ -2537,12 +2532,11 @@
       updatePublishState();
       saveDraftToLocal();
     });
-
     function sanitizePastedHtml(rawHtml) {
       const doc = new DOMParser().parseFromString(rawHtml, 'text/html');
       const allowedTags = new Set([
         'P', 'BR', 'B', 'STRONG', 'I', 'EM', 'U', 'S', 'STRIKE', 'DEL',
-        'H1', 'H2', 'H3', 'H4', 'BLOCKQUOTE', 'UL', 'OL', 'LI', 'A', 'SPAN', 'DIV', 'FONT'
+        'H1', 'H2', 'H3', 'H4', 'BLOCKQUOTE', 'UL', 'OL', 'LI', 'A', 'SPAN', 'DIV', 'FONT', 'IMG'
       ]);
 
       function cleanNode(node) {
@@ -2551,8 +2545,48 @@
         }
         if (node.nodeType !== 1) return null;
 
+        // Сохраняем карточки CODE целиком при копировании/вставке из заметки в заметку
+        if (node.classList && node.classList.contains('tg-code-block')) {
+          const cloneBlock = node.cloneNode(true);
+          cloneBlock.setAttribute('contenteditable', 'false');
+          const codeEl = cloneBlock.querySelector('code');
+          if (codeEl) codeEl.setAttribute('contenteditable', 'true');
+          const langEl = cloneBlock.querySelector('.tg-code-lang');
+          if (langEl) langEl.setAttribute('contenteditable', 'true');
+          const tagEl = cloneBlock.querySelector('.tg-code-tag');
+          if (tagEl) tagEl.setAttribute('contenteditable', 'true');
+          return cloneBlock;
+        }
+
+        // Сохраняем встроенные плееры при переносе между заметками
+        if (node.classList && node.classList.contains('tg-ymusic-embed')) {
+          const iframe = node.querySelector('iframe');
+          const src = iframe ? iframe.getAttribute('src') : '';
+          if (src) {
+            const parsed = parseYandexMusicEmbed(`<iframe src="${src}"></iframe>`);
+            if (parsed) {
+              const wrap = document.createElement('div');
+              wrap.className = 'tg-ymusic-embed' + (parsed.isAlbum ? ' is-album' : '');
+              wrap.setAttribute('contenteditable', 'false');
+              wrap.innerHTML = '<iframe src="' + parsed.src + '" allow="autoplay; encrypted-media; fullscreen; picture-in-picture; clipboard-write" allowfullscreen></iframe><button type="button" class="tg-ymusic-del" title="Удалить плеер">✕</button>';
+              return wrap;
+            }
+          }
+          return null;
+        }
+
         const tag = node.tagName.toUpperCase();
         if (['STYLE', 'SCRIPT', 'META', 'LINK', 'XML', 'HEAD', 'TITLE', 'IFRAME', 'OBJECT'].includes(tag)) {
+          return null;
+        }
+
+        if (tag === 'IMG') {
+          const src = node.getAttribute('src') || '';
+          if (/^(data:image\/|https?:\/\/)/i.test(src.trim())) {
+            const img = document.createElement('img');
+            img.src = src.trim();
+            return img;
+          }
           return null;
         }
 
@@ -2651,12 +2685,13 @@
           return;
         }
       }
-
       const html = cd ? cd.getData('text/html') : '';
       if (html) {
         const cleanHtml = sanitizePastedHtml(html);
         if (cleanHtml.trim()) {
           document.execCommand('insertHTML', false, cleanHtml);
+          refreshAllCodeBlocks(false);
+          syncCodeEditableState();
           updatePublishState();
           saveDraftToLocal();
           return;
