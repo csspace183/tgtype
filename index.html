@@ -639,7 +639,7 @@
       gap: 4px;
       font-size: 11.5px;
       font-weight: 600;
-      color: #34c759;
+      color: #1e8e3e;
     }
     .tg-code-tag-wrap.is-empty {
       display: none;
@@ -648,9 +648,9 @@
       display: inline-flex;
       opacity: 0.65;
     }
-        .tg-code-tag {
+    .tg-code-tag {
       outline: none;
-      color: #34c759;
+      color: #1e8e3e;
       min-width: 6px;
     }
     .tg-code-tag font[color],
@@ -659,7 +659,7 @@
     }
     .tg-code-tag:empty::before {
       content: "подпись...";
-      color: #34c759;
+      color: #1e8e3e;
       opacity: 0.7;
       pointer-events: none;
     }
@@ -1171,7 +1171,7 @@
             <a href="/" id="newPostLink" class="new-link">+ Новая запись</a>
             <a href="/blog" id="adminBlogLink" class="new-link">Блог</a>
           </div>
-          <span class="site-ver-badge">build v0.0.9</span>
+          <span class="site-ver-badge">build v0.1.0</span>
           <button id="themeBtn" class="theme-btn" type="button" title="Переключить тему">
             <svg class="icon-light" width="17" height="17" viewBox="0 0 24 24" fill="#f5b014" stroke="#e09c00" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
             <svg class="icon-dark" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#a5b4fc" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5a8.5 8.5 0 1 0 11 11z" fill="rgba(165, 180, 252, 0.2)"/><circle cx="17.5" cy="6.5" r="2" fill="#fcd34d" stroke="#fcd34d"/><path d="M14.5 8.2c2-.8 4.4-1.8 6-3.4" stroke="#fcd34d" stroke-width="1.3"/></svg>
@@ -1893,9 +1893,10 @@
         const color = swatch.dataset.color;
         const activeSel = window.getSelection();
         const tagNode = activeSel?.anchorNode?.parentElement?.closest('.tg-code-tag') || activeSel?.focusNode?.parentElement?.closest('.tg-code-tag');
-        if (tagNode && storyEl.contains(tagNode)) {
+               if (tagNode && storyEl.contains(tagNode)) {
           const wrap = tagNode.closest('.tg-code-tag-wrap');
-          const applied = color === '#222222' ? '#34c759' : color;
+          const applied = color === '#222222' ? '#1e8e3e' : color;
+
           tagNode.style.color = applied;
           if (wrap) wrap.style.color = applied;
           if (color === '#222222') {
