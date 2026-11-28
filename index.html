@@ -1,4 +1,3603 @@
-      savedBtnTimer = setTimeout(() => {
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>tgtype</title>
+  <link rel="preconnect" href="https://googleapis.com" crossorigin>
+  <script>
+    if (localStorage.getItem('tgtype_theme') === 'dark') {
+      document.documentElement.classList.add('dark');
+    }
+  </script>
+  <style>
+    :root {
+      --bg: #ffffff;
+      --text: #222222;
+      --muted: #888888;
+      --subtle: #999999;
+      --border: #e0e0e0;
+      --border-light: #eeeeee;
+      --surface: #fafafa;
+      --hover-bg: #f5f5f5;
+      --link: #0066cc;
+      --popover-bg: #ffffff;
+      --shadow: rgba(0, 0, 0, 0.12);
+      --code-bg: #f6f8fa;
+      --code-header: #eef1f5;
+      --code-inner-bg: #ffffff;
+      --code-border: #e1e4e8;
+      --code-text: #24292e;
+
+      --hl-kw: #d73a49;
+      --hl-str: #032f62;
+      --hl-com: #6a737d;
+      --hl-tag: #22863a;
+      --hl-num: #005cc5;
+    }
+    html.dark {
+      --bg: #1e1e1e;
+      --text: #e4e4e4;
+      --muted: #9a9a9a;
+      --subtle: #7e7e7e;
+      --border: #363636;
+      --border-light: #2b2b2b;
+      --surface: #252525;
+      --hover-bg: #2f2f2f;
+      --link: #6eb5ff;
+      --popover-bg: #262626;
+      --shadow: rgba(0, 0, 0, 0.45);
+      --code-bg: #252629;
+      --code-header: #252629;
+      --code-inner-bg: #1b1d21;
+      --code-border: #34363b;
+      --code-text: #e4e4e4;
+
+      --hl-kw: #c792ea;
+      --hl-str: #a5d6ff;
+      --hl-com: #8b949e;
+      --hl-tag: #7ee787;
+      --hl-num: #f78c6c;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      margin: 0;
+      padding: 40px 20px 80px;
+      color: var(--text);
+      background: var(--bg);
+      transition: background-color 0.2s ease, color 0.2s ease;
+    }
+    .container { max-width: 730px; margin: 0 auto; position: relative; }
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      min-height: 28px;
+      margin-bottom: 16px;
+    }
+    .top-left { display: flex; align-items: center; gap: 16px; }
+    .new-link { font-size: 13px; color: var(--subtle); text-decoration: none; }
+    .new-link:hover { color: var(--text); }
+    /* Кнопка переключения темы рядом с правой границей колонки текста */
+    .theme-btn {
+      position: fixed;
+      top: 32px;
+      left: calc(50% + 395px);
+      z-index: 95;
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      box-shadow: 0 2px 10px var(--shadow);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      transition: transform 0.15s ease, border-color 0.15s ease, background-color 0.2s ease;
+    }
+    @keyframes smoothFadeIn {
+      0% { opacity: 0; }
+      100% { opacity: 1; }
+    }
+    .theme-btn {
+      transition: transform 0.15s ease, border-color 0.15s ease, background-color 0.2s ease, opacity 0.25s ease;
+    }
+    .theme-btn:hover {
+      border-color: var(--text);
+      transform: scale(1.06);
+    }
+    .theme-btn.is-hidden-in-edit {
+      opacity: 0 !important;
+      pointer-events: none;
+      transition: opacity 0.18s ease !important;
+    }
+    .theme-btn.is-fading-in {
+      animation: smoothFadeIn 0.36s cubic-bezier(0.22, 1, 0.36, 1) forwards !important;
+    }
+
+    html.dark .theme-btn .icon-light { display: none; }
+    html:not(.dark) .theme-btn .icon-dark { display: none; }
+    .publish-btn {
+      position: relative;
+      overflow: hidden;
+      z-index: 1;
+      background: var(--bg);
+      color: var(--text);
+      border: 2px solid var(--text);
+      border-radius: 20px;
+      padding: 6px 14px;
+      font-weight: 700;
+      font-size: 11.5px;
+      letter-spacing: 0.4px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: color 0.2s ease, border-color 0.2s ease, opacity 0.2s ease;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .publish-btn::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: #28a745;
+      transform: scaleX(0);
+      transform-origin: right center;
+      transition: transform 0.48s cubic-bezier(0.22, 1, 0.36, 1);
+      z-index: -1;
+    }
+        .publish-btn:hover:not(:disabled):not(.is-saved):not(.is-saving) { background: var(--text); color: var(--bg); }
+    .publish-btn:disabled:not(.is-saved):not(.is-saving) { opacity: 0.35; cursor: default; }
+    .editor-header.is-editing .publish-btn:disabled:not(.is-saved):not(.is-saving) {
+      display: none !important;
+    }
+    .publish-btn.is-saving {
+      opacity: 1;
+      cursor: wait;
+      border-color: var(--text);
+      color: var(--text);
+    }
+        .publish-btn.is-saved {
+      border-color: #28a745;
+      color: #fff;
+      opacity: 1;
+      cursor: default;
+    }
+    .publish-btn.is-saved::before {
+      transform-origin: left center;
+      transform: scaleX(1);
+    }
+        .publish-btn.is-sliding-right {
+      transition: transform 0.42s cubic-bezier(0.22, 1, 0.36, 1), color 0.35s ease, border-color 0.35s ease;
+    }
+    .cancel-edit-btn.is-hiding {
+      opacity: 0;
+      transform: scale(0.9);
+      pointer-events: none;
+      transition: opacity 0.25s ease, transform 0.25s ease;
+    }
+
+    .publish-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+         .cancel-edit-btn {
+      display: none;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.4px;
+      padding: 6px 11px;
+      cursor: pointer;
+      align-items: center;
+      justify-content: center;
+      white-space: nowrap;
+      transition: border-color 0.15s ease, color 0.15s ease;
+    }
+
+    .cancel-edit-btn:hover {
+      border-color: var(--text);
+      color: var(--text);
+    }
+    /* Кнопка «Наверх» на одной линии с кнопками справа от текста */
+    .scroll-top-btn {
+      position: fixed;
+      bottom: 28px;
+      left: calc(50% + 395px);
+      z-index: 95;
+
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--muted);
+      box-shadow: 0 2px 10px var(--shadow);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(8px);
+      transition: opacity 0.2s ease, transform 0.2s ease, border-color 0.15s ease, color 0.15s ease;
+    }
+    .scroll-top-btn.visible {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateY(0);
+    }
+    .scroll-top-btn:hover {
+      border-color: var(--text);
+      color: var(--text);
+      transform: translateY(-2px);
+    }
+
+
+
+    .editable { outline: none; width: 100%; box-sizing: border-box; word-wrap: break-word; }
+    .editable:empty:before {
+      content: attr(data-placeholder);
+      color: var(--subtle);
+      pointer-events: none;
+      display: block;
+    }
+    /* Экран загрузки страницы при обращении к базе */
+    .page-loader {
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      background: var(--bg);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      transition: opacity 0.15s ease;
+    }
+    .page-loader.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+    .loader-spinner {
+      width: 34px;
+      height: 34px;
+      border: 3px solid var(--border-light);
+      border-top-color: var(--text);
+      border-radius: 50%;
+      animation: tgSpin 0.75s linear infinite;
+    }
+    .loader-text {
+      font-size: 13px;
+      color: var(--muted);
+    }
+    @keyframes tgSpin {
+      to { transform: rotate(360deg); }
+    }
+       /* Шапка редактора */
+    .editor-header {
+      background: var(--bg);
+      transition: box-shadow 0.2s ease, background-color 0.2s ease, top 0.36s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.32s ease;
+    }
+    .editor-header-inner {
+      max-width: 730px;
+      margin: 0 auto;
+    }
+    .editor-header.is-fixed {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 80;
+      background: var(--bg);
+      padding: 12px 20px 10px;
+      border-bottom: 1px solid var(--border-light);
+      box-shadow: 0 4px 16px var(--shadow);
+      opacity: 1;
+    }
+    .editor-header.is-fixed.is-closing,
+    .editor-header.is-fixed.is-opening {
+      top: -210px;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .editor-header.is-fixed .top-bar { margin-bottom: 8px; }
+    .editor-header.is-fixed .title-wrap { margin-bottom: 4px; }
+    .editor-header.is-fixed #title {
+      font-size: 20px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .editor-header.is-fixed #metaInfo { margin-bottom: 10px; font-size: 12px; }
+    .editor-header.is-fixed .toolbar-row { margin-bottom: 0; }
+    .editor-header.is-fixed .side-label { font-size: 18px; }
+
+    .title-wrap {
+      position: relative;
+      margin-bottom: 10px;
+    }
+    #title {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-size: 32px;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+    .side-label {
+      position: absolute;
+      right: calc(100% + 16px);
+      top: 0;
+      bottom: 0;
+      display: flex;
+      align-items: center;
+      padding-right: 14px;
+      border-right: 1px solid var(--border);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-size: 24px;
+      font-weight: 400;
+      color: var(--subtle);
+      pointer-events: none;
+      user-select: none;
+      opacity: 0;
+      transition: opacity 0.15s ease;
+    }
+       .side-label.visible { opacity: 1; }
+    .side-label.is-hiding { opacity: 0 !important; transition: opacity 0.2s ease; }
+    @media (max-width: 960px) {
+      .side-label { display: none; }
+    }
+    #metaInfo {
+      font-size: 14px;
+      color: var(--muted);
+      margin-bottom: 16px;
+      min-height: 18px;
+    }
+    #metaInfo.no-toolbar { margin-bottom: 28px; }
+    /* Строка с панелью инструментов и кнопкой ОПУБЛИКОВАТЬ вровень (всегда в 1 линию) */
+    .toolbar-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 18px;
+      min-height: 44px;
+    }
+    .toolbar {
+      display: flex;
+      gap: 5px;
+      flex-wrap: nowrap;
+      align-items: center;
+      opacity: 1;
+      transition: opacity 0.3s ease;
+    }
+    .toolbar::-webkit-scrollbar {
+      display: none;
+    }
+
+    .toolbar-row.view-mode .toolbar,
+    .toolbar-row.is-collapsing .toolbar {
+      opacity: 0;
+      pointer-events: none;
+    }
+    .toolbar-row.hidden { display: none; }
+    .publish-btn .edit-pencil-icon {
+      display: none;
+    }
+    @keyframes editBtnFadeOnly {
+      from {
+        opacity: 0;
+      }
+      to {
+        opacity: 1;
+      }
+    }
+
+    @keyframes editBtnSlideOut {
+      from {
+        opacity: 0.7;
+        transform: translateX(-140px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    @keyframes editBtnSlideIn {
+      from {
+        opacity: 0.7;
+        transform: translateX(140px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+    .toolbar-row.view-mode .publish-btn.is-scrolled {
+      position: fixed;
+      top: 108px;
+      left: calc(50% + 395px);
+      z-index: 94;
+      box-shadow: 0 2px 10px var(--shadow);
+      animation: editBtnSlideOut 0.36s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    .toolbar-row.view-mode .publish-btn.is-slide-back {
+      animation: editBtnSlideIn 0.36s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    .toolbar-row.view-mode .publish-btn.is-scrolled.no-slide-anim {
+      display: inline-flex !important;
+      animation: none !important;
+      transform: none !important;
+      opacity: 1;
+    }
+    .toolbar-row.view-mode .publish-btn.is-scrolled.is-fading-in {
+      display: inline-flex !important;
+      transform: none !important;
+      animation: smoothFadeIn 0.36s cubic-bezier(0.22, 1, 0.36, 1) forwards !important;
+    }
+
+    @media (max-width: 1180px) {
+      .theme-btn {
+        left: auto;
+        right: 24px;
+      }
+      .toolbar-row.view-mode .publish-btn.is-scrolled {
+        left: auto;
+        right: 24px;
+      }
+      .scroll-top-btn {
+        left: auto;
+        right: 24px;
+      }
+    }
+    @media (max-width: 768px) {
+      .theme-btn {
+        position: fixed;
+        top: 16px;
+        left: auto;
+        right: 16px;
+        z-index: 95;
+        width: 42px;
+        height: 42px;
+      }
+      .theme-btn svg {
+        width: 20px;
+        height: 20px;
+      }
+      .toolbar-row {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+      }
+      .publish-group {
+        justify-content: flex-end;
+      }
+      .toolbar {
+        overflow-x: auto;
+        scrollbar-width: none;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: 2px;
+      }
+      .toolbar-row.view-mode .publish-btn.is-scrolled {
+        position: fixed;
+        top: 16px;
+        left: auto;
+        right: 68px;
+        z-index: 94;
+        width: 42px;
+        height: 42px;
+        padding: 0;
+        border-radius: 50%;
+        border: 1px solid var(--border);
+        background: var(--surface);
+        color: var(--text);
+        box-shadow: 0 2px 10px var(--shadow);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        animation: editBtnFadeIn 0.25s ease;
+      }
+      .toolbar-row.view-mode .publish-btn.is-scrolled .btn-label {
+        display: none;
+      }
+           .toolbar-row.view-mode .publish-btn.is-scrolled.no-slide-anim {
+        animation: none !important;
+        opacity: 1;
+        transition: opacity 0.35s ease;
+      }
+      .toolbar-row.view-mode .publish-btn.is-scrolled.is-appearing {
+        opacity: 0 !important;
+      }
+      .toolbar-row.view-mode .publish-btn.is-scrolled .edit-pencil-icon {
+        display: block;
+        width: 18px;
+        height: 18px;
+      }
+
+      .scroll-top-btn {
+        left: auto;
+        right: 16px;
+        bottom: 18px;
+        width: 42px;
+        height: 42px;
+      }
+      .scroll-top-btn svg {
+        width: 19px;
+        height: 19px;
+      }
+    }
+
+    .tool-sep {
+      width: 1px;
+      height: 18px;
+      background: var(--border);
+      margin: 0 1px;
+      flex-shrink: 0;
+    }
+    .tool-btn {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 4px 7px;
+      cursor: pointer;
+      color: var(--muted);
+      font-size: 13px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      min-height: 28px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    /* Выпадающее меню выравнивания */
+    .align-wrap {
+      position: relative;
+      display: inline-flex;
+    }
+    .align-popover {
+      display: none;
+      position: absolute;
+      top: calc(100% + 6px);
+      left: 0;
+      z-index: 95;
+      background: var(--popover-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 5px;
+      gap: 4px;
+      align-items: center;
+      box-shadow: 0 6px 18px var(--shadow);
+    }
+    .align-popover.open { display: flex; }
+    .align-opt {
+      background: none;
+      border: 1px solid transparent;
+      border-radius: 6px;
+      width: 32px;
+      height: 30px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--muted);
+      padding: 0;
+    }
+    .align-opt:hover {
+      background: var(--hover-bg);
+      color: var(--text);
+    }
+    .align-opt.active {
+      background: var(--hover-bg);
+      border-color: var(--border);
+      color: var(--text);
+    }
+
+    /* Палитра цветов текста */
+    .color-wrap {
+      position: relative;
+      display: inline-flex;
+    }
+    .color-btn-inner {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      line-height: 1;
+      font-weight: 700;
+      font-size: 13px;
+    }
+    .color-bar {
+      width: 13px;
+      height: 2.5px;
+      background-image: linear-gradient(90deg, #ff3b30, #ff9500, #ffcc00, #34c759, #007aff, #af52de);
+      margin-top: 2px;
+      border-radius: 1px;
+    }
+    .color-popover {
+      display: none;
+      position: absolute;
+      top: calc(100% + 6px);
+      left: 0;
+      z-index: 95;
+      background: var(--popover-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 7px 8px;
+      gap: 6px;
+      align-items: center;
+      box-shadow: 0 6px 18px var(--shadow);
+    }
+    .color-popover.open { display: flex; }
+    .color-swatch {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      border: 1px solid rgba(128, 128, 128, 0.35);
+      cursor: pointer;
+      padding: 0;
+      transition: transform 0.12s ease;
+    }
+    .color-swatch:hover { transform: scale(1.18); }
+         #story {
+      font-family: Georgia, "Times New Roman", Times, serif;
+      font-size: 18px;
+      line-height: 1.58;
+      min-height: 350px;
+    }
+
+    #story p, #story div { margin: 0; line-height: 1.58; }
+    #story h3 {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-size: 24px;
+      font-weight: 700;
+      line-height: 1.3;
+      margin: 18px 0 8px;
+    }
+    #story blockquote { margin: 12px 0; padding-left: 16px; border-left: 3px solid var(--text); }
+    #story ul { margin: 12px 0; padding-left: 24px; }
+    #story li {
+      margin: 0 0 13px;
+      padding-left: 6px;
+      line-height: 1.55;
+    }
+    #story li:last-child { margin-bottom: 0; }
+    #story img { max-width: 100%; height: auto; display: block; margin: 18px 0; border-radius: 4px; }
+        #story a { color: var(--link); text-decoration: underline; cursor: pointer; }
+    #story a font[color], #story a span[style*="color"], #story font[color] a, #story span[style*="color"] a {
+      color: inherit;
+    }
+    html.dark #story [style*="color: rgb(34, 34, 34)"],
+    html.dark #story [style*="color: rgb(0, 0, 0)"],
+    html.dark #story [style*="color:#222"],
+    html.dark #story [style*="color: #222"],
+    html.dark #story [style*="color:#000"],
+    html.dark #story [style*="color: #000"] {
+      color: var(--text) !important;
+    }
+    /* Блок кода / промпта: карточка с заголовком, превью в несколько строк и нижней панелью */
+    #story .tg-code-block {
+      position: relative;
+      margin: 18px 0;
+      border-radius: 12px;
+      border: 1px solid var(--code-border);
+      background: var(--code-bg);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      transition: box-shadow 0.15s ease, border-color 0.15s ease;
+    }
+    html.dark #story .tg-code-block {
+      border-color: #363940;
+    }
+
+    #story .tg-code-block.is-selected-block {
+      user-select: none !important;
+      border-color: #1a73e8 !important;
+    }
+    #story .tg-code-block.is-selected-block * {
+      user-select: none !important;
+    }
+    #story .tg-code-block.is-selected-block *::selection {
+      background: transparent !important;
+    }
+    #story .tg-code-block.is-selected-block::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: 10.5px;
+      background: rgba(26, 115, 232, 0.28);
+      pointer-events: none;
+      z-index: 5;
+    }
+
+    .tg-code-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 14px 4px;
+      border-radius: 11px 11px 0 0;
+      background: var(--code-header);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      user-select: none;
+    }
+
+    .tg-code-head-left, .tg-code-head-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+       .tg-code-lang {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+      outline: none;
+      min-width: 40px;
+    }
+         .tg-code-tag-wrap {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 11.5px;
+      font-weight: 600;
+      color: #1e8e3e;
+    }
+    .tg-code-tag-wrap.is-empty {
+      display: none;
+    }
+    #story[contenteditable="true"] .tg-code-tag-wrap.is-empty {
+      display: inline-flex;
+      opacity: 0.65;
+    }
+    .tg-code-tag {
+      outline: none;
+      color: #1e8e3e;
+      min-width: 6px;
+    }
+    .tg-code-tag font[color],
+    .tg-code-tag span[style*="color"] {
+      color: inherit;
+    }
+    .tg-code-tag:empty::before {
+      content: "подпись...";
+      color: #1e8e3e;
+      opacity: 0.7;
+      pointer-events: none;
+    }
+         .site-ver-badge {
+      display: none;
+      position: fixed;
+      top: 12px;
+      left: calc(50% + 395px);
+      z-index: 94;
+      font-size: 11px;
+      font-weight: 600;
+      color: #58a6ff;
+      pointer-events: none;
+      user-select: none;
+    }
+    body.is-admin-user .site-ver-badge {
+      display: inline-block;
+    }
+    @media (max-width: 1180px) {
+      .site-ver-badge {
+        left: auto;
+        right: 24px;
+      }
+    }
+    @media (max-width: 768px) {
+      .site-ver-badge {
+        position: static;
+        margin-right: 8px;
+      }
+    }
+
+    .tg-code-foot-right {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .tg-code-edit {
+      background: none;
+      color: var(--muted);
+      border: 1px solid var(--code-border);
+      border-radius: 6px;
+      padding: 3px 9px;
+      font-size: 11.5px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: color 0.15s ease, border-color 0.15s ease;
+    }
+    .tg-code-edit:hover {
+      color: var(--text);
+      border-color: var(--text);
+    }
+    #story[contenteditable="true"] .tg-code-edit,
+    .no-edit-rights .tg-code-edit {
+      display: none !important;
+    }
+        .tg-code-head-toggle {
+      background: none;
+      color: var(--muted);
+      border: 1px solid var(--code-border);
+      border-radius: 6px;
+      padding: 3px 9px;
+      font-size: 11.5px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: color 0.15s ease, border-color 0.15s ease;
+    }
+    .tg-code-head-toggle:hover {
+      color: var(--text);
+      border-color: var(--text);
+    }
+    .tg-code-head-copy {
+      background: none;
+      color: var(--muted);
+      border: 1px solid var(--code-border);
+      border-radius: 6px;
+      padding: 3px 8px;
+      font-size: 11.5px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: color 0.15s ease, border-color 0.15s ease;
+    }
+    .tg-code-head-copy:hover {
+      color: var(--text);
+      border-color: var(--text);
+    }
+    #story .tg-code-block.is-collapsed .tg-code-foot,
+    #story .tg-code-block.is-short .tg-code-foot {
+      display: none;
+    }
+       .tg-code-del {
+      background: none;
+      color: var(--muted);
+      border: 1px solid var(--code-border);
+      border-radius: 6px;
+      padding: 2px 8px;
+      font-size: 11px;
+      cursor: pointer;
+      opacity: 1;
+      transition: opacity 0.25s ease, border-color 0.15s ease, color 0.15s ease;
+    }
+    .tg-code-del:hover { border-color: #d9534f; color: #d9534f; }
+    #story[contenteditable="false"] .tg-code-del,
+    .is-hiding-code-del .tg-code-del {
+      opacity: 0;
+      pointer-events: none;
+    }
+        .tg-code-body {
+      position: relative;
+      margin: 8px 10px 10px;
+      border-radius: 10px;
+      border: 1px solid var(--code-border);
+      background: var(--code-inner-bg);
+    }
+    html.dark .tg-code-body {
+      border-color: #363940;
+    }
+
+    #story .tg-code-block.is-collapsed .tg-code-body pre {
+      max-height: 43px;
+      padding-bottom: 6px;
+      overflow: hidden;
+      border-radius: 9px;
+    }
+    #story .tg-code-block.is-collapsed .tg-code-body::after {
+      content: "";
+      position: absolute;
+      left: 2px;
+      right: 2px;
+      bottom: 1px;
+      height: 26px;
+      border-radius: 0 0 8px 8px;
+      background: linear-gradient(to bottom, transparent 0%, var(--code-inner-bg) 88%);
+      pointer-events: none;
+    }
+
+    #story .tg-code-block pre {
+      margin: 0;
+      padding: 10px 14px;
+      overflow-x: auto;
+      font-size: 13.5px;
+      line-height: 1.55;
+      color: var(--code-text);
+      white-space: pre-wrap;
+      word-break: break-word;
+      tab-size: 2;
+      outline: none;
+    }
+
+    #story .tg-code-block code {
+      font-family: inherit;
+      display: block;
+      min-height: 22px;
+      outline: none;
+    }
+    #story .tg-code-block code:empty::before {
+      content: "Вставьте или введите код / промпт...";
+      color: var(--subtle);
+      pointer-events: none;
+    }
+       .tg-code-foot {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 14px;
+      border-radius: 0 0 11px 11px;
+      border-top: 1px solid var(--code-border);
+      background: var(--code-bg);
+      user-select: none;
+    }
+
+    .tg-code-toggle {
+      background: none;
+      border: none;
+      padding: 4px 6px;
+      color: var(--muted);
+      font-size: 12px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      border-radius: 6px;
+      transition: color 0.15s ease, background-color 0.15s ease;
+    }
+    .tg-code-toggle:hover {
+      color: var(--text);
+      background: var(--hover-bg);
+    }
+    .tg-code-copy {
+      background: none;
+      color: var(--muted);
+      border: none;
+      border-radius: 6px;
+      padding: 4px 8px;
+      font-size: 12px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: color 0.15s ease, background-color 0.15s ease;
+    }
+    .tg-code-copy:hover {
+      color: var(--text);
+      background: var(--hover-bg);
+    }
+
+    .hl-kw { color: var(--hl-kw); font-weight: 600; }
+    .hl-str { color: var(--hl-str); }
+    .hl-com { color: var(--hl-com); font-style: italic; }
+    .hl-tag { color: var(--hl-tag); }
+    .hl-num { color: var(--hl-num); }
+
+    /* Встроенный плеер */
+    #story .tg-ymusic-embed {
+      position: relative;
+      width: 100%;
+      margin: 18px 0;
+      border-radius: 10px;
+      overflow: hidden;
+      border: 1px solid var(--border-light);
+      background: var(--surface);
+    }
+    #story .tg-ymusic-embed iframe {
+      display: block;
+      width: 100%;
+      height: 244px;
+      border: 0;
+    }
+    #story .tg-ymusic-embed.is-album iframe { height: 450px; }
+    .tg-ymusic-del {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      z-index: 5;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      border: none;
+      background: rgba(0, 0, 0, 0.65);
+      color: #fff;
+      font-size: 13px;
+      line-height: 1;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .tg-ymusic-del:hover { background: #d93025; }
+    #story[contenteditable="false"] .tg-ymusic-del { display: none; }
+
+    .status { font-size: 13px; color: var(--muted); margin-top: 10px; font-weight: 500; min-height: 18px; }
+    .status.error { color: #d9534f; }
+    .status.ok { color: #28a745; }
+    .footer-bar {
+      margin-top: 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+    .auth-bar { font-size: 12px; color: var(--subtle); display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
+    .auth-bar button, .auth-bar a { background: none; border: 0; padding: 0; font: inherit; color: var(--subtle); cursor: pointer; text-decoration: underline; }
+    .auth-bar button:hover, .auth-bar a:hover { color: var(--text); }
+    .auth-bar button.is-logged-out { color: #d9534f; text-decoration: none; cursor: default; }
+    .auth-bar button.is-logged-out:hover { color: #d9534f; }
+    .auth-bar button.is-logged-in { color: #28a745; text-decoration: none; cursor: default; font-weight: 600; }
+    .auth-bar button.is-logged-in:hover { color: #28a745; }
+
+    .views-badge {
+      display: none;
+      align-items: center;
+      gap: 5px;
+      font-size: 12px;
+      color: var(--muted);
+      background: none;
+      border: 1px solid var(--border-light);
+      border-radius: 14px;
+      padding: 4px 10px;
+      cursor: pointer;
+      transition: 0.15s ease;
+    }
+    .views-badge:hover {
+      border-color: var(--text);
+      color: var(--text);
+    }
+    /* Список /blog */
+    .blog-search {
+      width: 100%; box-sizing: border-box; padding: 9px 14px; margin: 10px 0 15px;
+      border: 1px solid var(--border); border-radius: 20px; font-size: 14px; outline: none;
+      background: var(--bg); color: var(--text);
+    }
+    .blog-search:focus { border-color: var(--text); }
+    .posts-list { list-style: none; padding: 0; margin: 0; }
+    .post-item {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 14px 0; border-bottom: 1px solid var(--border-light); gap: 15px;
+    }
+    @media (max-width: 680px) {
+      .post-item { flex-direction: column; align-items: flex-start; }
+    }
+    .post-info a { font-family: Georgia, serif; font-size: 20px; font-weight: 700; color: var(--text); text-decoration: none; }
+    .post-info a:hover { color: var(--link); }
+    .post-meta { font-size: 12px; color: var(--muted); margin-top: 4px; }
+    .blog-views-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 11px;
+      color: var(--muted);
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 2px 8px;
+      margin-left: 4px;
+      cursor: pointer;
+      vertical-align: middle;
+      transition: border-color 0.15s ease, color 0.15s ease;
+    }
+    .blog-views-link:hover {
+      border-color: var(--text);
+      color: var(--text);
+    }
+    .post-actions { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; flex-shrink: 0; }
+    .mini-btn {
+      background: var(--bg); border: 1px solid var(--border); border-radius: 15px;
+      padding: 5px 11px; font-size: 12px; cursor: pointer; color: var(--text);
+      white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: 0.15s ease;
+    }
+    .mini-btn:hover { border-color: var(--text); }
+    .mini-btn.del:hover { border-color: #d9534f; color: #d9534f; }
+
+    /* Выпадающее меню доступа в стиле YouTube Studio */
+    .access-wrap { position: relative; display: inline-block; }
+    .access-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid #b7e4c7;
+      background: #ebfbee;
+      color: #1e7e34;
+      transition: all 0.18s ease;
+      white-space: nowrap;
+    }
+    .access-pill:hover { border-color: #1e7e34; }
+    .access-pill .chevron { font-size: 10px; opacity: 0.75; margin-left: 2px; }
+    .access-pill.is-private {
+      border-color: #ffc9c9;
+      background: #fff5f5;
+      color: #c92a2a;
+    }
+    .access-pill.is-private:hover { border-color: #c92a2a; color: #a61e1e; }
+    html.dark .access-pill {
+      background: rgba(40, 167, 69, 0.16);
+      border-color: rgba(40, 167, 69, 0.45);
+      color: #69db7c;
+    }
+    html.dark .access-pill.is-private {
+      background: rgba(217, 83, 79, 0.16);
+      border-color: rgba(217, 83, 79, 0.45);
+      color: #ff8787;
+    }
+    .access-dropdown {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: calc(100% + 6px);
+      width: 280px;
+      background: var(--popover-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      box-shadow: 0 10px 28px var(--shadow);
+      z-index: 60;
+      overflow: hidden;
+      text-align: left;
+    }
+    .access-dropdown.open { display: block; }
+    .access-dropdown-header {
+      padding: 12px 14px 10px;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text);
+      border-bottom: 1px solid var(--border-light);
+    }
+    .access-option {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      width: 100%;
+      padding: 11px 14px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      text-align: left;
+      transition: background 0.12s ease;
+    }
+    .access-option:hover { background: var(--hover-bg); }
+    .access-opt-icon { color: var(--muted); display: flex; align-items: center; flex-shrink: 0; }
+    .access-opt-text { flex: 1; min-width: 0; }
+    .access-opt-title { font-size: 13px; font-weight: 600; color: var(--text); line-height: 1.25; }
+    .access-opt-desc { font-size: 11px; color: var(--muted); margin-top: 2px; line-height: 1.3; }
+    .access-opt-check { font-size: 15px; font-weight: 700; color: var(--text); width: 16px; text-align: center; flex-shrink: 0; }
+
+    /* Всплывающая плашка ввода ссылки */
+    .link-popover {
+      display: none;
+      position: absolute;
+      z-index: 90;
+      background: #262626;
+      border-radius: 8px;
+      padding: 10px 14px;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+    }
+    .link-popover input {
+      background: transparent;
+      border: none;
+      outline: none;
+      color: #fff;
+      font-size: 15px;
+      width: 280px;
+      font-family: inherit;
+    }
+    .link-popover input::placeholder { color: #888; }
+    .link-popover button {
+      background: none;
+      border: none;
+      color: #999;
+      font-size: 19px;
+      cursor: pointer;
+      padding: 0 4px;
+      line-height: 1;
+    }
+    .link-popover button:hover { color: #fff; }
+
+    /* Модальные окна */
+    .modal-bg {
+      display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+      justify-content: center; align-items: center; z-index: 100; padding: 16px;
+    }
+    .modal-box {
+      background: var(--popover-bg); color: var(--text); padding: 24px; border-radius: 12px; width: 100%; max-width: 310px;
+      border: 1px solid var(--border);
+      box-shadow: 0 10px 30px var(--shadow);
+    }
+    .modal-box h3 { margin: 0 0 14px; font-size: 18px; }
+    .modal-box input {
+      width: 100%; box-sizing: border-box; padding: 9px 12px; margin-bottom: 10px;
+      border: 1px solid var(--border); border-radius: 6px; font-size: 14px; outline: none;
+      background: var(--bg); color: var(--text);
+    }
+    .modal-box input:focus { border-color: var(--text); }
+    .modal-btns { display: flex; gap: 8px; margin-top: 4px; }
+    .modal-btns button {
+      flex: 1; padding: 9px; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 13px;
+    }
+    .btn-primary { background: var(--text); color: var(--bg); border: none; }
+    .btn-secondary { background: var(--bg); color: var(--text); border: 1px solid var(--text); }
+    .modal-close { display: block; width: 100%; margin-top: 10px; background: none; border: none; color: var(--subtle); font-size: 12px; cursor: pointer; }
+
+    /* Список просмотров в модальном окне */
+    .views-modal-box { max-width: 380px; }
+    .views-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      max-height: 290px;
+      overflow-y: auto;
+      border-top: 1px solid var(--border-light);
+    }
+    .views-list li {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 9px 2px;
+      border-bottom: 1px solid var(--border-light);
+      font-size: 13px;
+      gap: 10px;
+    }
+    .views-user { font-weight: 600; color: var(--text); }
+    .views-user.is-guest { font-weight: 400; color: var(--muted); }
+    .views-date { font-size: 12px; color: var(--subtle); white-space: nowrap; }
+  </style>
+</head>
+<body>
+
+  <div id="pageLoader" class="page-loader" style="display:none;">
+    <div class="loader-spinner"></div>
+    <div class="loader-text">Загрузка...</div>
+  </div>
+
+  <div class="container">
+    <div id="headerSpacer" style="display:none;"></div>
+    <div id="editorHeader" class="editor-header is-editing">
+      <div class="editor-header-inner">
+        <div class="top-bar">
+          <div class="top-left">
+            <a href="/" id="newPostLink" class="new-link">+ Новая запись</a>
+            <a href="/blog" id="adminBlogLink" class="new-link">Блог</a>
+          </div>
+          <span class="site-ver-badge">build v0.2.9</span>
+          <button id="themeBtn" class="theme-btn" type="button" title="Переключить тему">
+            <svg class="icon-light" width="17" height="17" viewBox="0 0 24 24" fill="#f5b014" stroke="#e09c00" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+            <svg class="icon-dark" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#a5b4fc" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5a8.5 8.5 0 1 0 11 11z" fill="rgba(165, 180, 252, 0.2)"/><circle cx="17.5" cy="6.5" r="2" fill="#fcd34d" stroke="#fcd34d"/><path d="M14.5 8.2c2-.8 4.4-1.8 6-3.4" stroke="#fcd34d" stroke-width="1.3"/></svg>
+          </button>
+        </div>
+
+        <div class="title-wrap">
+          <span id="titleSideLabel" class="side-label">Заголовок</span>
+          <div id="title" class="editable" contenteditable="true" data-placeholder="Заголовок"></div>
+        </div>
+        <div id="metaInfo" class="editable" data-placeholder="Автор"></div>
+
+        <div id="toolbarRow" class="toolbar-row">
+          <div id="toolbar" class="toolbar">
+            <button class="tool-btn" type="button" data-cmd="bold" title="Жирный">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4h8a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/><path d="M6 12h9a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/></svg>
+            </button>
+            <button class="tool-btn" type="button" data-cmd="italic" title="Курсив">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="4" x2="10" y2="4"/><line x1="14" y1="20" x2="5" y2="20"/><line x1="15" y1="4" x2="9" y2="20"/></svg>
+            </button>
+                        <button class="tool-btn" type="button" data-cmd="strikeThrough" title="Зачёркнутый">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4H9a3 3 0 0 0-2.83 4"/><path d="M14 12a4 4 0 0 1 0 8H6"/><line x1="4" y1="12" x2="20" y2="12"/></svg>
+            </button>
+            <div class="color-wrap" id="colorWrap">
+              <button class="tool-btn" type="button" id="colorBtn" title="Цвет текста">
+                <span class="color-btn-inner">
+                  <span>A</span>
+                  <span class="color-bar" id="colorBar"></span>
+                </span>
+              </button>
+              <div class="color-popover" id="colorPopover">
+                <button type="button" class="color-swatch" data-color="#222222" style="background:#222222;" title="По умолчанию"></button>
+                <button type="button" class="color-swatch" data-color="#d93025" style="background:#d93025;" title="Красный"></button>
+                <button type="button" class="color-swatch" data-color="#e37400" style="background:#e37400;" title="Оранжевый"></button>
+                <button type="button" class="color-swatch" data-color="#d4a017" style="background:#d4a017;" title="Жёлтый"></button>
+                <button type="button" class="color-swatch" data-color="#1e8e3e" style="background:#1e8e3e;" title="Зелёный"></button>
+                <button type="button" class="color-swatch" data-color="#1a73e8" style="background:#1a73e8;" title="Синий"></button>
+                <button type="button" class="color-swatch" data-color="#9334e6" style="background:#9334e6;" title="Пурпурный"></button>
+              </div>
+            </div>
+            <button class="tool-btn" type="button" data-cmd="formatBlock" data-arg="H3" title="Подзаголовок">H</button>
+            <button class="tool-btn" type="button" data-cmd="formatBlock" data-arg="BLOCKQUOTE" title="Цитата">”</button>
+            <button class="tool-btn" type="button" data-cmd="insertUnorderedList" title="Список">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+            </button>
+                       <button id="clearFormatBtn" class="tool-btn" type="button" title="Очистить форматирование">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7V4h16v3"/><path d="M9 20h6"/><path d="M13 4 8 20"/><line x1="16" y1="15" x2="21" y2="20"/><line x1="21" y1="15" x2="16" y2="20"/></svg>
+            </button>
+            <button id="codeBtn" class="tool-btn" type="button" title="Вставить блок кода">&lt;/&gt;</button>
+
+            <span class="tool-sep"></span>
+            <div class="align-wrap" id="alignWrap">
+              <button class="tool-btn" type="button" id="alignBtn" title="Выравнивание текста">
+                <svg id="alignCurrentIcon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="17" y1="6" x2="3" y2="6"/><line x1="21" y1="12" x2="3" y2="12"/><line x1="15" y1="18" x2="3" y2="18"/></svg>
+                <span style="font-size:10px; opacity:0.75;">▾</span>
+              </button>
+              <div class="align-popover" id="alignPopover">
+                <button type="button" class="align-opt" data-align="justifyLeft" title="По левому краю">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="17" y1="6" x2="3" y2="6"/><line x1="21" y1="12" x2="3" y2="12"/><line x1="15" y1="18" x2="3" y2="18"/></svg>
+                </button>
+                <button type="button" class="align-opt" data-align="justifyCenter" title="По центру">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="6"/><line x1="21" y1="12" x2="3" y2="12"/><line x1="18" y1="18" x2="6" y2="18"/></svg>
+                </button>
+                <button type="button" class="align-opt" data-align="justifyRight" title="По правому краю">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="21" y1="6" x2="7" y2="6"/><line x1="21" y1="12" x2="3" y2="12"/><line x1="21" y1="18" x2="9" y2="18"/></svg>
+                </button>
+                <button type="button" class="align-opt" data-align="justifyFull" title="По ширине">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="12" x2="3" y2="12"/><line x1="21" y1="18" x2="3" y2="18"/></svg>
+                </button>
+              </div>
+            </div>
+            <span class="tool-sep"></span>
+            <button id="linkBtn" class="tool-btn" type="button">🔗 Ссылка</button>
+            <button id="photoBtn" class="tool-btn" type="button">📷 Фото</button>
+            <input type="file" id="fileInput" accept="image/*" style="display:none">
+          </div>
+                    <div class="publish-group">
+                        <button id="actionBtn" class="publish-btn" type="button" disabled><span class="btn-label">ОПУБЛИКОВАТЬ</span><svg class="edit-pencil-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></button>
+            <button id="cancelEditBtn" class="cancel-edit-btn" type="button" title="Закрыть режим редактирования">ЗАКРЫТЬ</button>
+
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="story" class="editable" contenteditable="true" data-placeholder="Ваша история... (можно вставлять фото и виджеты через Ctrl+V)"></div>
+    <div id="status" class="status"></div>
+
+    <div class="footer-bar">
+      <div class="auth-bar">
+        <button id="authBtn" type="button">Войти</button>
+        <a href="/start" id="faqLink">Справка</a>
+      </div>
+      <button id="viewsBadge" class="views-badge" type="button" title="Нажмите, чтобы посмотреть статистику просмотров">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        <span id="viewsCount">0</span>
+      </button>
+    </div>
+  </div>
+
+    <button id="scrollTopBtn" class="scroll-top-btn" type="button" title="Наверх">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+  </button>
+
+  <div id="linkPopover" class="link-popover">
+
+    <input type="text" id="linkUrlInput" placeholder="Вставьте или введите ссылку...">
+    <button type="button" id="closeLinkPopover" title="Закрыть">✕</button>
+  </div>
+
+  <div id="viewsModal" class="modal-bg">
+    <div class="modal-box views-modal-box">
+      <h3 id="viewsModalTitle">Просмотры</h3>
+      <ul id="viewsList" class="views-list"></ul>
+      <div id="viewsEmptyMsg" style="font-size:13px; color:#888; padding:10px 0; display:none;"></div>
+      <button id="closeViewsModalBtn" class="modal-close" type="button">Закрыть</button>
+    </div>
+  </div>
+
+  <div id="authModal" class="modal-bg">
+    <div class="modal-box">
+      <h3 id="modalTitle">Вход</h3>
+      <form id="authForm">
+        <input type="text" id="loginInput" name="username" autocomplete="username" placeholder="Логин (латиницей)">
+        <input type="password" id="passInput" name="password" autocomplete="current-password" placeholder="Пароль">
+        <div id="modalMsg" style="font-size:12px; color:#d9534f; margin-bottom:8px; min-height:16px;"></div>
+        <div class="modal-btns">
+          <button id="submitAuthBtn" class="btn-primary" type="submit">Войти</button>
+        </div>
+      </form>
+            <div style="text-align:center; margin-top:12px; font-size:12px; color:var(--muted);">
+        <span id="switchHint">Нет аккаунта?</span>
+        <button id="switchModeBtn" type="button" style="background:none; border:none; color:var(--text); font-weight:600; cursor:pointer; text-decoration:underline; padding:0; font-size:12px;">Регистрация</button>
+      </div>
+      <button id="closeModalBtn" class="modal-close" type="button">Закрыть</button>
+    </div>
+  </div>
+
+  <script src="/firebase-app-compat.js" defer></script>
+  <script src="/firebase-auth-compat.js" defer></script>
+  <script src="/firebase-firestore-compat.js" defer></script>
+  <script>
+    const ADMIN_LOGIN = 'lordman';
+    const DEFAULT_RAINBOW = 'linear-gradient(90deg, #ff3b30, #ff9500, #ffcc00, #34c759, #007aff, #af52de)';
+    const DRAFT_KEY = 'tgtype_new_draft_v1';
+
+    const pageLoader = document.getElementById('pageLoader');
+    const editorHeader = document.getElementById('editorHeader');
+    const headerSpacer = document.getElementById('headerSpacer');
+    const toolbarRow = document.getElementById('toolbarRow');
+    const titleEl = document.getElementById('title');
+    const titleSideLabel = document.getElementById('titleSideLabel');
+    const metaInfoEl = document.getElementById('metaInfo');
+    const storyEl = document.getElementById('story');
+       const actionBtn = document.getElementById('actionBtn');
+    const setActionBtnText = (txt) => {
+      const lbl = actionBtn.querySelector('.btn-label');
+      if (lbl) lbl.textContent = txt;
+      else actionBtn.textContent = txt;
+    };
+    const cancelEditBtn = document.getElementById('cancelEditBtn');
+
+    const scrollTopBtn = document.getElementById('scrollTopBtn');
+
+    scrollTopBtn.addEventListener('click', () => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+
+    const themeBtn = document.getElementById('themeBtn');
+       const newPostLink = document.getElementById('newPostLink');
+    const clearFormatBtn = document.getElementById('clearFormatBtn');
+    const codeBtn = document.getElementById('codeBtn');
+
+    const alignWrap = document.getElementById('alignWrap');
+    const alignBtn = document.getElementById('alignBtn');
+    const alignCurrentIcon = document.getElementById('alignCurrentIcon');
+    const alignPopover = document.getElementById('alignPopover');
+    const photoBtn = document.getElementById('photoBtn');
+    const linkBtn = document.getElementById('linkBtn');
+    const linkPopover = document.getElementById('linkPopover');
+    const linkUrlInput = document.getElementById('linkUrlInput');
+    const closeLinkPopover = document.getElementById('closeLinkPopover');
+    const colorWrap = document.getElementById('colorWrap');
+    const colorBtn = document.getElementById('colorBtn');
+    const colorBar = document.getElementById('colorBar');
+    const colorPopover = document.getElementById('colorPopover');
+    const fileInput = document.getElementById('fileInput');
+    const toolbar = document.getElementById('toolbar');
+    const statusEl = document.getElementById('status');
+    const authBtn = document.getElementById('authBtn');
+    const viewsBadge = document.getElementById('viewsBadge');
+    const viewsCountEl = document.getElementById('viewsCount');
+    const viewsModal = document.getElementById('viewsModal');
+    const viewsModalTitle = document.getElementById('viewsModalTitle');
+    const viewsList = document.getElementById('viewsList');
+    const viewsEmptyMsg = document.getElementById('viewsEmptyMsg');
+    const authModal = document.getElementById('authModal');
+    const loginInput = document.getElementById('loginInput');
+    const passInput = document.getElementById('passInput');
+
+    // Переключение тёмной / светлой темы
+    themeBtn.addEventListener('click', () => {
+      const isDark = document.documentElement.classList.toggle('dark');
+      localStorage.setItem('tgtype_theme', isDark ? 'dark' : 'light');
+    });
+
+    function showLoader() {
+      if (pageLoader) {
+        pageLoader.style.display = 'flex';
+        pageLoader.classList.remove('hidden');
+      }
+    }
+    function hideLoader() {
+      if (pageLoader && pageLoader.style.display !== 'none') {
+        pageLoader.classList.add('hidden');
+        setTimeout(() => { pageLoader.style.display = 'none'; }, 150);
+      }
+    }
+
+    let currentUser = null;
+    let currentArticleOwner = null;
+    let currentArticleViews = 0;
+    let currentArticleViewsLog = [];
+    let currentArticleIsPrivate = false;
+    let lockedPrivateArticle = false;
+    let viewCountedForSlug = false;
+    let savedLinkRange = null;
+    let savedBtnTimer = null;
+    let slideBackTimer = null;
+    let logoutMsgTimer = null;
+
+    let isManualLogout = false;
+
+    const pathSlug = window.location.pathname.replace(/^\/+|\/+$/g, '');
+    let currentSlug = pathSlug;
+    let isViewMode = false;
+
+    if (pathSlug) {
+      showLoader();
+    }
+
+    // Автосохранение и восстановление черновика для новой записи на /
+    function saveDraftToLocal() {
+      if (currentSlug || isViewMode) return;
+      const hasTitle = titleEl.innerText.trim().length > 0;
+      const hasStory = storyEl.innerText.trim().length > 0 || storyEl.querySelector('img, iframe, .tg-code-block');
+      if (!hasTitle && !hasStory) {
+        localStorage.removeItem(DRAFT_KEY);
+        return;
+      }
+      try {
+        localStorage.setItem(DRAFT_KEY, JSON.stringify({
+          title: titleEl.innerHTML,
+          story: storyEl.innerHTML,
+          at: Date.now()
+        }));
+      } catch (e) {}
+    }
+
+    function clearDraftFromLocal() {
+      localStorage.removeItem(DRAFT_KEY);
+    }
+
+    newPostLink.addEventListener('click', () => {
+      clearDraftFromLocal();
+    });
+
+    let initialSnapshot = { title: '', story: '', meta: '' };
+
+    function getCurrentSnapshot() {
+      return {
+        title: titleEl.innerHTML,
+        story: storyEl.innerHTML,
+        meta: metaInfoEl.innerText.trim()
+      };
+    }
+
+    function captureInitialSnapshot() {
+      initialSnapshot = getCurrentSnapshot();
+      updatePublishState();
+    }
+
+    function hasUnsavedChanges() {
+      const cur = getCurrentSnapshot();
+      if (cur.title !== initialSnapshot.title) return true;
+      if (cur.story !== initialSnapshot.story) return true;
+      if (currentUser && isAdmin(currentUser) && cur.meta !== initialSnapshot.meta) return true;
+      return false;
+    }
+
+    function updatePublishState() {
+      if (actionBtn.classList.contains('is-saved')) {
+        actionBtn.disabled = false;
+        return;
+      }
+      if (isViewMode) {
+        actionBtn.disabled = false;
+        return;
+      }
+      actionBtn.disabled = !hasUnsavedChanges();
+    }
+
+    captureInitialSnapshot();
+
+    // Восстанавливаем черновик, если открыта главная страница /
+    if (!pathSlug) {
+      try {
+        const rawDraft = localStorage.getItem(DRAFT_KEY);
+        if (rawDraft) {
+          const parsed = JSON.parse(rawDraft);
+          if (parsed && (parsed.title || parsed.story)) {
+            titleEl.innerHTML = parsed.title || '';
+            storyEl.innerHTML = parsed.story || '';
+            updatePublishState();
+          }
+        }
+      } catch (e) {}
+    }
+       function updateFixedHeader(animateOpen = false) {
+      const scrolled = window.scrollY > 28;
+      if (!scrolled) {
+        actionBtn.classList.remove('no-slide-anim', 'is-appearing');
+      }
+
+      const wasScrolled = actionBtn.classList.contains('is-scrolled');
+      const nextScrolled = scrolled && isViewMode;
+
+      themeBtn.classList.toggle('is-scrolled', scrolled);
+      actionBtn.classList.toggle('is-scrolled', nextScrolled);
+      scrollTopBtn.classList.toggle('visible', window.scrollY > 300);
+
+      if (wasScrolled && !nextScrolled && isViewMode) {
+        actionBtn.classList.remove('is-slide-back');
+        void actionBtn.offsetWidth;
+        actionBtn.classList.add('is-slide-back');
+        if (slideBackTimer) clearTimeout(slideBackTimer);
+        slideBackTimer = setTimeout(() => {
+          slideBackTimer = null;
+          actionBtn.classList.remove('is-slide-back');
+        }, 380);
+      } else if (nextScrolled) {
+        actionBtn.classList.remove('is-slide-back');
+      }
+
+      if (!editorHeader.classList.contains('is-editing')) {
+        editorHeader.classList.remove('is-fixed', 'is-opening', 'is-closing');
+        headerSpacer.style.display = 'none';
+        return;
+      }
+           const triggerY = 95;
+      if (window.scrollY > triggerY) {
+        themeBtn.classList.toggle('is-hidden-in-edit', !isViewMode);
+        if (!editorHeader.classList.contains('is-fixed')) {
+          const fullH = editorHeader.offsetHeight;
+          headerSpacer.style.height = fullH + 'px';
+          headerSpacer.style.display = 'block';
+          if (animateOpen) {
+            editorHeader.classList.add('is-fixed', 'is-opening');
+            requestAnimationFrame(() => {
+              requestAnimationFrame(() => {
+                editorHeader.classList.remove('is-opening');
+              });
+            });
+          } else {
+            editorHeader.classList.add('is-fixed');
+          }
+        }
+      } else {
+        themeBtn.classList.remove('is-hidden-in-edit');
+        editorHeader.classList.remove('is-fixed', 'is-opening');
+        headerSpacer.style.display = 'none';
+      }
+
+    }
+
+    window.addEventListener('scroll', updateFixedHeader, { passive: true });
+
+    window.addEventListener('resize', () => {
+      if (editorHeader.classList.contains('is-fixed')) {
+        editorHeader.classList.remove('is-fixed');
+        headerSpacer.style.height = editorHeader.offsetHeight + 'px';
+        editorHeader.classList.add('is-fixed');
+      }
+    });
+
+    function updateTitleSideLabel() {
+      const hasText = titleEl.innerText.trim().length > 0;
+      if (!hasText && titleEl.innerHTML !== '') {
+        titleEl.innerHTML = '';
+      }
+      const canEdit = titleEl.isContentEditable;
+      titleSideLabel.classList.toggle('visible', hasText && canEdit);
+    }
+    updateTitleSideLabel();
+
+    titleEl.addEventListener('input', () => {
+      updateTitleSideLabel();
+      updatePublishState();
+      saveDraftToLocal();
+    });
+    metaInfoEl.addEventListener('input', updatePublishState);
+    function formatRuDate(timestamp) {
+      if (!timestamp) return '—';
+      return new Date(timestamp).toLocaleString('ru-RU', {
+        day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
+      });
+    }
+
+    function renderMeta(login, timestamp) {
+      const parts = [];
+      if (login) parts.push(login);
+      if (timestamp) parts.push(formatRuDate(timestamp));
+      metaInfoEl.textContent = parts.join(' • ');
+    }
+
+    function setStatus(text, kind) {
+      statusEl.textContent = text || '';
+      statusEl.className = 'status' + (kind ? ' ' + kind : '');
+    }
+
+    function getLoginName(user) {
+      return user && user.email ? user.email.split('@').at(0) : '';
+    }
+
+    function isAdmin(user) {
+      return getLoginName(user) === ADMIN_LOGIN;
+    }
+
+    function placeCaretAtEnd(el) {
+      if (!el) return;
+      const range = document.createRange();
+      range.selectNodeContents(el);
+      range.collapse(false);
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+    }
+
+    // Подсветка синтаксиса для блока кода с автоопределением языка
+    const COPY_ICON_SVG = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
+
+    function escapeHtml(str) {
+      return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    function detectCodeLanguage(raw) {
+      const s = (raw || '').trim();
+      if (!s) return 'code';
+      if (/<!DOCTYPE|<html|<div|<script|<style|<\/[a-z]+>/i.test(s)) return 'html';
+      if (/\b(const|let|var|function|async|await|document\.|window\.|=>)\b/.test(s)) return 'javascript';
+      if (/\b(def |import |from |elif |print\(|None|True|False)\b/.test(s)) return 'python';
+      if (/^###?\s|^\s*-\s+\*\*/m.test(s)) return 'markdown';
+      if (/\{[\s\S]*?:[\s\S]*?;[\s\S]*?\}/.test(s) && !/\bfunction\b/.test(s)) return 'css';
+      return 'code';
+    }
+
+    function highlightCodeText(raw) {
+      let html = escapeHtml(raw);
+      const tokens = [];
+      const saveTok = (cls, text) => {
+        const id = `\u0000TOK${tokens.length}\u0000`;
+        tokens.push(`<span class="${cls}">${text}</span>`);
+        return id;
+      };
+
+      html = html.replace(/(\/\/[^\n]*|\/\*[\s\S]*?\*\/|#[^\n]*)/g, m => saveTok('hl-com', m));
+      html = html.replace(/(&lt;\/?[a-zA-Z0-9-]+(?:\s+[^&]*?)?\/?&gt;)/g, m => saveTok('hl-tag', m));
+      html = html.replace(/(&quot;[^&\n]*?&quot;|'[^'\n]*?'|`[^`]*?`)/g, m => saveTok('hl-str', m));
+      html = html.replace(/\b(const|let|var|function|return|if|else|for|while|async|await|try|catch|finally|class|import|from|export|default|new|true|false|null|undefined|def|print|elif|None|True|False)\b/g, '<span class="hl-kw">$1</span>');
+      html = html.replace(/\b(\d+(?:\.\d+)?)\b/g, '<span class="hl-num">$1</span>');
+
+      return html.replace(/\u0000TOK(\d+)\u0000/g, (_, idx) => tokens[Number(idx)]);
+    }
+
+    function getCaretOffsetIn(root) {
+      const sel = window.getSelection();
+      if (!sel || !sel.rangeCount || !root.contains(sel.anchorNode)) return null;
+      const range = sel.getRangeAt(0);
+      const pre = range.cloneRange();
+      pre.selectNodeContents(root);
+      pre.setEnd(range.endContainer, range.endOffset);
+      return pre.toString().length;
+    }
+
+    function setCaretOffsetIn(root, offset) {
+      if (offset === null || offset === undefined) return;
+      const sel = window.getSelection();
+      const range = document.createRange();
+      let current = 0;
+      const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null);
+      let node;
+      while ((node = walker.nextNode())) {
+        const next = current + node.nodeValue.length;
+        if (offset <= next) {
+          range.setStart(node, Math.max(0, offset - current));
+          range.collapse(true);
+          sel.removeAllRanges();
+          sel.addRange(range);
+          return;
+        }
+        current = next;
+      }
+      range.selectNodeContents(root);
+      range.collapse(false);
+      sel.removeAllRanges();
+      sel.addRange(range);
+    }
+        function updateCodeToggleUI(block) {
+      if (!block) return;
+      const toggleBtn = block.querySelector('.tg-code-toggle');
+      const headToggleBtn = block.querySelector('.tg-code-head-toggle');
+      const preEl = block.querySelector('pre');
+      if (!preEl) return;
+      const isShort = preEl.scrollHeight <= 48;
+      block.classList.toggle('is-short', isShort);
+      if (isShort) {
+        block.classList.remove('is-collapsed');
+        if (headToggleBtn) headToggleBtn.style.display = 'none';
+        return;
+      }
+      if (headToggleBtn) headToggleBtn.style.display = 'inline-flex';
+      const collapsed = block.classList.contains('is-collapsed');
+      if (toggleBtn) toggleBtn.textContent = collapsed ? 'Развернуть ▾' : 'Свернуть ▴';
+      if (headToggleBtn) headToggleBtn.textContent = collapsed ? 'Развернуть ▾' : 'Свернуть ▴';
+    }
+
+    function normalizeCodeBlockStructure(block) {
+      if (!block) return;
+      const head = block.querySelector('.tg-code-head');
+      const pre = block.querySelector('pre');
+      if (head && pre && !block.querySelector('.tg-code-body')) {
+        const bodyWrap = document.createElement('div');
+        bodyWrap.className = 'tg-code-body';
+        pre.replaceWith(bodyWrap);
+        bodyWrap.appendChild(pre);
+      }
+      if (head && !head.querySelector('.tg-code-head-left')) {
+        const langEl = head.querySelector('.tg-code-lang');
+        const delBtn = head.querySelector('.tg-code-del');
+        const langText = langEl ? langEl.textContent : 'code';
+        const isCustom = langEl?.dataset?.customTitle === '1';
+
+        const left = document.createElement('div');
+        left.className = 'tg-code-head-left';
+        const newLang = document.createElement('span');
+        newLang.className = 'tg-code-lang';
+        newLang.textContent = langText;
+        if (isCustom) newLang.dataset.customTitle = '1';
+        left.appendChild(newLang);
+
+        const right = document.createElement('div');
+        right.className = 'tg-code-head-right';
+        if (delBtn) right.appendChild(delBtn);
+
+        head.innerHTML = '';
+        head.appendChild(left);
+        head.appendChild(right);
+      }
+      const leftBox = head?.querySelector('.tg-code-head-left');
+      const rightBox = head?.querySelector('.tg-code-head-right');
+      const oldLeftToggle = leftBox?.querySelector('.tg-code-head-toggle');
+      if (oldLeftToggle) oldLeftToggle.remove();
+      const oldDevVer = leftBox?.querySelector('.tg-code-dev-ver');
+      if (oldDevVer) oldDevVer.remove();
+
+      if (leftBox && !leftBox.querySelector('.tg-code-tag-wrap')) {
+        const tagWrap = document.createElement('span');
+        tagWrap.className = 'tg-code-tag-wrap is-empty';
+        tagWrap.innerHTML = '• <span class="tg-code-tag" spellcheck="false"></span>';
+        leftBox.appendChild(tagWrap);
+      }
+      const tagWrapEl = leftBox?.querySelector('.tg-code-tag-wrap');
+      const tagTextEl = tagWrapEl?.querySelector('.tg-code-tag');
+      if (tagWrapEl && tagTextEl) {
+        tagWrapEl.classList.toggle('is-empty', !tagTextEl.textContent.trim());
+      }
+
+            const oldRightToggle = rightBox?.querySelector('.tg-code-head-toggle');
+      if (oldRightToggle) oldRightToggle.remove();
+      const oldEditBtn = rightBox?.querySelector('.tg-code-edit');
+      if (oldEditBtn) oldEditBtn.remove();
+      if (leftBox && !leftBox.querySelector('.tg-code-head-toggle')) {
+        const headToggle = document.createElement('button');
+        headToggle.type = 'button';
+        headToggle.className = 'tg-code-head-toggle';
+        headToggle.textContent = 'Развернуть ▾';
+        leftBox.appendChild(headToggle);
+      }
+      if (leftBox && !leftBox.querySelector('.tg-code-head-copy')) {
+        const headCopy = document.createElement('button');
+        headCopy.type = 'button';
+        headCopy.className = 'tg-code-head-copy tg-code-copy';
+        headCopy.title = 'Скопировать';
+        headCopy.innerHTML = COPY_ICON_SVG;
+        leftBox.appendChild(headCopy);
+      }
+
+
+      let foot = block.querySelector('.tg-code-foot');
+
+      if (!foot) {
+        foot = document.createElement('div');
+        foot.className = 'tg-code-foot';
+        block.appendChild(foot);
+      }
+      foot.innerHTML = `
+        <button type="button" class="tg-code-toggle">Развернуть ▾</button>
+        <button type="button" class="tg-code-copy" title="Скопировать">${COPY_ICON_SVG}</button>
+      `;
+    }
+
+    function applyCodeHighlight(codeEl, preserveCaret = false) {
+      if (!codeEl) return;
+      const caretPos = preserveCaret ? getCaretOffsetIn(codeEl) : null;
+      const raw = (codeEl.textContent || '').replace(/class="hl-(?:com|str|tag|kw|num)">/g, '');
+      codeEl.innerHTML = raw ? highlightCodeText(raw) : '';
+      const block = codeEl.closest('.tg-code-block');
+      normalizeCodeBlockStructure(block);
+      const langLabel = block?.querySelector('.tg-code-lang');
+      if (langLabel && !langLabel.dataset.customTitle) {
+        langLabel.textContent = detectCodeLanguage(raw);
+      }
+      updateCodeToggleUI(block);
+      if (preserveCaret && caretPos !== null) {
+        setCaretOffsetIn(codeEl, caretPos);
+      }
+    }
+
+    function refreshAllCodeBlocks(collapseAll = false) {
+      storyEl.querySelectorAll('.tg-code-block').forEach(block => {
+        normalizeCodeBlockStructure(block);
+        const code = block.querySelector('code');
+        if (code) applyCodeHighlight(code, false);
+        if (collapseAll) block.classList.add('is-collapsed');
+        updateCodeToggleUI(block);
+      });
+    }
+    function syncCodeEditableState() {
+      const canEdit = storyEl.isContentEditable;
+      storyEl.querySelectorAll('.tg-code-block code').forEach(code => {
+        code.contentEditable = canEdit ? 'true' : 'false';
+      });
+      storyEl.querySelectorAll('.tg-code-block .tg-code-lang').forEach(lang => {
+        lang.contentEditable = canEdit ? 'true' : 'false';
+      });
+      storyEl.querySelectorAll('.tg-code-block .tg-code-tag').forEach(tag => {
+        tag.contentEditable = canEdit ? 'true' : 'false';
+      });
+    }
+
+    codeBtn.addEventListener('mousedown', e => e.preventDefault());
+    codeBtn.addEventListener('click', () => {
+      colorPopover.classList.remove('open');
+      alignPopover.classList.remove('open');
+
+      const block = document.createElement('div');
+      block.className = 'tg-code-block';
+      block.setAttribute('contenteditable', 'false');
+            block.innerHTML = `
+                        <div class="tg-code-head">
+          <div class="tg-code-head-left">
+            <span class="tg-code-lang" contenteditable="true" spellcheck="false">code</span>
+            <span class="tg-code-tag-wrap is-empty">• <span class="tg-code-tag" contenteditable="true" spellcheck="false"></span></span>
+            <button type="button" class="tg-code-head-toggle" style="display:none;">Развернуть ▾</button>
+            <button type="button" class="tg-code-head-copy tg-code-copy" title="Скопировать">${COPY_ICON_SVG}</button>
+          </div>
+          <div class="tg-code-head-right">
+            <button type="button" class="tg-code-del" title="Удалить блок">✕</button>
+          </div>
+        </div>
+
+
+        <div class="tg-code-body">
+          <pre><code contenteditable="true" spellcheck="false"></code></pre>
+        </div>
+        <div class="tg-code-foot">
+          <button type="button" class="tg-code-toggle" style="visibility:hidden;">Развернуть ▾</button>
+          <button type="button" class="tg-code-copy" title="Скопировать">${COPY_ICON_SVG}</button>
+        </div>
+      `;
+
+      const afterP = document.createElement('p');
+      afterP.innerHTML = '<br>';
+
+      const sel = window.getSelection();
+      if (sel && sel.rangeCount && storyEl.contains(sel.anchorNode)) {
+        const range = sel.getRangeAt(0);
+        range.deleteContents();
+        range.insertNode(afterP);
+        range.insertNode(block);
+      } else {
+        storyEl.appendChild(block);
+        storyEl.appendChild(afterP);
+      }
+
+      const codeEl = block.querySelector('code');
+      codeEl.focus();
+      updatePublishState();
+      saveDraftToLocal();
+    });
+
+    storyEl.addEventListener('focusout', e => {
+      const codeEl = e.target.closest('.tg-code-block code');
+      if (codeEl && storyEl.contains(codeEl)) {
+        applyCodeHighlight(codeEl, false);
+        updatePublishState();
+        saveDraftToLocal();
+      }
+    });
+    // Выпадающее меню выравнивания
+    alignBtn.addEventListener('mousedown', e => e.preventDefault());
+    alignBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      colorPopover.classList.remove('open');
+      alignPopover.classList.toggle('open');
+    });
+
+    document.querySelectorAll('.align-opt').forEach(opt => {
+      opt.addEventListener('mousedown', e => e.preventDefault());
+      opt.addEventListener('click', e => {
+        e.stopPropagation();
+        const cmd = opt.dataset.align;
+        storyEl.focus();
+        document.execCommand(cmd, false, null);
+        alignCurrentIcon.innerHTML = opt.querySelector('svg').innerHTML;
+        document.querySelectorAll('.align-opt').forEach(b => b.classList.toggle('active', b === opt));
+        alignPopover.classList.remove('open');
+        updatePublishState();
+        saveDraftToLocal();
+      });
+    });
+
+    // Палитра цветов текста
+    colorBtn.addEventListener('mousedown', e => e.preventDefault());
+    colorBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      alignPopover.classList.remove('open');
+      colorPopover.classList.toggle('open');
+    });
+    document.querySelectorAll('.color-swatch').forEach(swatch => {
+      swatch.addEventListener('mousedown', e => e.preventDefault());
+      swatch.addEventListener('click', e => {
+        e.stopPropagation();
+        const color = swatch.dataset.color;
+        const activeSel = window.getSelection();
+        const tagNode = activeSel?.anchorNode?.parentElement?.closest('.tg-code-tag') || activeSel?.focusNode?.parentElement?.closest('.tg-code-tag');
+               if (tagNode && storyEl.contains(tagNode)) {
+          const wrap = tagNode.closest('.tg-code-tag-wrap');
+          const applied = color === '#222222' ? '#1e8e3e' : color;
+
+          tagNode.style.color = applied;
+          if (wrap) wrap.style.color = applied;
+                  colorBar.style.backgroundColor = 'transparent';
+        colorBar.style.backgroundImage = DEFAULT_RAINBOW;
+        colorPopover.classList.remove('open');
+        updatePublishState();
+        saveDraftToLocal();
+
+          return;
+        }
+        storyEl.focus();
+        document.execCommand('styleWithCSS', false, true);
+        document.execCommand('foreColor', false, color);
+        document.execCommand('styleWithCSS', false, false);
+        const sel = window.getSelection();
+        const anchor = sel?.anchorNode?.parentElement?.closest('a') || sel?.focusNode?.parentElement?.closest('a');
+        if (anchor && storyEl.contains(anchor)) {
+          anchor.style.color = color === '#222222' ? '' : color;
+        }
+
+                colorBar.style.backgroundColor = 'transparent';
+        colorBar.style.backgroundImage = DEFAULT_RAINBOW;
+        colorPopover.classList.remove('open');
+        updatePublishState();
+        saveDraftToLocal();
+
+      });
+    });
+    function updateActiveFormatButtons() {
+      if (!storyEl.isContentEditable) {
+        document.querySelectorAll('.tool-btn.active').forEach(b => b.classList.remove('active'));
+        return;
+      }
+      const sel = window.getSelection();
+      const node = sel && sel.rangeCount ? sel.anchorNode : null;
+      const insideStory = node && storyEl.contains(node);
+      const el = insideStory ? (node.nodeType === 3 ? node.parentElement : node) : null;
+
+      const boldBtn = document.querySelector('.tool-btn[data-cmd="bold"]');
+      const italicBtn = document.querySelector('.tool-btn[data-cmd="italic"]');
+      const strikeBtn = document.querySelector('.tool-btn[data-cmd="strikeThrough"]');
+      const listBtn = document.querySelector('.tool-btn[data-cmd="insertUnorderedList"]');
+      const hBtn = document.querySelector('.tool-btn[data-cmd="formatBlock"][data-arg="H3"]');
+      const quoteBtn = document.querySelector('.tool-btn[data-cmd="formatBlock"][data-arg="BLOCKQUOTE"]');
+
+      if (!insideStory) {
+        [boldBtn, italicBtn, strikeBtn, listBtn, hBtn, quoteBtn, linkBtn].forEach(b => b?.classList.remove('active'));
+        return;
+      }
+
+      try {
+        boldBtn?.classList.toggle('active', document.queryCommandState('bold'));
+        italicBtn?.classList.toggle('active', document.queryCommandState('italic'));
+        strikeBtn?.classList.toggle('active', document.queryCommandState('strikeThrough'));
+        listBtn?.classList.toggle('active', document.queryCommandState('insertUnorderedList'));
+      } catch (e) {}
+
+      hBtn?.classList.toggle('active', Boolean(el?.closest('h3')));
+      quoteBtn?.classList.toggle('active', Boolean(el?.closest('blockquote')));
+      linkBtn?.classList.toggle('active', Boolean(el?.closest('a')));
+    }
+    function updateSelectedCodeBlocks() {
+      const sel = window.getSelection();
+      const blocks = storyEl.querySelectorAll('.tg-code-block');
+      if (!sel || !sel.rangeCount || sel.isCollapsed) {
+        blocks.forEach(b => b.classList.remove('is-selected-block'));
+        return;
+      }
+      const range = sel.getRangeAt(0);
+      const insideSingleCode = range.commonAncestorContainer?.nodeType === 1
+        ? range.commonAncestorContainer.closest('.tg-code-block')
+        : range.commonAncestorContainer?.parentElement?.closest('.tg-code-block');
+
+      blocks.forEach(b => {
+        if (insideSingleCode === b) {
+          b.classList.remove('is-selected-block');
+        } else {
+          let intersects = false;
+          try { intersects = range.intersectsNode(b); } catch (e) {}
+          b.classList.toggle('is-selected-block', intersects);
+        }
+      });
+    }
+
+    document.addEventListener('selectionchange', () => {
+      updateActiveFormatButtons();
+      updateSelectedCodeBlocks();
+    });
+    storyEl.addEventListener('keyup', () => {
+      updateActiveFormatButtons();
+      updateSelectedCodeBlocks();
+    });
+    storyEl.addEventListener('mouseup', () => {
+      updateActiveFormatButtons();
+      updateSelectedCodeBlocks();
+    });
+
+    storyEl.addEventListener('copy', e => {
+      const selectedBlocks = Array.from(storyEl.querySelectorAll('.tg-code-block.is-selected-block'));
+      if (selectedBlocks.length === 0) return;
+      const sel = window.getSelection();
+      if (!sel || !sel.rangeCount) return;
+
+      const range = sel.getRangeAt(0);
+      const container = document.createElement('div');
+      container.appendChild(range.cloneContents());
+
+      // Убеждаемся, что каждая затронутая карточка CODE скопирована целиком, а не обрезанной частью
+      selectedBlocks.forEach((origBlock, idx) => {
+        const partial = container.querySelectorAll('.tg-code-block')[idx];
+        const fullClone = origBlock.cloneNode(true);
+        fullClone.classList.remove('is-selected-block');
+        if (partial) {
+          partial.replaceWith(fullClone);
+        } else {
+          container.appendChild(fullClone);
+        }
+      });
+
+      e.preventDefault();
+      e.clipboardData.setData('text/html', container.innerHTML);
+      e.clipboardData.setData('text/plain', container.innerText);
+    });
+
+    clearFormatBtn.addEventListener('mousedown', e => e.preventDefault());
+    clearFormatBtn.addEventListener('click', () => {
+      colorPopover.classList.remove('open');
+      alignPopover.classList.remove('open');
+      storyEl.focus();
+
+      const sel = window.getSelection();
+      if (!sel || !sel.rangeCount) return;
+
+      document.execCommand('removeFormat', false, null);
+      document.execCommand('unlink', false, null);
+
+      const node = sel.anchorNode;
+      const el = node?.nodeType === 3 ? node.parentElement : node;
+      const block = el?.closest('h3, blockquote');
+      if (block && storyEl.contains(block)) {
+        const p = document.createElement('p');
+        p.innerHTML = block.innerHTML || '<br>';
+        block.replaceWith(p);
+        placeCaretAtEnd(p);
+      }
+
+      colorBar.style.backgroundColor = 'transparent';
+      colorBar.style.backgroundImage = DEFAULT_RAINBOW;
+      updateActiveFormatButtons();
+      updatePublishState();
+      saveDraftToLocal();
+    });
+
+    document.addEventListener('click', e => {
+      if (!colorWrap.contains(e.target)) colorPopover.classList.remove('open');
+      if (!alignWrap.contains(e.target)) alignPopover.classList.remove('open');
+    });
+
+    document.querySelectorAll('.tool-btn[data-cmd]').forEach(btn => {
+      btn.addEventListener('mousedown', e => e.preventDefault());
+      btn.addEventListener('click', () => {
+        colorPopover.classList.remove('open');
+        alignPopover.classList.remove('open');
+        storyEl.focus();
+        const cmd = btn.dataset.cmd;
+        const arg = btn.dataset.arg || null;
+                if (cmd === 'formatBlock' && arg) {
+          const sel = window.getSelection();
+          if (!sel || !sel.rangeCount) return;
+          const node = sel.anchorNode;
+          if (!node || !storyEl.contains(node)) return;
+          const el = node.nodeType === 3 ? node.parentElement : node;
+          if (el?.closest('.tg-code-block')) return;
+
+          const targetTag = arg.toLowerCase();
+          const existingBlock = el?.closest(targetTag);
+
+          if (existingBlock && storyEl.contains(existingBlock)) {
+            const p = document.createElement('p');
+            p.innerHTML = existingBlock.innerHTML || '<br>';
+            existingBlock.replaceWith(p);
+            placeCaretAtEnd(p);
+          } else {
+            let lineBlock = el?.closest('p, div, h3, blockquote, li');
+            if (lineBlock === storyEl) lineBlock = null;
+
+            if (lineBlock && storyEl.contains(lineBlock)) {
+              const newEl = document.createElement(targetTag === 'blockquote' ? 'blockquote' : 'h3');
+              newEl.innerHTML = lineBlock.innerHTML || '<br>';
+              if (lineBlock.tagName === 'LI') {
+                lineBlock.innerHTML = '';
+                lineBlock.appendChild(newEl);
+              } else {
+                lineBlock.replaceWith(newEl);
+              }
+              placeCaretAtEnd(newEl);
+            } else {
+              const newEl = document.createElement(targetTag === 'blockquote' ? 'blockquote' : 'h3');
+              if (!sel.isCollapsed) {
+                const range = sel.getRangeAt(0);
+                newEl.appendChild(range.extractContents());
+                range.insertNode(newEl);
+              } else {
+                newEl.innerHTML = '<br>';
+                const range = sel.getRangeAt(0);
+                range.insertNode(newEl);
+              }
+              placeCaretAtEnd(newEl);
+            }
+          }
+
+          updateActiveFormatButtons();
+          updatePublishState();
+          saveDraftToLocal();
+          return;
+        }
+
+
+        if (cmd === 'insertUnorderedList') {
+          const sel = window.getSelection();
+          const wasCollapsed = sel && sel.isCollapsed;
+          document.execCommand(cmd, false, arg);
+          if (wasCollapsed) {
+            const curNode = window.getSelection()?.anchorNode;
+            const curEl = curNode?.nodeType === 3 ? curNode.parentElement : curNode;
+            const li = curEl?.closest('li');
+            if (li && storyEl.contains(li)) placeCaretAtEnd(li);
+          }
+          updatePublishState();
+          saveDraftToLocal();
+          return;
+        }
+
+        document.execCommand(cmd, false, arg);
+        updatePublishState();
+        saveDraftToLocal();
+      });
+    });
+
+    function hideLinkPopover() {
+      linkPopover.style.display = 'none';
+      linkUrlInput.value = '';
+      savedLinkRange = null;
+    }
+
+    linkBtn.addEventListener('mousedown', e => e.preventDefault());
+    linkBtn.addEventListener('click', () => {
+      colorPopover.classList.remove('open');
+      alignPopover.classList.remove('open');
+      const sel = window.getSelection();
+      if (!sel || !sel.rangeCount) return;
+
+      const anchor = sel.anchorNode?.parentElement?.closest('a') || sel.focusNode?.parentElement?.closest('a');
+      if (anchor) {
+        if (sel.isCollapsed) {
+          const range = document.createRange();
+          range.selectNodeContents(anchor);
+          sel.removeAllRanges();
+          sel.addRange(range);
+        }
+        document.execCommand('unlink', false, null);
+        hideLinkPopover();
+        updatePublishState();
+        saveDraftToLocal();
+        return;
+      }
+
+      if (sel.isCollapsed) {
+        alert('Сначала выделите мышкой слово или текст, который нужно сделать ссылкой!');
+        return;
+      }
+
+      savedLinkRange = sel.getRangeAt(0).cloneRange();
+      const rect = savedLinkRange.getBoundingClientRect();
+
+      linkUrlInput.value = '';
+      linkPopover.style.display = 'flex';
+
+      const popWidth = linkPopover.offsetWidth;
+      const popHeight = linkPopover.offsetHeight;
+      const wordCenter = window.scrollX + rect.left + (rect.width / 2);
+
+      linkPopover.style.top = Math.max(10, window.scrollY + rect.top - popHeight - 10) + 'px';
+      linkPopover.style.left = Math.max(10, Math.min(window.innerWidth - popWidth - 10, wordCenter - (popWidth / 2))) + 'px';
+      linkUrlInput.focus();
+    });
+
+    linkUrlInput.addEventListener('keydown', e => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        let url = linkUrlInput.value.trim();
+        if (!url || !savedLinkRange) {
+          hideLinkPopover();
+          return;
+        }
+        if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(savedLinkRange);
+        document.execCommand('createLink', false, url);
+
+        const newAnchor = sel.anchorNode?.parentElement?.closest('a') || sel.focusNode?.parentElement?.closest('a');
+        if (newAnchor) newAnchor.target = '_blank';
+
+        hideLinkPopover();
+        updatePublishState();
+        saveDraftToLocal();
+      } else if (e.key === 'Escape') {
+        hideLinkPopover();
+      }
+    });
+
+    closeLinkPopover.addEventListener('click', hideLinkPopover);
+
+    photoBtn.addEventListener('click', () => {
+      colorPopover.classList.remove('open');
+      alignPopover.classList.remove('open');
+      fileInput.click();
+    });
+    fileInput.addEventListener('change', e => {
+      for (const f of e.target.files || []) compressAndInsertImage(f);
+      fileInput.value = '';
+    });
+    let resetAfterBlockBreak = false;
+
+    function getActiveStoryBlock() {
+      const sel = window.getSelection();
+      const node = sel?.anchorNode;
+      const el = node?.nodeType === 3 ? node.parentElement : node;
+      return el?.closest('blockquote, h3');
+    }
+
+    function exitHeadingOrQuote() {
+      document.execCommand('insertParagraph', false, null);
+      document.execCommand('formatBlock', false, 'P');
+      if (document.queryCommandState('bold')) {
+        document.execCommand('bold', false, null);
+      }
+      const sel = window.getSelection();
+      const node = sel?.anchorNode;
+      const el = node?.nodeType === 3 ? node.parentElement : node;
+      const bTag = el?.closest('b, strong');
+      if (bTag && storyEl.contains(bTag)) {
+        const p = document.createElement('p');
+        p.innerHTML = '<br>';
+        bTag.replaceWith(p);
+        const range = document.createRange();
+        range.setStart(p, 0);
+        range.collapse(true);
+        sel.removeAllRanges();
+        sel.addRange(range);
+      }
+      updatePublishState();
+      saveDraftToLocal();
+    }
+
+    function parseYandexMusicEmbed(text) {
+      const trimmed = (text || '').trim();
+      const iframeMatch = trimmed.match(/<iframe\b[^>]*\bsrc=["'](https?:\/\/[^"']+)["'][^>]*>/i);
+      if (!iframeMatch) return null;
+
+      const src = iframeMatch.at(1);
+      const allowedHosts = /^(?:music\.yandex\.(?:ru|by|kz|uz|com)|(?:[\w-]+\.)?vk\.com|(?:[\w-]+\.)?vk\.ru|(?:[\w-]+\.)?vkvideo\.ru|(?:[\w-]+\.)?rutube\.ru|(?:[\w-]+\.)?dzen\.ru|(?:[\w-]+\.)?zvuk\.com|(?:[\w-]+\.)?yandex\.ru|(?:[\w-]+\.)?youtube\.com|(?:[\w-]+\.)?youtube-nocookie\.com)$/i;
+      try {
+        const urlObj = new URL(src);
+        if (!allowedHosts.test(urlObj.hostname)) return null;
+
+        const isTall = /\/iframe\/album\/\d+\/?(?:$|\?)/i.test(src) || /video|embed|map-widget/i.test(src);
+        return { src: src, isAlbum: isTall };
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function insertYandexMusicEmbed(parsed, replaceNode = null) {
+      const wrap = document.createElement('div');
+      wrap.className = 'tg-ymusic-embed' + (parsed.isAlbum ? ' is-album' : '');
+      wrap.setAttribute('contenteditable', 'false');
+      wrap.innerHTML = '<iframe src="' + parsed.src + '" allow="autoplay; encrypted-media; fullscreen; picture-in-picture; clipboard-write" allowfullscreen></iframe><button type="button" class="tg-ymusic-del" title="Удалить плеер">✕</button>';
+
+      const afterP = document.createElement('p');
+      afterP.innerHTML = '<br>';
+
+      if (replaceNode && storyEl.contains(replaceNode)) {
+        replaceNode.replaceWith(wrap, afterP);
+      } else {
+        const sel = window.getSelection();
+        if (sel && sel.rangeCount && storyEl.contains(sel.anchorNode)) {
+          const range = sel.getRangeAt(0);
+          range.deleteContents();
+          range.insertNode(afterP);
+          range.insertNode(wrap);
+        } else {
+          storyEl.appendChild(wrap);
+          storyEl.appendChild(afterP);
+        }
+      }
+
+      const newRange = document.createRange();
+      newRange.setStart(afterP, 0);
+      newRange.collapse(true);
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(newRange);
+      updatePublishState();
+      saveDraftToLocal();
+    }
+
+    // Клики внутри статьи: удаление плеера, копирование или удаление блока кода
+    storyEl.addEventListener('click', e => {
+      const delBtn = e.target.closest('.tg-ymusic-del');
+      if (delBtn && storyEl.contains(delBtn)) {
+        e.preventDefault();
+        e.stopPropagation();
+        delBtn.closest('.tg-ymusic-embed')?.remove();
+        updatePublishState();
+        saveDraftToLocal();
+        return;
+      }
+
+      const codeDelBtn = e.target.closest('.tg-code-del');
+      if (codeDelBtn && storyEl.contains(codeDelBtn)) {
+        e.preventDefault();
+        e.stopPropagation();
+        codeDelBtn.closest('.tg-code-block')?.remove();
+        updatePublishState();
+        saveDraftToLocal();
+        return;
+      }
+      const copyCodeBtn = e.target.closest('.tg-code-copy');
+      if (copyCodeBtn && storyEl.contains(copyCodeBtn)) {
+        e.preventDefault();
+        e.stopPropagation();
+        const block = copyCodeBtn.closest('.tg-code-block');
+        const codeText = block?.querySelector('code')?.textContent || '';
+        navigator.clipboard?.writeText(codeText);
+        copyCodeBtn.innerHTML = `${COPY_ICON_SVG}<span>Скопировано!</span>`;
+        setTimeout(() => {
+          copyCodeBtn.innerHTML = COPY_ICON_SVG;
+        }, 1500);
+        return;
+      }
+            const editCodeBtn = e.target.closest('.tg-code-edit');
+      if (editCodeBtn && storyEl.contains(editCodeBtn)) {
+        e.preventDefault();
+        e.stopPropagation();
+        const block = editCodeBtn.closest('.tg-code-block');
+        if (isViewMode && currentUser && (currentUser.uid === currentArticleOwner || isAdmin(currentUser))) {
+          block.classList.remove('is-collapsed');
+          updateCodeToggleUI(block);
+          actionBtn.click();
+          setTimeout(() => {
+            const codeEl = block.querySelector('code');
+            if (codeEl) {
+              codeEl.focus();
+              placeCaretAtEnd(codeEl);
+            }
+          }, 60);
+        }
+        return;
+      }
+      const toggleCodeBtn = e.target.closest('.tg-code-toggle, .tg-code-head-toggle');
+
+      if (toggleCodeBtn && storyEl.contains(toggleCodeBtn)) {
+        e.preventDefault();
+        e.stopPropagation();
+        const block = toggleCodeBtn.closest('.tg-code-block');
+        block.classList.toggle('is-collapsed');
+        updateCodeToggleUI(block);
+      }
+
+    });
+        storyEl.addEventListener('keydown', e => {
+      const activeCode = e.target.closest('.tg-code-block code');
+      if (activeCode && storyEl.contains(activeCode)) {
+        if ((e.ctrlKey || e.metaKey) && (e.key === 'a' || e.key === 'A' || e.key === 'ф' || e.key === 'Ф')) {
+          e.preventDefault();
+          e.stopPropagation();
+          const range = document.createRange();
+          range.selectNodeContents(activeCode);
+          const sel = window.getSelection();
+          sel.removeAllRanges();
+          sel.addRange(range);
+          return;
+        }
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          e.stopPropagation();
+          const sel = window.getSelection();
+          if (sel && sel.rangeCount) {
+            const range = sel.getRangeAt(0);
+            range.deleteContents();
+            const nl = document.createTextNode('\n');
+            range.insertNode(nl);
+            range.setStartAfter(nl);
+            range.collapse(true);
+            sel.removeAllRanges();
+            sel.addRange(range);
+          }
+          updatePublishState();
+          saveDraftToLocal();
+          return;
+        }
+        if (e.key === 'Tab') {
+          e.preventDefault();
+          document.execCommand('insertText', false, '  ');
+        }
+        return;
+
+      }
+
+      if (e.key === 'Enter' && !e.shiftKey) {
+        const sel = window.getSelection();
+        const node = sel?.anchorNode;
+        const lineEl = node?.nodeType === 3 ? node.parentElement : node;
+        const targetBlock = lineEl?.closest('p, div');
+        if (targetBlock && targetBlock !== storyEl && storyEl.contains(targetBlock)) {
+          const ym = parseYandexMusicEmbed(targetBlock.innerText);
+          if (ym) {
+            e.preventDefault();
+            insertYandexMusicEmbed(ym, targetBlock);
+            return;
+          }
+        } else if (node && node.nodeType === 3 && node.parentElement === storyEl) {
+          const ym = parseYandexMusicEmbed(node.textContent);
+          if (ym) {
+            e.preventDefault();
+            insertYandexMusicEmbed(ym, node);
+            return;
+          }
+        }
+
+        const block = getActiveStoryBlock();
+        if (block && storyEl.contains(block)) {
+          e.preventDefault();
+          exitHeadingOrQuote();
+        }
+      }
+    });
+
+    storyEl.addEventListener('beforeinput', e => {
+      if (e.defaultPrevented) return;
+      if (e.target.closest('.tg-code-block code')) return;
+      if (e.inputType === 'insertParagraph' || e.inputType === 'insertLineBreak') {
+        const block = getActiveStoryBlock();
+        if (block && storyEl.contains(block)) {
+          resetAfterBlockBreak = true;
+        }
+      }
+    });
+    storyEl.addEventListener('input', e => {
+      const tagEdit = e.target.closest('.tg-code-tag');
+      if (tagEdit && storyEl.contains(tagEdit)) {
+        const isEmpty = !tagEdit.textContent.trim();
+        if (isEmpty && tagEdit.innerHTML !== '') tagEdit.innerHTML = '';
+        const wrap = tagEdit.closest('.tg-code-tag-wrap');
+        if (wrap) wrap.classList.toggle('is-empty', isEmpty);
+        updatePublishState();
+        saveDraftToLocal();
+        return;
+      }
+      const langEdit = e.target.closest('.tg-code-lang');
+      if (langEdit && storyEl.contains(langEdit)) {
+        langEdit.dataset.customTitle = '1';
+        updatePublishState();
+        saveDraftToLocal();
+        return;
+      }
+
+      const codeEdit = e.target.closest('.tg-code-block code');
+      if (codeEdit && storyEl.contains(codeEdit)) {
+        if (!codeEdit.textContent.trim() && codeEdit.innerHTML !== '') {
+          codeEdit.innerHTML = '';
+        }
+        updatePublishState();
+        saveDraftToLocal();
+        return;
+      }
+
+      if (resetAfterBlockBreak) {
+        resetAfterBlockBreak = false;
+
+        const sel = window.getSelection();
+        const node = sel?.anchorNode;
+        const el = node?.nodeType === 3 ? node.parentElement : node;
+        const block = el?.closest('blockquote, h3');
+
+        if (block && storyEl.contains(block)) {
+          document.execCommand('formatBlock', false, 'P');
+        }
+        if (document.queryCommandState('bold')) {
+          document.execCommand('bold', false, null);
+        }
+        const curNode = window.getSelection()?.anchorNode;
+        const curEl = curNode?.nodeType === 3 ? curNode.parentElement : curNode;
+        const bTag = curEl?.closest('b, strong');
+        if (bTag && storyEl.contains(bTag) && bTag.textContent.trim() === '') {
+          const p = document.createElement('p');
+          p.innerHTML = '<br>';
+          bTag.replaceWith(p);
+          const range = document.createRange();
+          range.setStart(p, 0);
+          range.collapse(true);
+          const s = window.getSelection();
+          s.removeAllRanges();
+          s.addRange(range);
+        }
+      }
+      updatePublishState();
+      saveDraftToLocal();
+    });
+
+    titleEl.addEventListener('paste', e => {
+      e.preventDefault();
+      const text = (e.clipboardData || window.clipboardData).getData('text/plain').replace(/\r?\n/g, ' ');
+      document.execCommand('insertText', false, text);
+      updateTitleSideLabel();
+      updatePublishState();
+      saveDraftToLocal();
+    });
+    function sanitizePastedHtml(rawHtml) {
+      const doc = new DOMParser().parseFromString(rawHtml, 'text/html');
+      const allowedTags = new Set([
+        'P', 'BR', 'B', 'STRONG', 'I', 'EM', 'U', 'S', 'STRIKE', 'DEL',
+        'H1', 'H2', 'H3', 'H4', 'BLOCKQUOTE', 'UL', 'OL', 'LI', 'A', 'SPAN', 'DIV', 'FONT', 'IMG'
+      ]);
+
+      function cleanNode(node) {
+        if (node.nodeType === 3) {
+          return document.createTextNode(node.nodeValue);
+        }
+        if (node.nodeType !== 1) return null;
+
+        // Сохраняем карточки CODE целиком при копировании/вставке из заметки в заметку
+        if (node.classList && node.classList.contains('tg-code-block')) {
+          const cloneBlock = node.cloneNode(true);
+          cloneBlock.setAttribute('contenteditable', 'false');
+          const codeEl = cloneBlock.querySelector('code');
+          if (codeEl) codeEl.setAttribute('contenteditable', 'true');
+          const langEl = cloneBlock.querySelector('.tg-code-lang');
+          if (langEl) langEl.setAttribute('contenteditable', 'true');
+          const tagEl = cloneBlock.querySelector('.tg-code-tag');
+          if (tagEl) tagEl.setAttribute('contenteditable', 'true');
+          return cloneBlock;
+        }
+
+        // Сохраняем встроенные плееры при переносе между заметками
+        if (node.classList && node.classList.contains('tg-ymusic-embed')) {
+          const iframe = node.querySelector('iframe');
+          const src = iframe ? iframe.getAttribute('src') : '';
+          if (src) {
+            const parsed = parseYandexMusicEmbed(`<iframe src="${src}"></iframe>`);
+            if (parsed) {
+              const wrap = document.createElement('div');
+              wrap.className = 'tg-ymusic-embed' + (parsed.isAlbum ? ' is-album' : '');
+              wrap.setAttribute('contenteditable', 'false');
+              wrap.innerHTML = '<iframe src="' + parsed.src + '" allow="autoplay; encrypted-media; fullscreen; picture-in-picture; clipboard-write" allowfullscreen></iframe><button type="button" class="tg-ymusic-del" title="Удалить плеер">✕</button>';
+              return wrap;
+            }
+          }
+          return null;
+        }
+
+        const tag = node.tagName.toUpperCase();
+        if (['STYLE', 'SCRIPT', 'META', 'LINK', 'XML', 'HEAD', 'TITLE', 'IFRAME', 'OBJECT'].includes(tag)) {
+          return null;
+        }
+
+        if (tag === 'IMG') {
+          const src = node.getAttribute('src') || '';
+          if (/^(data:image\/|https?:\/\/)/i.test(src.trim())) {
+            const img = document.createElement('img');
+            img.src = src.trim();
+            return img;
+          }
+          return null;
+        }
+
+        const frag = document.createDocumentFragment();
+        for (const child of Array.from(node.childNodes)) {
+          const cleanedChild = cleanNode(child);
+          if (cleanedChild) frag.appendChild(cleanedChild);
+        }
+
+        if (!allowedTags.has(tag)) {
+          return frag;
+        }
+
+        let targetTag = tag.toLowerCase();
+        if (['H1', 'H2', 'H4'].includes(tag)) targetTag = 'h3';
+        if (tag === 'OL') targetTag = 'ul';
+        if (tag === 'FONT') targetTag = 'span';
+
+        const el = document.createElement(targetTag);
+
+        if (['P', 'DIV', 'H1', 'H2', 'H3', 'H4', 'BLOCKQUOTE'].includes(tag)) {
+          const align = (node.style && node.style.textAlign) || node.getAttribute('align');
+          if (align && ['center', 'right', 'left', 'justify'].includes(align.toLowerCase())) {
+            el.style.textAlign = align.toLowerCase();
+          }
+        }
+
+        const textColor = (node.style && node.style.color) || node.getAttribute('color');
+        if (textColor) {
+          el.style.color = textColor;
+        }
+
+        if (tag === 'A') {
+          const href = node.getAttribute('href');
+          if (href && /^https?:\/\//i.test(href.trim())) {
+            el.href = href.trim();
+            el.target = '_blank';
+          } else {
+            return frag;
+          }
+        }
+
+        el.appendChild(frag);
+        return el;
+      }
+
+      const container = document.createElement('div');
+      for (const child of Array.from(doc.body.childNodes)) {
+        const cleaned = cleanNode(child);
+        if (cleaned) container.appendChild(cleaned);
+      }
+      return container.innerHTML;
+    }
+
+    storyEl.addEventListener('paste', e => {
+      const cd = e.clipboardData || window.clipboardData;
+      // Вставка внутрь блока кода — сохраняем все переносы строк и отступы 1-в-1 как в Блокноте
+      const targetCode = e.target.closest('.tg-code-block code');
+      if (targetCode && storyEl.contains(targetCode)) {
+        e.preventDefault();
+        const plainCode = (cd ? cd.getData('text/plain') : '').replace(/\r\n/g, '\n');
+        if (plainCode) {
+          const sel = window.getSelection();
+          if (sel && sel.rangeCount) {
+            const range = sel.getRangeAt(0);
+            range.deleteContents();
+            const textNode = document.createTextNode(plainCode);
+            range.insertNode(textNode);
+            range.setStartAfter(textNode);
+            range.collapse(true);
+            sel.removeAllRanges();
+            sel.addRange(range);
+          }
+          applyCodeHighlight(targetCode, true);
+          updatePublishState();
+          saveDraftToLocal();
+        }
+        return;
+      }
+
+      const items = cd ? cd.items : [];
+      for (const item of items) {
+        if (item.kind === 'file' && item.type.indexOf('image') === 0) {
+          e.preventDefault();
+          compressAndInsertImage(item.getAsFile());
+          return;
+        }
+      }
+
+      e.preventDefault();
+      const text = cd ? cd.getData('text/plain') : '';
+      if (text) {
+        const ym = parseYandexMusicEmbed(text);
+        if (ym) {
+          insertYandexMusicEmbed(ym);
+          return;
+        }
+      }
+      const html = cd ? cd.getData('text/html') : '';
+      if (html) {
+        const cleanHtml = sanitizePastedHtml(html);
+        if (cleanHtml.trim()) {
+          document.execCommand('insertHTML', false, cleanHtml);
+          refreshAllCodeBlocks(false);
+          syncCodeEditableState();
+          updatePublishState();
+          saveDraftToLocal();
+          return;
+        }
+      }
+
+      if (text) {
+        document.execCommand('insertText', false, text);
+        updatePublishState();
+        saveDraftToLocal();
+      }
+    });
+
+    function compressAndInsertImage(file) {
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = event => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const MAX_WIDTH = 850;
+          let width = img.width;
+          let height = img.height;
+          if (width > MAX_WIDTH) {
+            height = Math.round(height * MAX_WIDTH / width);
+            width = MAX_WIDTH;
+          }
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.fillStyle = '#fff';
+          ctx.fillRect(0, 0, width, height);
+          ctx.drawImage(img, 0, 0, width, height);
+
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+          storyEl.focus();
+          document.execCommand('insertHTML', false, `<img src="${dataUrl}"><br>`);
+          updatePublishState();
+          saveDraftToLocal();
+        };
+        img.src = event.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    let db = null;
+    let auth = null;
+
+    if (pathSlug && pathSlug !== 'blog') {
+      loadArticle(pathSlug);
+    }
+
+    function updateViewsBadge() {
+      if (isViewMode && currentUser && isAdmin(currentUser)) {
+        viewsCountEl.textContent = currentArticleViews;
+        viewsBadge.style.display = 'inline-flex';
+      } else {
+        viewsBadge.style.display = 'none';
+      }
+    }
+
+    function openViewsModal(viewsCount = currentArticleViews, viewsLog = currentArticleViewsLog) {
+      viewsModalTitle.textContent = `Просмотры (${viewsCount})`;
+      viewsList.innerHTML = '';
+
+      if (!viewsLog || viewsLog.length === 0) {
+        viewsEmptyMsg.style.display = 'block';
+        viewsEmptyMsg.textContent = viewsCount > 0
+          ? 'Детальная история ведётся только для новых просмотров.'
+          : 'Пока никто не просматривал эту статью.';
+      } else {
+        viewsEmptyMsg.style.display = 'none';
+        const sorted = [...viewsLog].sort((a, b) => (b.at || 0) - (a.at || 0));
+        sorted.forEach(item => {
+          const li = document.createElement('li');
+          const who = item.user ? item.user : 'Гость';
+          const isGuest = !item.user;
+          li.innerHTML = `<span class="views-user${isGuest ? ' is-guest' : ''}">${who}</span><span class="views-date">${formatRuDate(item.at)}</span>`;
+          viewsList.appendChild(li);
+        });
+      }
+
+      viewsModal.style.display = 'flex';
+    }
+
+    viewsBadge.addEventListener('click', () => {
+      if (currentUser && isAdmin(currentUser)) {
+        openViewsModal();
+      }
+    });
+
+    document.getElementById('closeViewsModalBtn').addEventListener('click', () => {
+      viewsModal.style.display = 'none';
+    });
+
+    viewsModal.addEventListener('click', e => {
+      if (e.target === viewsModal) viewsModal.style.display = 'none';
+    });
+    async function trackArticleView(slug) {
+      if (!db || !slug || !isViewMode || lockedPrivateArticle) return;
+
+      const key = 'tgtype_v_' + slug;
+      const guestTs = Number(localStorage.getItem(key + '_guest_at') || 0);
+      const viewerLogin = currentUser ? getLoginName(currentUser) : '';
+
+      // Если пользователь раньше открыл эту статью как Гость, а затем вошёл в аккаунт — заменяем Гостя на его логин
+      if (viewerLogin && guestTs > 0) {
+        localStorage.removeItem(key + '_guest_at');
+        if (currentUser.uid !== currentArticleOwner && !isAdmin(currentUser)) {
+          try {
+            const snap = await db.collection('articles').doc(slug).get();
+            if (snap.exists) {
+              const log = Array.isArray(snap.data().viewsLog) ? [...snap.data().viewsLog] : [];
+              const idx = log.findIndex(item => !item.user && item.at === guestTs);
+              if (idx > -1) {
+                log[idx] = { user: viewerLogin, at: guestTs };
+                await db.collection('articles').doc(slug).update({ viewsLog: log });
+                currentArticleViewsLog = log;
+                updateViewsBadge();
+              }
+            }
+          } catch (e) {}
+        }
+        return;
+      }
+
+      if (viewCountedForSlug) return;
+      if (currentUser && (currentUser.uid === currentArticleOwner || isAdmin(currentUser))) return;
+      if (localStorage.getItem(key)) return;
+
+      viewCountedForSlug = true;
+      localStorage.setItem(key, '1');
+      const nowTs = Date.now();
+      if (!viewerLogin) {
+        localStorage.setItem(key + '_guest_at', String(nowTs));
+      }
+      const entry = { user: viewerLogin, at: nowTs };
+
+      try {
+        await db.collection('articles').doc(slug).update({
+          views: firebase.firestore.FieldValue.increment(1),
+          viewsLog: firebase.firestore.FieldValue.arrayUnion(entry)
+        });
+        currentArticleViews += 1;
+        currentArticleViewsLog.push(entry);
+        updateViewsBadge();
+      } catch (e) {
+        localStorage.removeItem(key);
+        localStorage.removeItem(key + '_guest_at');
+        viewCountedForSlug = false;
+      }
+    }
+
+    function showAuthButtonNotice(text, cssClass, fallbackText) {
+      if (logoutMsgTimer) clearTimeout(logoutMsgTimer);
+      authBtn.classList.remove('is-logged-out', 'is-logged-in');
+      authBtn.classList.add(cssClass);
+      authBtn.textContent = text;
+      logoutMsgTimer = setTimeout(() => {
+        logoutMsgTimer = null;
+        authBtn.classList.remove('is-logged-out', 'is-logged-in');
+        authBtn.textContent = fallbackText;
+      }, 2500);
+    }
+    window.addEventListener('DOMContentLoaded', () => {
+      if (typeof firebase !== 'undefined') {
+        firebase.initializeApp({
+          apiKey: "AIzaSyAGZvMxxAZEsbech1evNe2aNwR6GfC0xhw",
+          authDomain: "tgtype-a41aa." + "firebaseapp.com",
+          projectId: "tgtype-a41aa",
+          storageBucket: "tgtype-a41aa.firebasestorage.app",
+          messagingSenderId: "967552866716",
+          appId: "1:967552866716:web:2d3dff00a96e83e151d059"
+        });
+        db = firebase.firestore();
+        auth = firebase.auth();
+                  auth.onAuthStateChanged(user => {
+          currentUser = user;
+          const login = getLoginName(user);
+          document.body.classList.toggle('is-admin-user', Boolean(user && isAdmin(user)));
+          if (user) {
+            isManualLogout = false;
+            if (!logoutMsgTimer) {
+              authBtn.classList.remove('is-logged-out', 'is-logged-in');
+              authBtn.textContent = `Выйти (${login})`;
+            }
+          } else if (!logoutMsgTimer) {
+            authBtn.classList.remove('is-logged-out', 'is-logged-in');
+            authBtn.textContent = 'Войти';
+          }
+
+          if (lockedPrivateArticle && currentSlug) {
+            loadArticle(currentSlug);
+            return;
+          }
+
+          updateEditVisibility();
+          updateViewsBadge();
+          if (!isViewMode) {
+            metaInfoEl.contentEditable = Boolean(user && isAdmin(user));
+            updatePublishState();
+          }
+
+          if (pathSlug === 'blog') {
+            if (!isManualLogout) {
+              loadBlogPage();
+            }
+            isManualLogout = false;
+          } else if (isViewMode && currentSlug) {
+            trackArticleView(currentSlug);
+          }
+        });
+      } else {
+        hideLoader();
+        setStatus('Ошибка: файлы Firebase не загрузились.', 'error');
+        const reloadBtn = document.createElement('button');
+        reloadBtn.type = 'button';
+        reloadBtn.textContent = 'Обновить';
+        reloadBtn.className = 'mini-btn';
+        reloadBtn.style.marginTop = '8px';
+        reloadBtn.addEventListener('click', () => window.location.reload());
+        statusEl.after(reloadBtn);
+      }
+    });
+
+    const modalTitle = document.getElementById('modalTitle');
+    const authForm = document.getElementById('authForm');
+    const modalMsg = document.getElementById('modalMsg');
+    const submitAuthBtn = document.getElementById('submitAuthBtn');
+    const switchHint = document.getElementById('switchHint');
+    const switchModeBtn = document.getElementById('switchModeBtn');
+
+    let isRegMode = false;
+    const ONE_HOUR = 60 * 60 * 1000;
+
+    function setAuthMode(reg) {
+      isRegMode = reg;
+      modalMsg.textContent = '';
+      if (isRegMode) {
+        modalTitle.textContent = 'Регистрация';
+        submitAuthBtn.textContent = 'Создать аккаунт';
+        switchHint.textContent = 'Уже есть аккаунт?';
+        switchModeBtn.textContent = 'Войти';
+        loginInput.value = '';
+        passInput.value = '';
+        loginInput.setAttribute('autocomplete', 'off');
+        passInput.setAttribute('autocomplete', 'new-password');
+        passInput.placeholder = 'Пароль (минимум 6 символов)';
+      } else {
+        modalTitle.textContent = 'Вход';
+        submitAuthBtn.textContent = 'Войти';
+        switchHint.textContent = 'Нет аккаунта?';
+        switchModeBtn.textContent = 'Регистрация';
+        loginInput.value = '';
+        passInput.value = '';
+        loginInput.setAttribute('autocomplete', 'username');
+        passInput.setAttribute('autocomplete', 'current-password');
+        passInput.placeholder = 'Пароль';
+      }
+    }
+
+    switchModeBtn.addEventListener('click', () => {
+      setAuthMode(!isRegMode);
+      loginInput.focus();
+    });
+
+    authBtn.addEventListener('click', async () => {
+      if (authBtn.classList.contains('is-logged-out') || authBtn.classList.contains('is-logged-in')) return;
+
+      if (currentUser) {
+        isManualLogout = true;
+        showAuthButtonNotice('Вы вышли из системы', 'is-logged-out', 'Войти');
+        await auth.signOut();
+      } else {
+        setAuthMode(false);
+        authModal.style.display = 'flex';
+        loginInput.focus();
+      }
+    });
+
+    document.getElementById('closeModalBtn').addEventListener('click', () => {
+      authModal.style.display = 'none';
+    });
+
+    function cleanLogin(raw) {
+      return raw.trim().toLowerCase().replace(/[^a-z0-9_-]/g, '');
+    }
+
+    authForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      modalMsg.textContent = '';
+
+      const login = cleanLogin(loginInput.value);
+      const pass = passInput.value;
+
+      if (isRegMode) {
+        const lastReg = Number(localStorage.getItem('tgtype_last_reg') || 0);
+        if (Date.now() - lastReg < ONE_HOUR) {
+          modalMsg.textContent = 'Вы недавно уже создавали аккаунт. Попробуйте позже.';
+          return;
+        }
+
+        if (!login || login.length < 3) {
+          modalMsg.textContent = 'Логин: минимум 3 латинских символа (a-z, 0-9).';
+          return;
+        }
+        if (!pass || pass.length < 6) {
+          modalMsg.textContent = 'Пароль: минимум 6 символов.';
+          return;
+        }
+
+        submitAuthBtn.disabled = true;
+        try {
+          await auth.createUserWithEmailAndPassword(`${login}@tgtype.local`, pass);
+          localStorage.setItem('tgtype_last_reg', String(Date.now()));
+          authModal.style.display = 'none';
+          showAuthButtonNotice(`Аккаунт создан: ${login}`, 'is-logged-in', `Выйти (${login})`);
+        } catch (err) {
+          if (err.code === 'auth/email-already-in-use') {
+            modalMsg.textContent = 'Этот логин уже занят. Придумайте другой.';
+          } else {
+            modalMsg.textContent = 'Ошибка регистрации: ' + err.message;
+          }
+        } finally {
+          submitAuthBtn.disabled = false;
+        }
+      } else {
+        const lockUntil = Number(localStorage.getItem('tgtype_login_lock') || 0);
+        if (Date.now() < lockUntil) {
+          modalMsg.textContent = 'Слишком много неудачных попыток. Повторите попытку позже.';
+          return;
+        } else if (lockUntil > 0) {
+          localStorage.removeItem('tgtype_login_lock');
+          localStorage.removeItem('tgtype_login_fails');
+        }
+
+        if (!login || !pass) {
+          modalMsg.textContent = 'Введите логин и пароль.';
+          return;
+        }
+
+        submitAuthBtn.disabled = true;
+        try {
+          await auth.signInWithEmailAndPassword(`${login}@tgtype.local`, pass);
+          localStorage.removeItem('tgtype_login_fails');
+          localStorage.removeItem('tgtype_login_lock');
+          authModal.style.display = 'none';
+          showAuthButtonNotice(`Вход выполнен: ${login}`, 'is-logged-in', `Выйти (${login})`);
+        } catch (err) {
+          if (err.code === 'auth/too-many-requests') {
+            localStorage.setItem('tgtype_login_lock', String(Date.now() + ONE_HOUR));
+            modalMsg.textContent = 'Слишком много неудачных попыток. Повторите попытку позже.';
+          } else {
+            const fails = Number(localStorage.getItem('tgtype_login_fails') || 0) + 1;
+            if (fails >= 3) {
+              localStorage.setItem('tgtype_login_lock', String(Date.now() + ONE_HOUR));
+              localStorage.removeItem('tgtype_login_fails');
+              modalMsg.textContent = 'Слишком много неудачных попыток. Повторите попытку позже.';
+            } else {
+              localStorage.setItem('tgtype_login_fails', String(fails));
+              modalMsg.textContent = `Неверный логин или пароль. Осталось попыток: ${3 - fails}`;
+            }
+          }
+        } finally {
+          submitAuthBtn.disabled = false;
+        }
+      }
+    });
+        function updateEditVisibility() {
+      if (!isViewMode) {
+        actionBtn.style.display = 'inline-block';
+        toolbarRow.classList.remove('hidden', 'view-mode');
+        metaInfoEl.classList.remove('no-toolbar', 'can-edit-btn');
+        updatePublishState();
+        return;
+      }
+            const canEdit = currentUser && (currentUser.uid === currentArticleOwner || isAdmin(currentUser));
+      storyEl.classList.toggle('no-edit-rights', !canEdit);
+      actionBtn.style.display = canEdit ? 'inline-flex' : 'none';
+      setActionBtnText('РЕДАКТИРОВАТЬ');
+      actionBtn.disabled = false;
+
+
+      toolbarRow.classList.add('view-mode');
+      toolbarRow.classList.toggle('hidden', !canEdit);
+      metaInfoEl.classList.toggle('no-toolbar', !canEdit);
+      metaInfoEl.classList.toggle('can-edit-btn', canEdit);
+    }
+
+    async function loadBlogPage(skipAutoModal = false) {
+      metaInfoEl.style.display = 'none';
+      toolbarRow.style.display = 'none';
+      storyEl.style.display = 'none';
+      actionBtn.style.display = 'none';
+      titleEl.contentEditable = false;
+      editorHeader.classList.remove('is-editing');
+      updateFixedHeader();
+      updateTitleSideLabel();
+
+      document.querySelector('.blog-search')?.remove();
+      document.querySelector('.posts-list')?.remove();
+
+      if (!currentUser) {
+        hideLoader();
+        titleEl.textContent = 'Мои публикации';
+        document.title = 'Мои публикации — tgtype';
+        if (skipAutoModal) {
+          setStatus('Вы вышли из системы.');
+        } else {
+          setStatus('Войдите в аккаунт, чтобы увидеть свои публикации.', 'error');
+          setAuthMode(false);
+          authModal.style.display = 'flex';
+        }
+        return;
+      }
+
+      const adminMode = isAdmin(currentUser);
+      titleEl.textContent = adminMode ? 'Все публикации (/blog)' : 'Мои публикации';
+      document.title = `${titleEl.textContent} — tgtype`;
+      setStatus('Загрузка публикаций...');
+
+      try {
+        let query = db.collection('articles');
+        if (!adminMode) {
+          query = query.where('ownerUid', '==', currentUser.uid);
+        }
+        const snap = await query.get();
+
+        if (snap.empty) {
+          setStatus(adminMode ? 'Пока нет ни одной статьи.' : 'Здесь пока пусто — вы ещё ничего не опубликовали.');
+          return;
+        }
+
+        const posts = [];
+        snap.forEach(doc => posts.push({ id: doc.id, ...doc.data() }));
+        posts.sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+
+        const searchInput = document.createElement('input');
+        searchInput.type = 'text';
+        searchInput.className = 'blog-search';
+        searchInput.placeholder = adminMode
+          ? 'Поиск по заголовку, ссылке или логину автора...'
+          : 'Поиск по вашим публикациям...';
+
+        const ul = document.createElement('ul');
+        ul.className = 'posts-list';
+
+        const globeSvg = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>';
+        const lockSvg = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>';
+
+        function closeAllAccessMenus() {
+          document.querySelectorAll('.access-dropdown.open').forEach(d => d.classList.remove('open'));
+        }
+        document.addEventListener('click', closeAllAccessMenus);
+
+        function updateAccessUI(wrap, isPrivate) {
+          const btn = wrap.querySelector('.access-pill');
+          const checks = wrap.querySelectorAll('.access-opt-check');
+          btn.classList.toggle('is-private', Boolean(isPrivate));
+          btn.innerHTML = isPrivate
+            ? `${lockSvg}<span>Ограниченный доступ</span><span class="chevron">▾</span>`
+            : `${globeSvg}<span>Открытый доступ</span><span class="chevron">▾</span>`;
+          if (checks[0]) checks[0].textContent = isPrivate ? '' : '✓';
+          if (checks[1]) checks[1].textContent = isPrivate ? '✓' : '';
+        }
+
+        function renderList(filterText = '') {
+          ul.innerHTML = '';
+          const q = filterText.toLowerCase().trim();
+          let count = 0;
+
+          posts.forEach(post => {
+            const temp = document.createElement('div');
+            temp.innerHTML = post.title || post.id;
+            const cleanTitle = temp.innerText.trim() || post.id;
+            const ownerName = Array.isArray(post.ownerLogin) ? post.ownerLogin.at(0) : (post.ownerLogin || 'неизвестен (старая запись)');
+
+            if (q && !cleanTitle.toLowerCase().includes(q) && !post.id.toLowerCase().includes(q) && !(adminMode && ownerName.toLowerCase().includes(q))) {
+              return;
+            }
+            count++;
+
+            const dateStr = formatRuDate(post.updatedAt);
+            const fullUrl = `${window.location.origin}/${post.id}`;
+            const authorPart = adminMode ? ` • Автор: <b>${ownerName}</b>` : '';
+            const eyeSvg = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+            const viewsPart = adminMode ? ` • <button type="button" class="blog-views-link" title="Показать историю просмотров">${eyeSvg}<span>${Number(post.views) || 0}</span></button>` : '';
+
+            const li = document.createElement('li');
+            li.className = 'post-item';
+            li.innerHTML = `
+              <div class="post-info">
+                <a href="/${post.id}">${cleanTitle}</a>
+                <div class="post-meta">/${post.id}${authorPart} • Изменено: ${dateStr}${viewsPart}</div>
+              </div>
+              <div class="post-actions">
+                <div class="access-wrap">
+                  <button class="access-pill" type="button"></button>
+                  <div class="access-dropdown">
+                    <div class="access-dropdown-header">Параметры доступа</div>
+                    <button class="access-option" type="button" data-private="false">
+                      <span class="access-opt-icon">${globeSvg}</span>
+                      <span class="access-opt-text">
+                        <div class="access-opt-title">Открытый доступ</div>
+                        <div class="access-opt-desc">Посмотреть сможет любой по ссылке</div>
+                      </span>
+                      <span class="access-opt-check"></span>
+                    </button>
+                    <button class="access-option" type="button" data-private="true">
+                      <span class="access-opt-icon">${lockSvg}</span>
+                      <span class="access-opt-text">
+                        <div class="access-opt-title">Ограниченный доступ</div>
+                        <div class="access-opt-desc">Статья доступна только вам</div>
+                      </span>
+                      <span class="access-opt-check"></span>
+                    </button>
+                  </div>
+                </div>
+                <button class="mini-btn copy-btn" type="button">Копировать ссылку</button>
+                <button class="mini-btn del del-btn" type="button">Удалить</button>
+              </div>
+            `;
+
+            const blogViewsBtn = li.querySelector('.blog-views-link');
+            if (blogViewsBtn) {
+              blogViewsBtn.addEventListener('click', () => {
+                openViewsModal(Number(post.views) || 0, Array.isArray(post.viewsLog) ? post.viewsLog : []);
+              });
+            }
+
+            const accessWrap = li.querySelector('.access-wrap');
+            const accessBtn = accessWrap.querySelector('.access-pill');
+            const dropdown = accessWrap.querySelector('.access-dropdown');
+            updateAccessUI(accessWrap, Boolean(post.isPrivate));
+
+            accessBtn.addEventListener('click', (e) => {
+              e.stopPropagation();
+              const wasOpen = dropdown.classList.contains('open');
+              closeAllAccessMenus();
+              if (!wasOpen) dropdown.classList.add('open');
+            });
+
+            dropdown.addEventListener('click', (e) => e.stopPropagation());
+
+            accessWrap.querySelectorAll('.access-option').forEach(opt => {
+              opt.addEventListener('click', async () => {
+                const nextState = opt.dataset.private === 'true';
+                closeAllAccessMenus();
+                if (Boolean(post.isPrivate) === nextState) return;
+
+                accessBtn.disabled = true;
+                try {
+                  await db.collection('articles').doc(post.id).update({
+                    isPrivate: nextState
+                  });
+                  post.isPrivate = nextState;
+                  updateAccessUI(accessWrap, nextState);
+                } catch (err) {
+                  alert('Ошибка изменения доступа: ' + err.message);
+                } finally {
+                  accessBtn.disabled = false;
+                }
+              });
+            });
+
+            li.querySelector('.copy-btn').addEventListener('click', (e) => {
+              navigator.clipboard?.writeText(fullUrl);
+              e.target.textContent = 'Скопировано!';
+              setTimeout(() => e.target.textContent = 'Копировать ссылку', 1500);
+            });
+
+            li.querySelector('.del-btn').addEventListener('click', async () => {
+              if (!confirm(`Точно удалить статью «${cleanTitle}» (/${post.id})?`)) return;
+              try {
+                await db.collection('articles').doc(post.id).delete();
+                const idx = posts.indexOf(post);
+                if (idx > -1) posts.splice(idx, 1);
+                if (posts.length === 0) {
+                  searchInput.remove();
+                  ul.remove();
+                  setStatus('Здесь пока пусто — вы ещё ничего не опубликовали.');
+                } else {
+                  renderList(searchInput.value);
+                }
+              } catch (err) {
+                alert('Ошибка удаления: ' + err.message);
+              }
+            });
+
+            ul.appendChild(li);
+          });
+
+          setStatus(`Показано статей: ${count} из ${posts.length}`);
+        }
+
+        searchInput.addEventListener('input', () => renderList(searchInput.value));
+        storyEl.after(searchInput, ul);
+        renderList();
+      } catch (e) {
+        setStatus('Ошибка загрузки списка: ' + e.message, 'error');
+      } finally {
+        hideLoader();
+      }
+    }
+
+    function parseFirestoreRestDoc(fields) {
+      if (!fields) return {};
+      const readVal = v => {
+        if (!v) return undefined;
+        if ('stringValue' in v) return v.stringValue;
+        if ('integerValue' in v) return Number(v.integerValue);
+        if ('doubleValue' in v) return Number(v.doubleValue);
+        if ('booleanValue' in v) return Boolean(v.booleanValue);
+        if ('arrayValue' in v) return (v.arrayValue.values || []).map(readVal);
+        if ('mapValue' in v) {
+          const obj = {};
+          const mapFields = v.mapValue.fields || {};
+          for (const mk of Object.keys(mapFields)) {
+            obj[mk] = readVal(mapFields[mk]);
+          }
+          return obj;
+        }
+        return undefined;
+      };
+      const out = {};
+      for (const k of Object.keys(fields)) {
+        out[k] = readVal(fields[k]);
+      }
+      return out;
+    }
+
+    async function loadArticle(slug) {
+      setEditable(false);
+      setStatus('Загрузка...');
+      try {
+        let exists = false;
+        let data = null;
+
+        try {
+          const restHost = 'https://firestore.' + 'googleapis.com';
+          const restUrl = `${restHost}/v1/projects/tgtype-a41aa/databases/(default)/documents/articles/${encodeURIComponent(slug)}`;
+          const res = await fetch(restUrl);
+          if (res.status === 200) {
+            const json = await res.json();
+            exists = true;
+            data = parseFirestoreRestDoc(json.fields);
+          } else if (res.status === 404) {
+            exists = false;
+          } else {
+            throw new Error('HTTP ' + res.status);
+          }
+        } catch (restErr) {
+          if (!db) throw restErr;
+          const snap = await db.collection('articles').doc(slug).get();
+          exists = snap.exists;
+          data = exists ? snap.data() : null;
+        }
+
+        if (exists && data) {
+          currentArticleOwner = data.ownerUid || null;
+          currentArticleIsPrivate = Boolean(data.isPrivate);
+
+          if (currentArticleIsPrivate) {
+            const hasAccess = currentUser && (currentUser.uid === currentArticleOwner || isAdmin(currentUser));
+            if (!hasAccess) {
+              lockedPrivateArticle = true;
+              titleEl.innerHTML = '';
+              storyEl.innerHTML = '';
+              metaInfoEl.style.display = 'none';
+              toolbarRow.style.display = 'none';
+              storyEl.style.display = 'none';
+              actionBtn.style.display = 'none';
+              titleEl.contentEditable = false;
+              editorHeader.classList.remove('is-editing');
+              updateFixedHeader();
+              updateTitleSideLabel();
+              titleEl.textContent = 'Доступ ограничен';
+              document.title = 'Доступ ограничен — tgtype';
+              setStatus('Автор закрыл доступ к этой публикации.', 'error');
+              return;
+            }
+          }
+
+          lockedPrivateArticle = false;
+          metaInfoEl.style.display = '';
+          toolbarRow.style.display = '';
+          storyEl.style.display = '';
+
+                    titleEl.innerHTML = data.title || '';
+          storyEl.innerHTML = data.story || '';
+          refreshAllCodeBlocks(true);
+          syncCodeEditableState();
+
+          currentArticleViews = Number(data.views) || 0;
+          currentArticleViewsLog = Array.isArray(data.viewsLog) ? data.viewsLog : [];
+
+          if (data.customMeta !== undefined) {
+            metaInfoEl.textContent = data.customMeta;
+          } else {
+            const rawAuthor = Array.isArray(data.ownerLogin) ? data.ownerLogin.at(0) : (data.ownerLogin || '');
+            const authorDisplay = rawAuthor || (data.author ? data.author.replace(/<[^>]*>/g, '').trim() : '');
+            renderMeta(authorDisplay, data.updatedAt);
+          }
+          document.title = titleEl.innerText || 'tgtype';
+          setStatus('');
+          setActionBtnText('РЕДАКТИРОВАТЬ');
+          isViewMode = true;
+
+          captureInitialSnapshot();
+          updateEditVisibility();
+          updateViewsBadge();
+          if (auth) trackArticleView(slug);
+        } else {
+          metaInfoEl.style.display = 'none';
+          toolbarRow.style.display = 'none';
+          storyEl.style.display = 'none';
+          actionBtn.style.display = 'none';
+          titleEl.contentEditable = false;
+          editorHeader.classList.remove('is-editing');
+          updateFixedHeader();
+          updateTitleSideLabel();
+          titleEl.textContent = 'Страница не найдена';
+          document.title = 'Страница не найдена — tgtype';
+          setStatus('Этой страницы не существует.', 'error');
+        }
+      } catch (e) {
+        setStatus('Ошибка загрузки: ' + e.message, 'error');
+      } finally {
+        hideLoader();
+      }
+    }
+        function finishEditingTransition(restoreInitial = false) {
+      const keepY = window.scrollY;
+      const storyTopBefore = storyEl.getBoundingClientRect().top;
+      if (restoreInitial) {
+        titleEl.innerHTML = initialSnapshot.title;
+        storyEl.innerHTML = initialSnapshot.story;
+        if (currentUser && isAdmin(currentUser)) {
+          metaInfoEl.textContent = initialSnapshot.meta;
+        }
+        refreshAllCodeBlocks(true);
+      }
+
+      const rowRect = toolbarRow.getBoundingClientRect();
+      const btnRect = actionBtn.getBoundingClientRect();
+      const shiftX = Math.max(0, rowRect.right - btnRect.right);
+
+      titleSideLabel.classList.add('is-hiding');
+      storyEl.classList.add('is-hiding-code-del');
+      toolbarRow.classList.add('is-collapsing');
+
+      if (editorHeader.classList.contains('is-fixed')) {
+        editorHeader.classList.add('is-closing');
+      }
+      const inMiddleClose = keepY > 95;
+      const publishWasHidden = getComputedStyle(actionBtn).display === 'none';
+      if (inMiddleClose) {
+        cancelEditBtn.style.transition = 'opacity 0.18s ease';
+        cancelEditBtn.style.opacity = '0';
+        setActionBtnText('РЕДАКТИРОВАТЬ');
+      } else if (publishWasHidden) {
+
+        cancelEditBtn.style.transition = 'opacity 0.24s ease';
+        cancelEditBtn.style.opacity = '0';
+        setActionBtnText('РЕДАКТИРОВАТЬ');
+      } else {
+        cancelEditBtn.classList.add('is-hiding');
+        actionBtn.classList.add('is-sliding-right');
+        if (shiftX > 0 && !editorHeader.classList.contains('is-fixed')) {
+          actionBtn.style.transform = `translateX(${shiftX}px)`;
+        }
+        actionBtn.classList.remove('is-saved');
+        setActionBtnText('РЕДАКТИРОВАТЬ');
+      }
+           savedBtnTimer = setTimeout(() => {
         savedBtnTimer = null;
         actionBtn.classList.remove('is-sliding-right', 'is-fading-in');
         themeBtn.classList.remove('is-fading-in');
@@ -29,10 +3628,179 @@
             themeBtn.classList.remove('is-fading-in');
             actionBtn.classList.remove('is-fading-in');
           }, 360);
+               const storyTopAfter = storyEl.getBoundingClientRect().top;
+          const diff = storyTopAfter - storyTopBefore;
+          if (Math.abs(diff) > 0.5) {
+            window.scrollBy({ top: diff, behavior: 'instant' });
+          }
+        }
+      }, 110);
+
+    }
+
+    cancelEditBtn.addEventListener('click', () => {
+      if (isViewMode || !currentSlug) return;
+      if (savedBtnTimer) clearTimeout(savedBtnTimer);
+      finishEditingTransition(true);
+    });
+
+    function setEditable(canEdit, animateOpen = false) {
+      titleEl.contentEditable = Boolean(canEdit);
+      storyEl.contentEditable = Boolean(canEdit);
+      syncCodeEditableState();
+      cancelEditBtn.style.display = (canEdit && currentSlug) ? 'inline-flex' : 'none';
+      toolbarRow.classList.toggle('view-mode', !canEdit);
+      if (canEdit) {
+        toolbarRow.classList.remove('hidden');
+        metaInfoEl.classList.remove('no-toolbar', 'can-edit-btn');
+      }
+      metaInfoEl.contentEditable = Boolean(canEdit && currentUser && isAdmin(currentUser));
+      editorHeader.classList.toggle('is-editing', canEdit);
+      updateFixedHeader(animateOpen);
+      updateTitleSideLabel();
+      updatePublishState();
+    }
+    function slugify(text) {
+      const map = {'а':'a','б':'b','в':'v','г':'g','д':'d','е':'e','ё':'yo','ж':'zh','з':'z','и':'i','й':'y','к':'k','л':'l','м':'m','н':'n','о':'o','п':'p','р':'r','с':'s','т':'t','у':'u','ф':'f','х':'h','ц':'ts','ч':'ch','ш':'sh','щ':'sch','ъ':'','ы':'y','ь':'','э':'e','ю':'yu','я':'ya'};
+      return text.toLowerCase().split('').map(c => map[c] || c).join('')
+        .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'post-' + Date.now();
+    }
+
+    actionBtn.addEventListener('click', async () => {
+      if (!db || !auth) return;
+      if (actionBtn.classList.contains('is-saved')) return;
+
+      if (!currentUser) {
+        setAuthMode(false);
+        authModal.style.display = 'flex';
+        loginInput.focus();
+        return;
+      }
+            if (isViewMode) {
+        const savedScrollY = window.scrollY;
+        const storyTopBefore = storyEl.getBoundingClientRect().top;
+        actionBtn.blur();
+        isViewMode = false;
+        const inMiddle = savedScrollY > 95;
+        if (!inMiddle) {
+          toolbarRow.classList.add('is-collapsing');
+          cancelEditBtn.classList.add('is-hiding');
+          titleSideLabel.classList.add('is-hiding');
+          storyEl.classList.add('is-hiding-code-del');
+        }
+        setEditable(true, inMiddle);
+        setActionBtnText('ОПУБЛИКОВАТЬ');
+        captureInitialSnapshot();
+        if (inMiddle) {
           const storyTopAfter = storyEl.getBoundingClientRect().top;
           const diff = storyTopAfter - storyTopBefore;
           if (Math.abs(diff) > 0.5) {
             window.scrollBy({ top: diff, behavior: 'instant' });
           }
         }
-      }, 240);
+
+        if (!inMiddle) {
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+              toolbarRow.classList.remove('is-collapsing');
+              cancelEditBtn.classList.remove('is-hiding');
+              titleSideLabel.classList.remove('is-hiding');
+              storyEl.classList.remove('is-hiding-code-del');
+            });
+          });
+        }
+        return;
+      }
+
+      if (!hasUnsavedChanges()) return;
+
+      const titleText = titleEl.innerText.trim();
+      if (!titleText) {
+        alert('Введите заголовок!');
+        return;
+      }
+            refreshAllCodeBlocks(false);
+      actionBtn.disabled = true;
+      actionBtn.classList.add('is-saving');
+      setActionBtnText('СОХРАНЕНИЕ...');
+      setStatus('')
+      try {
+        let targetSlug = currentSlug;
+        if (!targetSlug) {
+          let baseSlug = slugify(titleText);
+          targetSlug = baseSlug;
+          let counter = 1;
+          while ((await db.collection('articles').doc(targetSlug).get()).exists) {
+            targetSlug = `${baseSlug}${counter++}`;
+          }
+        }
+
+        const now = Date.now();
+        const payload = {
+          title: titleEl.innerHTML,
+          story: storyEl.innerHTML,
+          updatedAt: now
+        };
+
+        if (isAdmin(currentUser)) {
+          payload.customMeta = metaInfoEl.innerText.trim();
+        } else {
+          payload.customMeta = firebase.firestore.FieldValue.delete();
+        }
+
+        if (!currentArticleOwner) {
+          payload.ownerUid = currentUser.uid;
+          payload.ownerLogin = getLoginName(currentUser);
+          currentArticleOwner = currentUser.uid;
+        }
+
+        await db.collection('articles').doc(targetSlug).set(payload, { merge: true });
+        clearDraftFromLocal();
+
+        if (isAdmin(currentUser)) {
+          metaInfoEl.textContent = payload.customMeta;
+        } else {
+          renderMeta(payload.ownerLogin || getLoginName(currentUser), now);
+        }
+
+        currentSlug = targetSlug;
+        window.history.pushState({}, '', '/' + targetSlug);
+        document.title = titleText;
+        setStatus('');
+                // 1. Заливаем кнопку зелёным слева направо
+        actionBtn.classList.remove('is-saving');
+        actionBtn.disabled = false;
+        setActionBtnText('СОХРАНЕНО');
+        actionBtn.classList.add('is-saved');
+        if (savedBtnTimer) clearTimeout(savedBtnTimer);
+        savedBtnTimer = setTimeout(() => {
+          finishEditingTransition(false);
+        }, 1100);
+
+      } catch (e) {
+        actionBtn.classList.remove('is-saving');
+        setActionBtnText('ОПУБЛИКОВАТЬ');
+        setStatus('Ошибка публикации: ' + e.message, 'error');
+        updatePublishState();
+      }
+
+    });
+  </script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
