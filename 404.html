@@ -1255,8 +1255,7 @@
         }
       } catch (e) {}
     }
-
-            function updateFixedHeader() {
+    function updateFixedHeader() {
       const scrolled = window.scrollY > 28;
       themeBtn.classList.toggle('is-scrolled', scrolled);
       actionBtn.classList.toggle('is-scrolled', scrolled && isViewMode);
@@ -1264,10 +1263,19 @@
 
 
       if (!editorHeader.classList.contains('is-editing')) {
-        editorHeader.classList.remove('is-fixed');
-        headerSpacer.style.display = 'none';
+        if (editorHeader.classList.contains('is-fixed')) {
+          const spacerH = parseFloat(headerSpacer.style.height) || 0;
+          editorHeader.classList.remove('is-fixed');
+          headerSpacer.style.display = 'none';
+          if (spacerH > 0 && window.scrollY > 0) {
+            window.scrollBy(0, -spacerH);
+          }
+        } else {
+          headerSpacer.style.display = 'none';
+        }
         return;
       }
+
       const triggerY = 28;
       if (window.scrollY > triggerY) {
         if (!editorHeader.classList.contains('is-fixed')) {
@@ -2870,14 +2878,11 @@
         alert('Введите заголовок!');
         return;
       }
-
       refreshAllCodeBlocks(true);
       actionBtn.disabled = true;
       actionBtn.classList.add('is-saving');
       actionBtn.innerHTML = '<span class="btn-mini-spin"></span><span>СОХРАНЕНИЕ...</span>';
       setStatus('');
-
-
       try {
         let targetSlug = currentSlug;
         if (!targetSlug) {
@@ -2921,13 +2926,11 @@
         window.history.pushState({}, '', '/' + targetSlug);
         document.title = titleText;
         setStatus('');
-
-                // 1. Заливаем кнопку зелёным слева направо с галочкой
+        // 1. Заливаем кнопку зелёным слева направо
         actionBtn.classList.remove('is-saving');
         actionBtn.disabled = false;
-        actionBtn.textContent = '✓ СОХРАНЕНО';
+        actionBtn.textContent = 'СОХРАНЕНО';
         actionBtn.classList.add('is-saved');
-
         if (savedBtnTimer) clearTimeout(savedBtnTimer);
         savedBtnTimer = setTimeout(() => {
           // 2. Зелёная шторка плавно уезжает вправо, а кнопка на том же месте переходит в РЕДАКТИРОВАТЬ
