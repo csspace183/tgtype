@@ -2041,10 +2041,68 @@
       quoteBtn?.classList.toggle('active', Boolean(el?.closest('blockquote')));
       linkBtn?.classList.toggle('active', Boolean(el?.closest('a')));
     }
+    function updateSelectedCodeBlocks() {
+      const sel = window.getSelection();
+      const blocks = storyEl.querySelectorAll('.tg-code-block');
+      if (!sel || !sel.rangeCount || sel.isCollapsed) {
+        blocks.forEach(b => b.classList.remove('is-selected-block'));
+        return;
+      }
+      const range = sel.getRangeAt(0);
+      const insideSingleCode = range.commonAncestorContainer?.nodeType === 1
+        ? range.commonAncestorContainer.closest('.tg-code-block')
+        : range.commonAncestorContainer?.parentElement?.closest('.tg-code-block');
 
-    document.addEventListener('selectionchange', updateActiveFormatButtons);
-    storyEl.addEventListener('keyup', updateActiveFormatButtons);
-    storyEl.addEventListener('mouseup', updateActiveFormatButtons);
+      blocks.forEach(b => {
+        if (insideSingleCode === b) {
+          b.classList.remove('is-selected-block');
+        } else {
+          let intersects = false;
+          try { intersects = range.intersectsNode(b); } catch (e) {}
+          b.classList.toggle('is-selected-block', intersects);
+        }
+      });
+    }
+
+    document.addEventListener('selectionchange', () => {
+      updateActiveFormatButtons();
+      updateSelectedCodeBlocks();
+    });
+    storyEl.addEventListener('keyup', () => {
+      updateActiveFormatButtons();
+      updateSelectedCodeBlocks();
+    });
+    storyEl.addEventListener('mouseup', () => {
+      updateActiveFormatButtons();
+      updateSelectedCodeBlocks();
+    });
+
+    storyEl.addEventListener('copy', e => {
+      const selectedBlocks = Array.from(storyEl.querySelectorAll('.tg-code-block.is-selected-block'));
+      if (selectedBlocks.length === 0) return;
+      const sel = window.getSelection();
+      if (!sel || !sel.rangeCount) return;
+
+      const range = sel.getRangeAt(0);
+      const container = document.createElement('div');
+      container.appendChild(range.cloneContents());
+
+      // Убеждаемся, что каждая затронутая карточка CODE скопирована целиком, а не обрезанной частью
+      selectedBlocks.forEach((origBlock, idx) => {
+        const partial = container.querySelectorAll('.tg-code-block')[idx];
+        const fullClone = origBlock.cloneNode(true);
+        fullClone.classList.remove('is-selected-block');
+        if (partial) {
+          partial.replaceWith(fullClone);
+        } else {
+          container.appendChild(fullClone);
+        }
+      });
+
+      e.preventDefault();
+      e.clipboardData.setData('text/html', container.innerHTML);
+      e.clipboardData.setData('text/plain', container.innerText);
+    });
 
     clearFormatBtn.addEventListener('mousedown', e => e.preventDefault());
     clearFormatBtn.addEventListener('click', () => {
