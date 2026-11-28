@@ -806,7 +806,32 @@
       opacity: 0;
       pointer-events: none;
     }
-.tg-code-body {
+    .tg-code-body {
+      position: relative;
+      margin: 4px 12px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--code-border);
+      background: var(--code-inner-bg);
+    }
+    html.dark .tg-code-body {
+      border-color: #4a4e57;
+    }
+    #story .tg-code-block.is-collapsed .tg-code-body pre {
+      max-height: 58px;
+      overflow: hidden;
+      border-radius: 7px;
+    }
+    #story .tg-code-block.is-collapsed .tg-code-body::after {
+      content: "";
+      position: absolute;
+      left: 3px;
+      right: 3px;
+      bottom: 3px;
+      height: 18px;
+      border-radius: 0 0 5px 5px;
+      background: linear-gradient(to bottom, transparent, var(--code-inner-bg));
+      pointer-events: none;
+    }
     #story .tg-code-block pre {
       margin: 0;
       padding: 10px 14px;
