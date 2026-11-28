@@ -1435,12 +1435,14 @@
             editorHeader.classList.add('is-fixed');
           }
         }
-      } else {
+           } else {
         editorHeader.classList.remove('is-fixed', 'is-opening');
         headerSpacer.style.display = 'none';
       }
+    }
 
     window.addEventListener('scroll', updateFixedHeader, { passive: true });
+
     window.addEventListener('resize', () => {
       if (editorHeader.classList.contains('is-fixed')) {
         editorHeader.classList.remove('is-fixed');
