@@ -545,12 +545,17 @@
       transition: transform 0.12s ease;
     }
     .color-swatch:hover { transform: scale(1.18); }
-    #story {
+       #story {
       font-family: Georgia, "Times New Roman", Times, serif;
       font-size: 18px;
       line-height: 1.58;
       min-height: 350px;
+      padding-top: 24px;
     }
+    .editor-header.is-editing + #story {
+      padding-top: 0;
+    }
+
     #story p, #story div { margin: 0; line-height: 1.58; }
     #story h3 {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -1360,25 +1365,20 @@
         return;
       }
 
-      const triggerY = 28;
+            const triggerY = 28;
       if (window.scrollY > triggerY) {
         if (!editorHeader.classList.contains('is-fixed')) {
-          if (animateOpen) {
-            // Если нажали РЕДАКТИРОВАТЬ в середине статьи: не сдвигаем экран, а плавно выдвигаем панель сверху вниз
-            headerSpacer.style.display = 'none';
-            editorHeader.classList.add('is-fixed', 'is-opening');
+          headerSpacer.style.display = 'none';
+          editorHeader.classList.add('is-fixed', 'is-opening');
+          requestAnimationFrame(() => {
             requestAnimationFrame(() => {
-              requestAnimationFrame(() => {
-                editorHeader.classList.remove('is-opening');
-              });
+              editorHeader.classList.remove('is-opening');
             });
-          } else {
-            headerSpacer.style.height = editorHeader.offsetHeight + 'px';
-            headerSpacer.style.display = 'block';
-            editorHeader.classList.add('is-fixed');
-          }
+          });
         }
-      } else {
+      }
+
+      else {
         editorHeader.classList.remove('is-fixed', 'is-opening');
         headerSpacer.style.display = 'none';
       }
