@@ -76,13 +76,18 @@
     .new-link { font-size: 13px; color: var(--subtle); text-decoration: none; }
     .new-link:hover { color: var(--text); }
 
-    /* Кнопка переключения темы в правом верхнем углу */
+   /* Кнопка переключения темы всегда в правом верхнем углу при прокрутке */
     .theme-btn {
-      width: 32px;
-      height: 32px;
+      position: fixed;
+      top: 16px;
+      right: 20px;
+      z-index: 95;
+      width: 34px;
+      height: 34px;
       border-radius: 50%;
       border: 1px solid var(--border);
       background: var(--surface);
+      box-shadow: 0 2px 10px var(--shadow);
       cursor: pointer;
       display: inline-flex;
       align-items: center;
@@ -405,6 +410,14 @@
     #story li:last-child { margin-bottom: 0; }
     #story img { max-width: 100%; height: auto; display: block; margin: 18px 0; border-radius: 4px; }
     #story a { color: var(--link); text-decoration: underline; cursor: pointer; }
+    html.dark #story [style*="color: rgb(34, 34, 34)"],
+    html.dark #story [style*="color: rgb(0, 0, 0)"],
+    html.dark #story [style*="color:#222"],
+    html.dark #story [style*="color: #222"],
+    html.dark #story [style*="color:#000"],
+    html.dark #story [style*="color: #000"] {
+      color: var(--text) !important;
+    }
 
     /* Блок кода с автоподсветкой и нижней панелью как на скриншоте */
     #story .tg-code-block {
@@ -810,8 +823,7 @@
             <button class="tool-btn" type="button" data-cmd="italic" title="Курсив">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="4" x2="10" y2="4"/><line x1="14" y1="20" x2="5" y2="20"/><line x1="15" y1="4" x2="9" y2="20"/></svg>
             </button>
-            <button class="tool-btn" type="button" data-cmd="strikeThrough" title="Зачёркнутый">
-            <button class="tool-btn" type="button" data-cmd="strikeThrough" title="Зачёркнутый">
+                        <button class="tool-btn" type="button" data-cmd="strikeThrough" title="Зачёркнутый">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4H9a3 3 0 0 0-2.83 4"/><path d="M14 12a4 4 0 0 1 0 8H6"/><line x1="4" y1="12" x2="20" y2="12"/></svg>
             </button>
             <div class="color-wrap" id="colorWrap">
