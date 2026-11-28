@@ -25,21 +25,44 @@
     .new-link { font-size: 13px; color: #999; text-decoration: none; }
     .new-link:hover { color: #222; }
     .publish-btn {
+      position: relative;
+      overflow: hidden;
+      z-index: 1;
       background: #fff;
       border: 2px solid #222;
       border-radius: 20px;
       padding: 6px 18px;
       font-weight: 700;
-      font-size: 13px;
+      font-size: 12px;
       letter-spacing: 0.5px;
       cursor: pointer;
-      transition: 0.2s;
+      transition: color 0.25s ease, border-color 0.25s ease, background-color 0.25s ease, opacity 0.2s ease;
       white-space: nowrap;
       flex-shrink: 0;
     }
-    .publish-btn:hover:not(:disabled) { background: #222; color: #fff; }
-    .publish-btn:disabled { opacity: 0.35; cursor: default; }
+    .publish-btn::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: #28a745;
+      transform: scaleX(0);
+      transform-origin: left center;
+      transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+      z-index: -1;
+    }
+    .publish-btn:hover:not(:disabled):not(.is-saved) { background: #222; color: #fff; }
+    .publish-btn:disabled:not(.is-saved) { opacity: 0.35; cursor: default; }
     .publish-btn.is-saving { opacity: 0.5; cursor: wait; }
+    .publish-btn.is-saved {
+      border-color: #28a745;
+      color: #fff;
+      opacity: 1;
+      cursor: default;
+    }
+    .publish-btn.is-saved::before {
+      transform: scaleX(1);
+    }
+
     .editable { outline: none; width: 100%; box-sizing: border-box; word-wrap: break-word; }
     .editable:empty:before {
       content: attr(data-placeholder);
@@ -144,7 +167,7 @@
       padding-right: 14px;
       border-right: 1px solid #e0e0e0;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      font-size: 28px;
+      font-size: 24px;
       font-weight: 400;
       color: #bbb;
       pointer-events: none;
@@ -153,13 +176,13 @@
       transition: opacity 0.15s ease;
     }
     .side-label.visible { opacity: 1; }
-    @media (max-width: 900px) {
+    @media (max-width: 960px) {
       .side-label { display: none; }
     }
     #metaInfo { font-size: 14px; color: #888; margin-bottom: 20px; min-height: 18px; }
     #metaInfo.no-toolbar, #metaInfo.can-edit-btn { margin-bottom: 28px; }
 
-    /* Строка с панелью инструментов и кнопкой PUBLISH вровень */
+    /* Строка с панелью инструментов и кнопкой ОПУБЛИКОВАТЬ вровень */
     .toolbar-row {
       display: flex;
       justify-content: space-between;
@@ -284,7 +307,7 @@
     #story img { max-width: 100%; height: auto; display: block; margin: 18px 0; border-radius: 4px; }
     #story a { color: #0066cc; text-decoration: underline; cursor: pointer; }
 
-    /* Встроенный плеер Яндекс Музыки */
+    /* Встроенный плеер */
     #story .tg-ymusic-embed {
       position: relative;
       width: 100%;
@@ -343,8 +366,17 @@
       align-items: center;
       gap: 5px;
       font-size: 12px;
-      color: #aaa;
-      user-select: none;
+      color: #888;
+      background: none;
+      border: 1px solid #eee;
+      border-radius: 14px;
+      padding: 4px 10px;
+      cursor: pointer;
+      transition: 0.15s ease;
+    }
+    .views-badge:hover {
+      border-color: #222;
+      color: #222;
     }
 
     /* Список /blog */
@@ -358,17 +390,71 @@
       display: flex; justify-content: space-between; align-items: center;
       padding: 14px 0; border-bottom: 1px solid #eee; gap: 15px;
     }
- .post-info a { font-family: Georgia, serif; font-size: 20px; font-weight: 700; color: #222; text-decoration: none; }
+    @media (max-width: 680px) {
+      .post-item { flex-direction: column; align-items: flex-start; }
+    }
+    .post-info a { font-family: Georgia, serif; font-size: 20px; font-weight: 700; color: #222; text-decoration: none; }
     .post-info a:hover { color: #0066cc; }
     .post-meta { font-size: 12px; color: #888; margin-top: 4px; }
-    .post-actions { display: flex; gap: 6px; flex-shrink: 0; }
+    .blog-views-link {
+  cursor: pointer;
+  border-bottom: 1px dashed #bbb;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+.blog-views-link:hover {
+  color: #222;
+  border-bottom-color: #222;
+}
+    .post-actions { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; flex-shrink: 0; }
     .mini-btn {
       background: #fff; border: 1px solid #ddd; border-radius: 15px;
       padding: 5px 11px; font-size: 12px; cursor: pointer; color: #333;
       white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: 0.15s ease;
     }
     .mini-btn:hover { border-color: #222; }
     .mini-btn.del:hover { border-color: #d9534f; color: #d9534f; }
+
+    /* Круглая капсульная кнопка доступа как в YouTube Studio */
+    .access-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid #d5e8d8;
+      background: #f2fbf4;
+      color: #1e7e34;
+      transition: all 0.18s ease;
+      white-space: nowrap;
+    }
+    .access-pill:hover {
+      border-color: #1e7e34;
+    }
+    .access-pill .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #28a745;
+    }
+    .access-pill.is-private {
+      border-color: #e2e2e2;
+      background: #f4f4f4;
+      color: #555;
+    }
+    .access-pill.is-private:hover {
+      border-color: #222;
+      color: #222;
+    }
+    .access-pill.is-private .dot {
+      background: #777;
+    }
 
     /* Всплывающая плашка ввода ссылки */
     .link-popover {
@@ -387,7 +473,7 @@
       border: none;
       outline: none;
       color: #fff;
-      font-size: 16px;
+      font-size: 15px;
       width: 280px;
       font-family: inherit;
     }
@@ -403,10 +489,10 @@
     }
     .link-popover button:hover { color: #fff; }
 
-    /* Модальное окно входа/регистрации */
+    /* Модальные окна */
     .modal-bg {
       display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45);
-      justify-content: center; align-items: center; z-index: 100;
+      justify-content: center; align-items: center; z-index: 100; padding: 16px;
     }
     .modal-box {
       background: #fff; padding: 24px; border-radius: 12px; width: 100%; max-width: 310px;
@@ -425,6 +511,41 @@
     .btn-primary { background: #222; color: #fff; border: none; }
     .btn-secondary { background: #fff; color: #222; border: 1px solid #222; }
     .modal-close { display: block; width: 100%; margin-top: 10px; background: none; border: none; color: #999; font-size: 12px; cursor: pointer; }
+
+    /* Список просмотров в модальном окне */
+    .views-modal-box {
+      max-width: 380px;
+    }
+    .views-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      max-height: 290px;
+      overflow-y: auto;
+      border-top: 1px solid #eee;
+    }
+    .views-list li {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 9px 2px;
+      border-bottom: 1px solid #f2f2f2;
+      font-size: 13px;
+      gap: 10px;
+    }
+    .views-user {
+      font-weight: 600;
+      color: #222;
+    }
+    .views-user.is-guest {
+      font-weight: 400;
+      color: #777;
+    }
+    .views-date {
+      font-size: 12px;
+      color: #999;
+      white-space: nowrap;
+    }
   </style>
 </head>
 <body>
@@ -446,10 +567,10 @@
         </div>
 
         <div class="title-wrap">
-          <span id="titleSideLabel" class="side-label">Title</span>
-          <div id="title" class="editable" contenteditable="true" data-placeholder="Title"></div>
+          <span id="titleSideLabel" class="side-label">Заголовок</span>
+          <div id="title" class="editable" contenteditable="true" data-placeholder="Заголовок"></div>
         </div>
-        <div id="metaInfo" class="editable" data-placeholder="Author"></div>
+        <div id="metaInfo" class="editable" data-placeholder="Автор"></div>
 
         <div id="toolbarRow" class="toolbar-row">
           <div id="toolbar" class="toolbar">
@@ -496,33 +617,40 @@
             <button id="photoBtn" class="tool-btn" type="button">📷 Фото</button>
             <input type="file" id="fileInput" accept="image/*" style="display:none">
           </div>
-          <button id="actionBtn" class="publish-btn" type="button" disabled>PUBLISH</button>
+          <button id="actionBtn" class="publish-btn" type="button" disabled>ОПУБЛИКОВАТЬ</button>
         </div>
       </div>
     </div>
 
-    <div id="story" class="editable" contenteditable="true" data-placeholder="Your story... (можно вставлять фото и HTML/ссылки Яндекс Музыки через Ctrl+V)"></div>
+    <div id="story" class="editable" contenteditable="true" data-placeholder="Ваша история... (можно вставлять фото и виджеты через Ctrl+V)"></div>
     <div id="status" class="status"></div>
 
     <div class="footer-bar">
       <div class="auth-bar">
         <button id="authBtn" type="button">Войти</button>
-        <a href="/start" id="faqLink">FAQ</a>
+        <a href="/start" id="faqLink">Справка</a>
       </div>
-      <div id="viewsBadge" class="views-badge" title="Уникальные просмотры">
+      <button id="viewsBadge" class="views-badge" type="button" title="Нажмите, чтобы посмотреть статистику просмотров">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
         <span id="viewsCount">0</span>
-      </div>
+      </button>
     </div>
   </div>
 
-  <!-- Всплывающее поле ввода ссылки -->
   <div id="linkPopover" class="link-popover">
-    <input type="text" id="linkUrlInput" placeholder="Paste or type a link...">
+    <input type="text" id="linkUrlInput" placeholder="Вставьте или введите ссылку...">
     <button type="button" id="closeLinkPopover" title="Закрыть">✕</button>
   </div>
 
-  <!-- Окно входа и регистрации -->
+  <div id="viewsModal" class="modal-bg">
+    <div class="modal-box views-modal-box">
+      <h3 id="viewsModalTitle">Просмотры</h3>
+      <ul id="viewsList" class="views-list"></ul>
+      <div id="viewsEmptyMsg" style="font-size:13px; color:#888; padding:10px 0; display:none;"></div>
+      <button id="closeViewsModalBtn" class="modal-close" type="button">Закрыть</button>
+    </div>
+  </div>
+
   <div id="authModal" class="modal-bg">
     <div class="modal-box">
       <h3 id="modalTitle">Вход</h3>
@@ -536,7 +664,7 @@
       </form>
       <div style="text-align:center; margin-top:12px; font-size:12px; color:#777;">
         <span id="switchHint">Нет аккаунта?</span>
- <button id="switchModeBtn" type="button" style="background:none; border:none; color:#222; font-weight:600; cursor:pointer; text-decoration:underline; padding:0; font-size:12px;">Регистрация</button>
+        <button id="switchModeBtn" type="button" style="background:none; border:none; color:#222; font-weight:600; cursor:pointer; text-decoration:underline; padding:0; font-size:12px;">Регистрация</button>
       </div>
       <button id="closeModalBtn" class="modal-close" type="button">Закрыть</button>
     </div>
@@ -573,7 +701,10 @@
     const authBtn = document.getElementById('authBtn');
     const viewsBadge = document.getElementById('viewsBadge');
     const viewsCountEl = document.getElementById('viewsCount');
-    const adminBlogLink = document.getElementById('adminBlogLink');
+    const viewsModal = document.getElementById('viewsModal');
+    const viewsModalTitle = document.getElementById('viewsModalTitle');
+    const viewsList = document.getElementById('viewsList');
+    const viewsEmptyMsg = document.getElementById('viewsEmptyMsg');
     const authModal = document.getElementById('authModal');
     const loginInput = document.getElementById('loginInput');
     const passInput = document.getElementById('passInput');
@@ -594,8 +725,14 @@
     let currentUser = null;
     let currentArticleOwner = null;
     let currentArticleViews = 0;
+    let currentArticleViewsLog = [];
+    let currentArticleIsPrivate = false;
+    let lockedPrivateArticle = false;
     let viewCountedForSlug = false;
     let savedLinkRange = null;
+    let savedBtnTimer = null;
+    let logoutMsgTimer = null;
+
     const pathSlug = window.location.pathname.replace(/^\/+|\/+$/g, '');
     let currentSlug = pathSlug;
     let isViewMode = false;
@@ -628,6 +765,10 @@
     }
 
     function updatePublishState() {
+      if (actionBtn.classList.contains('is-saved')) {
+        actionBtn.disabled = false;
+        return;
+      }
       if (isViewMode) {
         actionBtn.disabled = false;
         return;
@@ -677,16 +818,17 @@
       updatePublishState();
     });
     metaInfoEl.addEventListener('input', updatePublishState);
+    function formatRuDate(timestamp) {
+      if (!timestamp) return '—';
+      return new Date(timestamp).toLocaleString('ru-RU', {
+        day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
+      });
+    }
 
     function renderMeta(login, timestamp) {
       const parts = [];
       if (login) parts.push(login);
-      if (timestamp) {
-        const dateStr = new Date(timestamp).toLocaleString('ru-RU', {
-          day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
-        });
-        parts.push(dateStr);
-      }
+      if (timestamp) parts.push(formatRuDate(timestamp));
       metaInfoEl.textContent = parts.join(' • ');
     }
 
@@ -746,7 +888,8 @@
         colorPopover.classList.remove('open');
       }
     });
-document.querySelectorAll('.tool-btn[data-cmd]').forEach(btn => {
+
+    document.querySelectorAll('.tool-btn[data-cmd]').forEach(btn => {
       btn.addEventListener('mousedown', e => e.preventDefault());
       btn.addEventListener('click', () => {
         colorPopover.classList.remove('open');
@@ -760,7 +903,6 @@ document.querySelectorAll('.tool-btn[data-cmd]').forEach(btn => {
           const node = sel.anchorNode;
           const el = node?.nodeType === 3 ? node.parentElement : node;
 
-          // 1. Если строка уже заголовок/цитата — превращаем обратно в обычный абзац <p> через историю Undo
           const existingBlock = el?.closest(arg.toLowerCase());
           if (existingBlock && storyEl.contains(existingBlock)) {
             const range = document.createRange();
@@ -773,7 +915,6 @@ document.querySelectorAll('.tool-btn[data-cmd]').forEach(btn => {
             return;
           }
 
-          // 2. Ищем текущий строчный блок (p, div, blockquote, h3) внутри #story
           let lineBlock = el?.closest('p, div, blockquote, h3');
           if (lineBlock === storyEl) lineBlock = null;
 
@@ -789,7 +930,6 @@ document.querySelectorAll('.tool-btn[data-cmd]').forEach(btn => {
             return;
           }
 
-          // 3. Если текст лежит прямо в корне #story без <p>/<div> — выделяем строку и оборачиваем через execCommand
           if (node && storyEl.contains(node)) {
             let startNode = node;
             while (startNode.previousSibling && startNode.previousSibling.nodeName !== 'BR' && !/^(P|DIV|H3|BLOCKQUOTE|UL)$/i.test(startNode.previousSibling.nodeName)) {
@@ -916,7 +1056,6 @@ document.querySelectorAll('.tool-btn[data-cmd]').forEach(btn => {
     });
 
     closeLinkPopover.addEventListener('click', hideLinkPopover);
-
     photoBtn.addEventListener('click', () => {
       colorPopover.classList.remove('open');
       fileInput.click();
@@ -958,7 +1097,6 @@ document.querySelectorAll('.tool-btn[data-cmd]').forEach(btn => {
       updatePublishState();
     }
 
-    // Встраивание виджета только по готовому HTML-коду <iframe>
     function parseYandexMusicEmbed(text) {
       const trimmed = (text || '').trim();
       const iframeMatch = trimmed.match(/<iframe\b[^>]*\bsrc=["'](https?:\/\/[^"']+)["'][^>]*>/i);
@@ -1005,7 +1143,7 @@ document.querySelectorAll('.tool-btn[data-cmd]').forEach(btn => {
       }
 
       const newRange = document.createRange();
-newRange.setStart(afterP, 0);
+      newRange.setStart(afterP, 0);
       newRange.collapse(true);
       const sel = window.getSelection();
       sel.removeAllRanges();
@@ -1096,7 +1234,6 @@ newRange.setStart(afterP, 0);
       updatePublishState();
     });
 
-    // Вставка в заголовок строго чистым текстом в одну строку
     titleEl.addEventListener('paste', e => {
       e.preventDefault();
       const text = (e.clipboardData || window.clipboardData).getData('text/plain').replace(/\r?\n/g, ' ');
@@ -1105,7 +1242,6 @@ newRange.setStart(afterP, 0);
       updatePublishState();
     });
 
-    // Очистка вставляемого HTML: сохраняем базовое форматирование и цвета текста, но убираем фоны и чужие стили
     function sanitizePastedHtml(rawHtml) {
       const doc = new DOMParser().parseFromString(rawHtml, 'text/html');
       const allowedTags = new Set([
@@ -1175,7 +1311,6 @@ newRange.setStart(afterP, 0);
       return container.innerHTML;
     }
 
-    // Вставка в основной текст: картинки сжимаем, HTML-виджеты превращаем в плеер, форматирование чистим от фонов
     storyEl.addEventListener('paste', e => {
       const cd = e.clipboardData || window.clipboardData;
       const items = cd ? cd.items : [];
@@ -1260,8 +1395,46 @@ newRange.setStart(afterP, 0);
       }
     }
 
+    function openViewsModal() {
+      viewsModalTitle.textContent = `Просмотры (${currentArticleViews})`;
+      viewsList.innerHTML = '';
+
+      if (!currentArticleViewsLog || currentArticleViewsLog.length === 0) {
+        viewsEmptyMsg.style.display = 'block';
+        viewsEmptyMsg.textContent = currentArticleViews > 0
+          ? 'Детальная история ведётся только для новых просмотров.'
+          : 'Пока никто не просматривал эту статью.';
+      } else {
+        viewsEmptyMsg.style.display = 'none';
+        const sorted = [...currentArticleViewsLog].sort((a, b) => (b.at || 0) - (a.at || 0));
+        sorted.forEach(item => {
+          const li = document.createElement('li');
+          const who = item.user ? item.user : 'Гость';
+          const isGuest = !item.user;
+          li.innerHTML = `<span class="views-user${isGuest ? ' is-guest' : ''}">${who}</span><span class="views-date">${formatRuDate(item.at)}</span>`;
+          viewsList.appendChild(li);
+        });
+      }
+
+      viewsModal.style.display = 'flex';
+    }
+
+    viewsBadge.addEventListener('click', () => {
+      if (currentUser && isAdmin(currentUser)) {
+        openViewsModal();
+      }
+    });
+
+    document.getElementById('closeViewsModalBtn').addEventListener('click', () => {
+      viewsModal.style.display = 'none';
+    });
+
+    viewsModal.addEventListener('click', e => {
+      if (e.target === viewsModal) viewsModal.style.display = 'none';
+    });
+
     async function trackArticleView(slug) {
-      if (!db || !slug || viewCountedForSlug || !isViewMode) return;
+      if (!db || !slug || viewCountedForSlug || !isViewMode || lockedPrivateArticle) return;
       if (currentUser && (currentUser.uid === currentArticleOwner || isAdmin(currentUser))) return;
 
       const key = 'tgtype_v_' + slug;
@@ -1269,18 +1442,22 @@ newRange.setStart(afterP, 0);
 
       viewCountedForSlug = true;
       localStorage.setItem(key, '1');
+      const viewerLogin = currentUser ? getLoginName(currentUser) : '';
+      const entry = { user: viewerLogin, at: Date.now() };
+
       try {
         await db.collection('articles').doc(slug).update({
-          views: firebase.firestore.FieldValue.increment(1)
+          views: firebase.firestore.FieldValue.increment(1),
+          viewsLog: firebase.firestore.FieldValue.arrayUnion(entry)
         });
         currentArticleViews += 1;
+        currentArticleViewsLog.push(entry);
         updateViewsBadge();
       } catch (e) {
         localStorage.removeItem(key);
         viewCountedForSlug = false;
       }
     }
-
     window.addEventListener('DOMContentLoaded', () => {
       if (typeof firebase !== 'undefined') {
         firebase.initializeApp({
@@ -1299,9 +1476,18 @@ newRange.setStart(afterP, 0);
           const login = getLoginName(user);
 
           if (user) {
+            if (logoutMsgTimer) {
+              clearTimeout(logoutMsgTimer);
+              logoutMsgTimer = null;
+            }
             authBtn.textContent = `Выйти (${login})`;
-          } else {
-  authBtn.textContent = 'Войти';
+          } else if (!logoutMsgTimer) {
+            authBtn.textContent = 'Войти';
+          }
+
+          if (lockedPrivateArticle && currentSlug) {
+            loadArticle(currentSlug);
+            return;
           }
 
           updateEditVisibility();
@@ -1364,17 +1550,30 @@ newRange.setStart(afterP, 0);
         passInput.setAttribute('autocomplete', 'current-password');
         passInput.placeholder = 'Пароль';
       }
-    }  
+    }
 
     switchModeBtn.addEventListener('click', () => {
       setAuthMode(!isRegMode);
       loginInput.focus();
     });
 
-    authBtn.addEventListener('click', () => {
+    authBtn.addEventListener('click', async () => {
       if (currentUser) {
-        auth.signOut();
+        await auth.signOut();
+        authBtn.textContent = 'Вы вышли из аккаунта';
+        if (logoutMsgTimer) clearTimeout(logoutMsgTimer);
+        logoutMsgTimer = setTimeout(() => {
+          logoutMsgTimer = null;
+          if (!currentUser) {
+            authBtn.textContent = 'Войти';
+          }
+        }, 2200);
       } else {
+        if (logoutMsgTimer) {
+          clearTimeout(logoutMsgTimer);
+          logoutMsgTimer = null;
+          authBtn.textContent = 'Войти';
+        }
         setAuthMode(false);
         authModal.style.display = 'flex';
         loginInput.focus();
@@ -1486,7 +1685,6 @@ newRange.setStart(afterP, 0);
       metaInfoEl.classList.toggle('no-toolbar', !canEdit);
       metaInfoEl.classList.toggle('can-edit-btn', canEdit);
     }
-
     async function loadBlogPage() {
       metaInfoEl.style.display = 'none';
       toolbarRow.style.display = 'none';
@@ -1541,6 +1739,16 @@ newRange.setStart(afterP, 0);
         const ul = document.createElement('ul');
         ul.className = 'posts-list';
 
+        function updateAccessBtnUI(btn, isPrivate) {
+          btn.classList.toggle('is-private', Boolean(isPrivate));
+          btn.innerHTML = isPrivate
+            ? '<span class="dot"></span><span>Доступ: Закрыт</span>'
+            : '<span class="dot"></span><span>Доступ: Открыт</span>';
+          btn.title = isPrivate
+            ? 'Видно только вам и администратору. Нажмите, чтобы открыть для всех.'
+            : 'Доступно всем по ссылке. Нажмите, чтобы закрыть доступ.';
+        }
+
         function renderList(filterText = '') {
           ul.innerHTML = '';
           const q = filterText.toLowerCase().trim();
@@ -1557,12 +1765,10 @@ newRange.setStart(afterP, 0);
             }
             count++;
 
-            const dateStr = post.updatedAt ? new Date(post.updatedAt).toLocaleString('ru-RU', {
-              day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
-            }) : '—';
+            const dateStr = formatRuDate(post.updatedAt);
             const fullUrl = `${window.location.origin}/${post.id}`;
             const authorPart = adminMode ? ` • Автор: <b>${ownerName}</b>` : '';
- const viewsPart = adminMode ? ` • 👁 ${Number(post.views) || 0}` : '';
+            const viewsPart = adminMode ? ` • 👁 ${Number(post.views) || 0}` : '';
 
             const li = document.createElement('li');
             li.className = 'post-item';
@@ -1572,10 +1778,30 @@ newRange.setStart(afterP, 0);
                 <div class="post-meta">/${post.id}${authorPart} • Изменено: ${dateStr}${viewsPart}</div>
               </div>
               <div class="post-actions">
+                <button class="access-pill" type="button"></button>
                 <button class="mini-btn copy-btn" type="button">Копировать ссылку</button>
                 <button class="mini-btn del del-btn" type="button">Удалить</button>
               </div>
             `;
+
+            const accessBtn = li.querySelector('.access-pill');
+            updateAccessBtnUI(accessBtn, Boolean(post.isPrivate));
+
+            accessBtn.addEventListener('click', async () => {
+              const nextState = !Boolean(post.isPrivate);
+              accessBtn.disabled = true;
+              try {
+                await db.collection('articles').doc(post.id).update({
+                  isPrivate: nextState
+                });
+                post.isPrivate = nextState;
+                updateAccessBtnUI(accessBtn, nextState);
+              } catch (err) {
+                alert('Ошибка изменения доступа: ' + err.message);
+              } finally {
+                accessBtn.disabled = false;
+              }
+            });
 
             li.querySelector('.copy-btn').addEventListener('click', (e) => {
               navigator.clipboard?.writeText(fullUrl);
@@ -1626,6 +1852,14 @@ newRange.setStart(afterP, 0);
         if ('doubleValue' in v) return Number(v.doubleValue);
         if ('booleanValue' in v) return Boolean(v.booleanValue);
         if ('arrayValue' in v) return (v.arrayValue.values || []).map(readVal);
+        if ('mapValue' in v) {
+          const obj = {};
+          const mapFields = v.mapValue.fields || {};
+          for (const mk of Object.keys(mapFields)) {
+            obj[mk] = readVal(mapFields[mk]);
+          }
+          return obj;
+        }
         return undefined;
       };
       const out = {};
@@ -1663,10 +1897,40 @@ newRange.setStart(afterP, 0);
         }
 
         if (exists && data) {
+          currentArticleOwner = data.ownerUid || null;
+          currentArticleIsPrivate = Boolean(data.isPrivate);
+
+          if (currentArticleIsPrivate) {
+            const hasAccess = currentUser && (currentUser.uid === currentArticleOwner || isAdmin(currentUser));
+            if (!hasAccess) {
+              lockedPrivateArticle = true;
+              titleEl.innerHTML = '';
+              storyEl.innerHTML = '';
+              metaInfoEl.style.display = 'none';
+              toolbarRow.style.display = 'none';
+              storyEl.style.display = 'none';
+              actionBtn.style.display = 'none';
+              titleEl.contentEditable = false;
+              editorHeader.classList.remove('is-editing');
+              updateFixedHeader();
+              updateTitleSideLabel();
+              titleEl.textContent = 'Доступ ограничен';
+              document.title = 'Доступ ограничен — tgtype';
+              setStatus('Автор закрыл доступ к этой публикации.', 'error');
+              return;
+            }
+          }
+
+          lockedPrivateArticle = false;
+          metaInfoEl.style.display = '';
+          toolbarRow.style.display = '';
+          storyEl.style.display = '';
+
           titleEl.innerHTML = data.title || '';
           storyEl.innerHTML = data.story || '';
-          currentArticleOwner = data.ownerUid || null;
           currentArticleViews = Number(data.views) || 0;
+          currentArticleViewsLog = Array.isArray(data.viewsLog) ? data.viewsLog : [];
+
           if (data.customMeta !== undefined) {
             metaInfoEl.textContent = data.customMeta;
           } else {
@@ -1677,7 +1941,7 @@ newRange.setStart(afterP, 0);
 
           document.title = titleEl.innerText || 'tgtype';
           setStatus('');
-          actionBtn.textContent = 'EDIT';
+          actionBtn.textContent = 'РЕДАКТИРОВАТЬ';
           isViewMode = true;
           captureInitialSnapshot();
           updateEditVisibility();
@@ -1727,6 +1991,7 @@ newRange.setStart(afterP, 0);
 
     actionBtn.addEventListener('click', async () => {
       if (!db || !auth) return;
+      if (actionBtn.classList.contains('is-saved')) return;
 
       if (!currentUser) {
         setAuthMode(false);
@@ -1738,7 +2003,7 @@ newRange.setStart(afterP, 0);
       if (isViewMode) {
         isViewMode = false;
         setEditable(true);
-        actionBtn.textContent = 'PUBLISH';
+        actionBtn.textContent = 'ОПУБЛИКОВАТЬ';
         captureInitialSnapshot();
         return;
       }
@@ -1747,7 +2012,7 @@ newRange.setStart(afterP, 0);
 
       const titleText = titleEl.innerText.trim();
       if (!titleText) {
-        alert('Введите заголовок (Title)!');
+        alert('Введите заголовок!');
         return;
       }
 
@@ -1799,14 +2064,26 @@ newRange.setStart(afterP, 0);
         isViewMode = true;
         captureInitialSnapshot();
         setEditable(false);
-        actionBtn.textContent = 'EDIT';
         updateEditVisibility();
         updateViewsBadge();
-        setStatus('Опубликовано!', 'ok');
-      } catch (e) {
-        setStatus('Ошибка публикации: ' + e.message, 'error');
-      } finally {
+        setStatus('');
+
+        // Красивая заливка зелёным и надпись СОХРАНЕНО
         actionBtn.classList.remove('is-saving');
+        actionBtn.disabled = false;
+        actionBtn.textContent = 'СОХРАНЕНО';
+        actionBtn.classList.add('is-saved');
+
+        if (savedBtnTimer) clearTimeout(savedBtnTimer);
+        savedBtnTimer = setTimeout(() => {
+          savedBtnTimer = null;
+          actionBtn.classList.remove('is-saved');
+          actionBtn.textContent = 'РЕДАКТИРОВАТЬ';
+          updatePublishState();
+        }, 1800);
+      } catch (e) {
+        actionBtn.classList.remove('is-saving');
+        setStatus('Ошибка публикации: ' + e.message, 'error');
         updatePublishState();
       }
     });
@@ -1817,6 +2094,22 @@ newRange.setStart(afterP, 0);
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
 
 
 
