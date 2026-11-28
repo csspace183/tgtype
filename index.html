@@ -381,12 +381,13 @@
         transform: translateY(0);
       }
     }
-          .toolbar-row.view-mode .publish-btn {
+            .toolbar-row.view-mode .publish-btn {
       position: absolute;
       right: 0;
-      bottom: 4px;
+      bottom: -14px;
       transition: opacity 0.3s ease, transform 0.3s ease, background-color 0.25s ease, color 0.25s ease;
     }
+
     .toolbar-row.view-mode .publish-btn.is-scrolled {
       position: fixed;
       top: 25px;
@@ -402,14 +403,15 @@
         box-shadow: none;
         flex-shrink: 0;
       }
-      .toolbar-row.view-mode .publish-btn.is-scrolled {
+            .toolbar-row.view-mode .publish-btn.is-scrolled {
         position: absolute;
         top: auto;
-        bottom: 4px;
+        bottom: -14px;
         right: 0;
         box-shadow: none;
         animation: none;
       }
+
       .scroll-top-btn {
         right: 16px;
         bottom: 16px;
@@ -578,15 +580,20 @@
       overflow: hidden;
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
     }
-    .tg-code-head {
+      .tg-code-head {
       display: flex;
       justify-content: space-between;
       align-items: center;
       gap: 10px;
-      padding: 12px 16px 6px;
+      padding: 9px 14px 4px;
       background: var(--code-header);
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       user-select: none;
+    }
+    .tg-code-head-left, .tg-code-head-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
     .tg-code-lang {
       font-size: 14px;
@@ -594,6 +601,28 @@
       color: var(--text);
       outline: none;
       min-width: 40px;
+    }
+    .tg-code-head-toggle {
+      background: none;
+      color: var(--muted);
+      border: 1px solid var(--code-border);
+      border-radius: 6px;
+      width: 24px;
+      height: 22px;
+      padding: 0;
+      font-size: 11px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: color 0.15s ease, border-color 0.15s ease, transform 0.2s ease;
+    }
+    .tg-code-head-toggle:hover {
+      color: var(--text);
+      border-color: var(--text);
+    }
+    .tg-code-block:not(.is-collapsed) .tg-code-head-toggle {
+      transform: rotate(180deg);
     }
     .tg-code-del {
       background: none;
@@ -610,7 +639,7 @@
       position: relative;
     }
     #story .tg-code-block.is-collapsed .tg-code-body {
-      max-height: 98px;
+      max-height: 54px;
       overflow: hidden;
     }
     #story .tg-code-block.is-collapsed .tg-code-body::after {
@@ -619,10 +648,11 @@
       left: 0;
       right: 0;
       bottom: 0;
-      height: 34px;
+      height: 22px;
       background: linear-gradient(to bottom, transparent, var(--code-bg));
       pointer-events: none;
     }
+
     #story .tg-code-block pre {
       margin: 0;
       padding: 6px 16px 14px;
@@ -1303,22 +1333,11 @@
       themeBtn.classList.toggle('is-scrolled', scrolled);
       actionBtn.classList.toggle('is-scrolled', scrolled && isViewMode);
       scrollTopBtn.classList.toggle('visible', window.scrollY > 300);
-
-
       if (!editorHeader.classList.contains('is-editing')) {
-        if (editorHeader.classList.contains('is-fixed')) {
-          const spacerH = parseFloat(headerSpacer.style.height) || 0;
-          editorHeader.classList.remove('is-fixed');
-          headerSpacer.style.display = 'none';
-          if (spacerH > 0 && window.scrollY > 0) {
-            window.scrollBy(0, -spacerH);
-          }
-        } else {
-          headerSpacer.style.display = 'none';
-        }
+        editorHeader.classList.remove('is-fixed');
+        headerSpacer.style.display = 'none';
         return;
       }
-
       const triggerY = 28;
       if (window.scrollY > triggerY) {
         if (!editorHeader.classList.contains('is-fixed')) {
@@ -1462,20 +1481,24 @@
       sel.removeAllRanges();
       sel.addRange(range);
     }
-       function updateCodeToggleUI(block) {
+    function updateCodeToggleUI(block) {
       if (!block) return;
       const toggleBtn = block.querySelector('.tg-code-toggle');
+      const headToggleBtn = block.querySelector('.tg-code-head-toggle');
       const preEl = block.querySelector('pre');
-      if (!toggleBtn || !preEl) return;
-      const isShort = preEl.scrollHeight <= 104 && !block.classList.contains('is-collapsed');
-      if (preEl.scrollHeight <= 104) {
+      if (!preEl) return;
+      const isShort = preEl.scrollHeight <= 60;
+      if (isShort) {
         block.classList.remove('is-collapsed');
-        toggleBtn.style.visibility = 'hidden';
+        if (toggleBtn) toggleBtn.style.visibility = 'hidden';
+        if (headToggleBtn) headToggleBtn.style.display = 'none';
         return;
       }
-      toggleBtn.style.visibility = 'visible';
+      if (toggleBtn) toggleBtn.style.visibility = 'visible';
+      if (headToggleBtn) headToggleBtn.style.display = 'inline-flex';
       const collapsed = block.classList.contains('is-collapsed');
-      toggleBtn.textContent = collapsed ? 'Развернуть ▾' : 'Свернуть ▴';
+      if (toggleBtn) toggleBtn.textContent = collapsed ? 'Развернуть ▾' : 'Свернуть ▴';
+      if (headToggleBtn) headToggleBtn.title = collapsed ? 'Развернуть' : 'Свернуть';
     }
 
     function normalizeCodeBlockStructure(block) {
@@ -1488,16 +1511,33 @@
         pre.replaceWith(bodyWrap);
         bodyWrap.appendChild(pre);
       }
-      if (head) {
+      if (head && !head.querySelector('.tg-code-head-left')) {
         const langEl = head.querySelector('.tg-code-lang');
         const delBtn = head.querySelector('.tg-code-del');
         const langText = langEl ? langEl.textContent : 'code';
-        head.innerHTML = '';
+        const isCustom = langEl?.dataset?.customTitle === '1';
+
+        const left = document.createElement('div');
+        left.className = 'tg-code-head-left';
         const newLang = document.createElement('span');
         newLang.className = 'tg-code-lang';
         newLang.textContent = langText;
-        head.appendChild(newLang);
-        if (delBtn) head.appendChild(delBtn);
+        if (isCustom) newLang.dataset.customTitle = '1';
+        const headToggle = document.createElement('button');
+        headToggle.type = 'button';
+        headToggle.className = 'tg-code-head-toggle';
+        headToggle.textContent = '▾';
+        headToggle.title = 'Развернуть / Свернуть';
+        left.appendChild(newLang);
+        left.appendChild(headToggle);
+
+        const right = document.createElement('div');
+        right.className = 'tg-code-head-right';
+        if (delBtn) right.appendChild(delBtn);
+
+        head.innerHTML = '';
+        head.appendChild(left);
+        head.appendChild(right);
       }
       let foot = block.querySelector('.tg-code-foot');
       if (!foot) {
@@ -1516,7 +1556,7 @@
     function applyCodeHighlight(codeEl, preserveCaret = false) {
       if (!codeEl) return;
       const caretPos = preserveCaret ? getCaretOffsetIn(codeEl) : null;
-      const raw = codeEl.textContent || '';
+      const raw = (codeEl.textContent || '').replace(/class="hl-(?:com|str|tag|kw|num)">/g, '');
       codeEl.innerHTML = raw ? highlightCodeText(raw) : '';
       const block = codeEl.closest('.tg-code-block');
       normalizeCodeBlockStructure(block);
@@ -1560,8 +1600,13 @@
       block.setAttribute('contenteditable', 'false');
       block.innerHTML = `
         <div class="tg-code-head">
-          <span class="tg-code-lang" contenteditable="true" spellcheck="false">code</span>
-          <button type="button" class="tg-code-del" title="Удалить блок">✕</button>
+          <div class="tg-code-head-left">
+            <span class="tg-code-lang" contenteditable="true" spellcheck="false">code</span>
+            <button type="button" class="tg-code-head-toggle" style="display:none;" title="Свернуть">▾</button>
+          </div>
+          <div class="tg-code-head-right">
+            <button type="button" class="tg-code-del" title="Удалить блок">✕</button>
+          </div>
         </div>
         <div class="tg-code-body">
           <pre><code contenteditable="true" spellcheck="false"></code></pre>
@@ -1961,8 +2006,7 @@
         }, 1500);
         return;
       }
-
-      const toggleCodeBtn = e.target.closest('.tg-code-toggle');
+      const toggleCodeBtn = e.target.closest('.tg-code-toggle, .tg-code-head-toggle');
       if (toggleCodeBtn && storyEl.contains(toggleCodeBtn)) {
         e.preventDefault();
         e.stopPropagation();
