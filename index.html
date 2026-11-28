@@ -76,11 +76,11 @@
     .new-link { font-size: 13px; color: var(--subtle); text-decoration: none; }
     .new-link:hover { color: var(--text); }
 
-   /* Кнопка переключения темы всегда в правом верхнем углу при прокрутке */
+       /* Кнопка переключения темы по правому краю колонки текста */
     .theme-btn {
       position: fixed;
-      top: 16px;
-      right: 20px;
+      top: 34px;
+      right: max(20px, calc(50% - 365px));
       z-index: 95;
       width: 34px;
       height: 34px;
@@ -94,6 +94,9 @@
       justify-content: center;
       padding: 0;
       transition: transform 0.15s ease, border-color 0.15s ease, background-color 0.2s ease;
+    }
+    .theme-btn.is-scrolled {
+      top: 16px;
     }
     .theme-btn:hover {
       border-color: var(--text);
@@ -264,11 +267,20 @@
       min-height: 0;
       margin: 0;
     }
-    .toolbar-row.view-mode .publish-btn {
+        .toolbar-row.view-mode .publish-btn {
       position: absolute;
       right: 0;
       bottom: 22px;
     }
+    .toolbar-row.view-mode .publish-btn.is-scrolled {
+      position: fixed;
+      top: 16px;
+      bottom: auto;
+      right: max(64px, calc(50% - 321px));
+      z-index: 94;
+      box-shadow: 0 2px 10px var(--shadow);
+    }
+
     .toolbar-row.hidden { display: none; }
     .toolbar {
       display: flex;
@@ -1092,7 +1104,11 @@
       } catch (e) {}
     }
 
-    function updateFixedHeader() {
+        function updateFixedHeader() {
+      const scrolled = window.scrollY > 28;
+      themeBtn.classList.toggle('is-scrolled', scrolled);
+      actionBtn.classList.toggle('is-scrolled', scrolled && isViewMode);
+
       if (!editorHeader.classList.contains('is-editing')) {
         editorHeader.classList.remove('is-fixed');
         headerSpacer.style.display = 'none';
