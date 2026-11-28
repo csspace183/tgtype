@@ -5,31 +5,105 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>tgtype</title>
   <link rel="preconnect" href="https://googleapis.com" crossorigin>
+  <script>
+    if (localStorage.getItem('tgtype_theme') === 'dark') {
+      document.documentElement.classList.add('dark');
+    }
+  </script>
   <style>
+    :root {
+      --bg: #ffffff;
+      --text: #222222;
+      --muted: #888888;
+      --subtle: #999999;
+      --border: #e0e0e0;
+      --border-light: #eeeeee;
+      --surface: #fafafa;
+      --hover-bg: #f5f5f5;
+      --link: #0066cc;
+      --popover-bg: #ffffff;
+      --shadow: rgba(0, 0, 0, 0.12);
+      --code-bg: #f6f8fa;
+      --code-header: #eef1f5;
+      --code-border: #e1e4e8;
+      --code-text: #24292e;
+      --hl-kw: #d73a49;
+      --hl-str: #032f62;
+      --hl-com: #6a737d;
+      --hl-tag: #22863a;
+      --hl-num: #005cc5;
+    }
+    html.dark {
+      --bg: #141414;
+      --text: #e6e6e6;
+      --muted: #8e8e8e;
+      --subtle: #777777;
+      --border: #2e2e2e;
+      --border-light: #242424;
+      --surface: #1c1c1c;
+      --hover-bg: #252525;
+      --link: #58a6ff;
+      --popover-bg: #1f1f1f;
+      --shadow: rgba(0, 0, 0, 0.45);
+      --code-bg: #1b1d21;
+      --code-header: #23262b;
+      --code-border: #2f333a;
+      --code-text: #e6edf3;
+      --hl-kw: #ff7b72;
+      --hl-str: #a5d6ff;
+      --hl-com: #8b949e;
+      --hl-tag: #7ee787;
+      --hl-num: #79c0ff;
+    }
+
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       margin: 0;
       padding: 40px 20px 80px;
-      color: #222;
-      background: #fff;
+      color: var(--text);
+      background: var(--bg);
+      transition: background-color 0.2s ease, color 0.2s ease;
     }
     .container { max-width: 730px; margin: 0 auto; position: relative; }
     .top-bar {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      min-height: 24px;
+      min-height: 28px;
       margin-bottom: 16px;
     }
     .top-left { display: flex; align-items: center; gap: 16px; }
-    .new-link { font-size: 13px; color: #999; text-decoration: none; }
-    .new-link:hover { color: #222; }
+    .new-link { font-size: 13px; color: var(--subtle); text-decoration: none; }
+    .new-link:hover { color: var(--text); }
+
+    /* Кнопка переключения темы в правом верхнем углу */
+    .theme-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      transition: transform 0.15s ease, border-color 0.15s ease, background-color 0.2s ease;
+    }
+    .theme-btn:hover {
+      border-color: var(--text);
+      transform: scale(1.06);
+    }
+    html.dark .theme-btn .icon-light { display: none; }
+    html:not(.dark) .theme-btn .icon-dark { display: none; }
+
     .publish-btn {
       position: relative;
       overflow: hidden;
       z-index: 1;
-      background: #fff;
-      border: 2px solid #222;
+      background: var(--bg);
+      color: var(--text);
+      border: 2px solid var(--text);
       border-radius: 20px;
       padding: 6px 18px;
       font-weight: 700;
@@ -50,7 +124,7 @@
       transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
       z-index: -1;
     }
-    .publish-btn:hover:not(:disabled):not(.is-saved) { background: #222; color: #fff; }
+    .publish-btn:hover:not(:disabled):not(.is-saved) { background: var(--text); color: var(--bg); }
     .publish-btn:disabled:not(.is-saved) { opacity: 0.35; cursor: default; }
     .publish-btn.is-saving { opacity: 0.5; cursor: wait; }
     .publish-btn.is-saved {
@@ -66,17 +140,16 @@
     .editable { outline: none; width: 100%; box-sizing: border-box; word-wrap: break-word; }
     .editable:empty:before {
       content: attr(data-placeholder);
-      color: #999;
+      color: var(--subtle);
       pointer-events: none;
       display: block;
     }
-
     /* Экран загрузки страницы при обращении к базе */
     .page-loader {
       position: fixed;
       inset: 0;
       z-index: 200;
-      background: #fff;
+      background: var(--bg);
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -91,14 +164,14 @@
     .loader-spinner {
       width: 34px;
       height: 34px;
-      border: 3px solid #eaeaea;
-      border-top-color: #222;
+      border: 3px solid var(--border-light);
+      border-top-color: var(--text);
       border-radius: 50%;
       animation: tgSpin 0.75s linear infinite;
     }
     .loader-text {
       font-size: 13px;
-      color: #888;
+      color: var(--muted);
     }
     @keyframes tgSpin {
       to { transform: rotate(360deg); }
@@ -106,8 +179,8 @@
 
     /* Шапка редактора */
     .editor-header {
-      background: #fff;
-      transition: box-shadow 0.15s ease;
+      background: var(--bg);
+      transition: box-shadow 0.15s ease, background-color 0.2s ease;
     }
     .editor-header-inner {
       max-width: 730px;
@@ -119,33 +192,22 @@
       left: 0;
       right: 0;
       z-index: 80;
-      background: #fff;
+      background: var(--bg);
       padding: 12px 20px 10px;
-      border-bottom: 1px solid #eee;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+      border-bottom: 1px solid var(--border-light);
+      box-shadow: 0 4px 16px var(--shadow);
     }
-    .editor-header.is-fixed .top-bar {
-      margin-bottom: 8px;
-    }
-    .editor-header.is-fixed .title-wrap {
-      margin-bottom: 4px;
-    }
+    .editor-header.is-fixed .top-bar { margin-bottom: 8px; }
+    .editor-header.is-fixed .title-wrap { margin-bottom: 4px; }
     .editor-header.is-fixed #title {
       font-size: 20px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
-    .editor-header.is-fixed #metaInfo {
-      margin-bottom: 10px;
-      font-size: 12px;
-    }
-    .editor-header.is-fixed .toolbar-row {
-      margin-bottom: 0;
-    }
-    .editor-header.is-fixed .side-label {
-      font-size: 18px;
-    }
+    .editor-header.is-fixed #metaInfo { margin-bottom: 10px; font-size: 12px; }
+    .editor-header.is-fixed .toolbar-row { margin-bottom: 0; }
+    .editor-header.is-fixed .side-label { font-size: 18px; }
 
     .title-wrap {
       position: relative;
@@ -165,11 +227,11 @@
       display: flex;
       align-items: center;
       padding-right: 14px;
-      border-right: 1px solid #e0e0e0;
+      border-right: 1px solid var(--border);
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       font-size: 24px;
       font-weight: 400;
-      color: #bbb;
+      color: var(--subtle);
       pointer-events: none;
       user-select: none;
       opacity: 0;
@@ -179,8 +241,9 @@
     @media (max-width: 960px) {
       .side-label { display: none; }
     }
-    #metaInfo { font-size: 14px; color: #888; margin-bottom: 20px; min-height: 18px; }
+    #metaInfo { font-size: 14px; color: var(--muted); margin-bottom: 20px; min-height: 18px; }
     #metaInfo.no-toolbar, #metaInfo.can-edit-btn { margin-bottom: 28px; }
+
     /* Строка с панелью инструментов и кнопкой ОПУБЛИКОВАТЬ вровень */
     .toolbar-row {
       display: flex;
@@ -201,9 +264,7 @@
       right: 0;
       bottom: 22px;
     }
-    .toolbar-row.hidden {
-      display: none;
-    }
+    .toolbar-row.hidden { display: none; }
     .toolbar {
       display: flex;
       gap: 8px;
@@ -213,23 +274,67 @@
     .tool-sep {
       width: 1px;
       height: 18px;
-      background: #e0e0e0;
+      background: var(--border);
       margin: 0 2px;
     }
     .tool-btn {
       background: none;
-      border: 1px solid #e0e0e0;
+      border: 1px solid var(--border);
       border-radius: 4px;
       padding: 4px 9px;
       cursor: pointer;
-      color: #555;
+      color: var(--muted);
       font-size: 13px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
+      gap: 4px;
       min-height: 28px;
     }
-    .tool-btn:hover { border-color: #222; color: #222; }
+    .tool-btn:hover { border-color: var(--text); color: var(--text); }
+
+    /* Выпадающее меню выравнивания */
+    .align-wrap {
+      position: relative;
+      display: inline-flex;
+    }
+    .align-popover {
+      display: none;
+      position: absolute;
+      top: calc(100% + 6px);
+      left: 0;
+      z-index: 95;
+      background: var(--popover-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 5px;
+      gap: 4px;
+      align-items: center;
+      box-shadow: 0 6px 18px var(--shadow);
+    }
+    .align-popover.open { display: flex; }
+    .align-opt {
+      background: none;
+      border: 1px solid transparent;
+      border-radius: 6px;
+      width: 32px;
+      height: 30px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--muted);
+      padding: 0;
+    }
+    .align-opt:hover {
+      background: var(--hover-bg);
+      color: var(--text);
+    }
+    .align-opt.active {
+      background: var(--hover-bg);
+      border-color: var(--border);
+      color: var(--text);
+    }
 
     /* Палитра цветов текста */
     .color-wrap {
@@ -257,30 +362,25 @@
       top: calc(100% + 6px);
       left: 0;
       z-index: 95;
-      background: #fff;
-      border: 1px solid #e0e0e0;
+      background: var(--popover-bg);
+      border: 1px solid var(--border);
       border-radius: 8px;
       padding: 7px 8px;
       gap: 6px;
       align-items: center;
-      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+      box-shadow: 0 6px 18px var(--shadow);
     }
-    .color-popover.open {
-      display: flex;
-    }
+    .color-popover.open { display: flex; }
     .color-swatch {
       width: 20px;
       height: 20px;
       border-radius: 50%;
-      border: 1px solid rgba(0, 0, 0, 0.15);
+      border: 1px solid rgba(128, 128, 128, 0.35);
       cursor: pointer;
       padding: 0;
       transition: transform 0.12s ease;
     }
-    .color-swatch:hover {
-      transform: scale(1.18);
-    }
-
+    .color-swatch:hover { transform: scale(1.18); }
     #story {
       font-family: Georgia, "Times New Roman", Times, serif;
       font-size: 18px;
@@ -295,7 +395,7 @@
       line-height: 1.3;
       margin: 18px 0 8px;
     }
-    #story blockquote { margin: 12px 0; padding-left: 16px; border-left: 3px solid #222; }
+    #story blockquote { margin: 12px 0; padding-left: 16px; border-left: 3px solid var(--text); }
     #story ul { margin: 12px 0; padding-left: 24px; }
     #story li {
       margin: 0 0 13px;
@@ -304,7 +404,74 @@
     }
     #story li:last-child { margin-bottom: 0; }
     #story img { max-width: 100%; height: auto; display: block; margin: 18px 0; border-radius: 4px; }
-    #story a { color: #0066cc; text-decoration: underline; cursor: pointer; }
+    #story a { color: var(--link); text-decoration: underline; cursor: pointer; }
+
+    /* Блок кода с подсветкой синтаксиса и кнопкой копирования */
+    #story .tg-code-block {
+      margin: 18px 0;
+      border-radius: 10px;
+      border: 1px solid var(--code-border);
+      background: var(--code-bg);
+      overflow: hidden;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    }
+    .tg-code-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 12px;
+      background: var(--code-header);
+      border-bottom: 1px solid var(--code-border);
+      font-size: 11px;
+      color: var(--muted);
+      user-select: none;
+    }
+    .tg-code-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .tg-code-copy, .tg-code-del {
+      background: var(--bg);
+      color: var(--text);
+      border: 1px solid var(--code-border);
+      border-radius: 6px;
+      padding: 3px 9px;
+      font-size: 11px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      cursor: pointer;
+      transition: border-color 0.15s ease, color 0.15s ease;
+    }
+    .tg-code-copy:hover { border-color: var(--text); }
+    .tg-code-del:hover { border-color: #d9534f; color: #d9534f; }
+    #story[contenteditable="false"] .tg-code-del { display: none; }
+    #story .tg-code-block pre {
+      margin: 0;
+      padding: 13px 15px;
+      overflow-x: auto;
+      font-size: 13.5px;
+      line-height: 1.52;
+      color: var(--code-text);
+      white-space: pre;
+      tab-size: 2;
+      outline: none;
+    }
+    #story .tg-code-block code {
+      font-family: inherit;
+      display: block;
+      min-height: 20px;
+      outline: none;
+    }
+    #story .tg-code-block code:empty::before {
+      content: "Вставьте или введите код / текст...";
+      color: var(--subtle);
+      pointer-events: none;
+    }
+    .hl-kw { color: var(--hl-kw); font-weight: 600; }
+    .hl-str { color: var(--hl-str); }
+    .hl-com { color: var(--hl-com); font-style: italic; }
+    .hl-tag { color: var(--hl-tag); }
+    .hl-num { color: var(--hl-num); }
 
     /* Встроенный плеер */
     #story .tg-ymusic-embed {
@@ -313,8 +480,8 @@
       margin: 18px 0;
       border-radius: 10px;
       overflow: hidden;
-      border: 1px solid #eee;
-      background: #fafafa;
+      border: 1px solid var(--border-light);
+      background: var(--surface);
     }
     #story .tg-ymusic-embed iframe {
       display: block;
@@ -322,9 +489,7 @@
       height: 244px;
       border: 0;
     }
-    #story .tg-ymusic-embed.is-album iframe {
-      height: 450px;
-    }
+    #story .tg-ymusic-embed.is-album iframe { height: 450px; }
     .tg-ymusic-del {
       position: absolute;
       top: 8px;
@@ -344,11 +509,9 @@
       justify-content: center;
     }
     .tg-ymusic-del:hover { background: #d93025; }
-    #story[contenteditable="false"] .tg-ymusic-del {
-      display: none;
-    }
+    #story[contenteditable="false"] .tg-ymusic-del { display: none; }
 
-    .status { font-size: 13px; color: #888; margin-top: 10px; font-weight: 500; min-height: 18px; }
+    .status { font-size: 13px; color: var(--muted); margin-top: 10px; font-weight: 500; min-height: 18px; }
     .status.error { color: #d9534f; }
     .status.ok { color: #28a745; }
     .footer-bar {
@@ -357,55 +520,57 @@
       justify-content: space-between;
       align-items: flex-start;
     }
-    .auth-bar { font-size: 12px; color: #aaa; display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
-    .auth-bar button, .auth-bar a { background: none; border: 0; padding: 0; font: inherit; color: #aaa; cursor: pointer; text-decoration: underline; }
-    .auth-bar button:hover, .auth-bar a:hover { color: #222; }
+    .auth-bar { font-size: 12px; color: var(--subtle); display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
+    .auth-bar button, .auth-bar a { background: none; border: 0; padding: 0; font: inherit; color: var(--subtle); cursor: pointer; text-decoration: underline; }
+    .auth-bar button:hover, .auth-bar a:hover { color: var(--text); }
     .auth-bar button.is-logged-out { color: #d9534f; text-decoration: none; cursor: default; }
     .auth-bar button.is-logged-out:hover { color: #d9534f; }
+    .auth-bar button.is-logged-in { color: #28a745; text-decoration: none; cursor: default; font-weight: 600; }
+    .auth-bar button.is-logged-in:hover { color: #28a745; }
 
     .views-badge {
       display: none;
       align-items: center;
       gap: 5px;
       font-size: 12px;
-      color: #888;
+      color: var(--muted);
       background: none;
-      border: 1px solid #eee;
+      border: 1px solid var(--border-light);
       border-radius: 14px;
       padding: 4px 10px;
       cursor: pointer;
       transition: 0.15s ease;
     }
     .views-badge:hover {
-      border-color: #222;
-      color: #222;
+      border-color: var(--text);
+      color: var(--text);
     }
-
     /* Список /blog */
     .blog-search {
       width: 100%; box-sizing: border-box; padding: 9px 14px; margin: 10px 0 15px;
-      border: 1px solid #ddd; border-radius: 20px; font-size: 14px; outline: none;
+      border: 1px solid var(--border); border-radius: 20px; font-size: 14px; outline: none;
+      background: var(--bg); color: var(--text);
     }
-    .blog-search:focus { border-color: #222; }
+    .blog-search:focus { border-color: var(--text); }
     .posts-list { list-style: none; padding: 0; margin: 0; }
     .post-item {
       display: flex; justify-content: space-between; align-items: center;
-      padding: 14px 0; border-bottom: 1px solid #eee; gap: 15px;
+      padding: 14px 0; border-bottom: 1px solid var(--border-light); gap: 15px;
     }
     @media (max-width: 680px) {
       .post-item { flex-direction: column; align-items: flex-start; }
     }
-    .post-info a { font-family: Georgia, serif; font-size: 20px; font-weight: 700; color: #222; text-decoration: none; }
-    .post-info a:hover { color: #0066cc; }
-    .post-meta { font-size: 12px; color: #888; margin-top: 4px; }
+    .post-info a { font-family: Georgia, serif; font-size: 20px; font-weight: 700; color: var(--text); text-decoration: none; }
+    .post-info a:hover { color: var(--link); }
+    .post-meta { font-size: 12px; color: var(--muted); margin-top: 4px; }
     .blog-views-link {
       display: inline-flex;
       align-items: center;
       gap: 4px;
       font-size: 11px;
-      color: #888;
-      background: #fff;
-      border: 1px solid #e5e5e5;
+      color: var(--muted);
+      background: var(--bg);
+      border: 1px solid var(--border);
       border-radius: 999px;
       padding: 2px 8px;
       margin-left: 4px;
@@ -414,27 +579,24 @@
       transition: border-color 0.15s ease, color 0.15s ease;
     }
     .blog-views-link:hover {
-      border-color: #222;
-      color: #222;
+      border-color: var(--text);
+      color: var(--text);
     }
     .post-actions { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; flex-shrink: 0; }
     .mini-btn {
-      background: #fff; border: 1px solid #ddd; border-radius: 15px;
-      padding: 5px 11px; font-size: 12px; cursor: pointer; color: #333;
+      background: var(--bg); border: 1px solid var(--border); border-radius: 15px;
+      padding: 5px 11px; font-size: 12px; cursor: pointer; color: var(--text);
       white-space: nowrap;
       display: inline-flex;
       align-items: center;
       gap: 5px;
       transition: 0.15s ease;
     }
-    .mini-btn:hover { border-color: #222; }
+    .mini-btn:hover { border-color: var(--text); }
     .mini-btn.del:hover { border-color: #d9534f; color: #d9534f; }
 
     /* Выпадающее меню доступа в стиле YouTube Studio */
-    .access-wrap {
-      position: relative;
-      display: inline-block;
-    }
+    .access-wrap { position: relative; display: inline-block; }
     .access-pill {
       display: inline-flex;
       align-items: center;
@@ -451,19 +613,22 @@
       white-space: nowrap;
     }
     .access-pill:hover { border-color: #1e7e34; }
-    .access-pill .chevron {
-      font-size: 10px;
-      opacity: 0.75;
-      margin-left: 2px;
-    }
+    .access-pill .chevron { font-size: 10px; opacity: 0.75; margin-left: 2px; }
     .access-pill.is-private {
       border-color: #ffc9c9;
       background: #fff5f5;
       color: #c92a2a;
     }
-    .access-pill.is-private:hover {
-      border-color: #c92a2a;
-      color: #a61e1e;
+    .access-pill.is-private:hover { border-color: #c92a2a; color: #a61e1e; }
+    html.dark .access-pill {
+      background: rgba(40, 167, 69, 0.16);
+      border-color: rgba(40, 167, 69, 0.45);
+      color: #69db7c;
+    }
+    html.dark .access-pill.is-private {
+      background: rgba(217, 83, 79, 0.16);
+      border-color: rgba(217, 83, 79, 0.45);
+      color: #ff8787;
     }
     .access-dropdown {
       display: none;
@@ -471,10 +636,10 @@
       right: 0;
       top: calc(100% + 6px);
       width: 280px;
-      background: #fff;
-      border: 1px solid #e5e5e5;
+      background: var(--popover-bg);
+      border: 1px solid var(--border);
       border-radius: 12px;
-      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.14);
+      box-shadow: 0 10px 28px var(--shadow);
       z-index: 60;
       overflow: hidden;
       text-align: left;
@@ -484,8 +649,8 @@
       padding: 12px 14px 10px;
       font-size: 13px;
       font-weight: 700;
-      color: #222;
-      border-bottom: 1px solid #f0f0f0;
+      color: var(--text);
+      border-bottom: 1px solid var(--border-light);
     }
     .access-option {
       display: flex;
@@ -499,34 +664,12 @@
       text-align: left;
       transition: background 0.12s ease;
     }
-    .access-option:hover { background: #f7f7f7; }
-    .access-opt-icon {
-      color: #555;
-      display: flex;
-      align-items: center;
-      flex-shrink: 0;
-    }
+    .access-option:hover { background: var(--hover-bg); }
+    .access-opt-icon { color: var(--muted); display: flex; align-items: center; flex-shrink: 0; }
     .access-opt-text { flex: 1; min-width: 0; }
-    .access-opt-title {
-      font-size: 13px;
-      font-weight: 600;
-      color: #222;
-      line-height: 1.25;
-    }
-    .access-opt-desc {
-      font-size: 11px;
-      color: #888;
-      margin-top: 2px;
-      line-height: 1.3;
-    }
-    .access-opt-check {
-      font-size: 15px;
-      font-weight: 700;
-      color: #222;
-      width: 16px;
-      text-align: center;
-      flex-shrink: 0;
-    }
+    .access-opt-title { font-size: 13px; font-weight: 600; color: var(--text); line-height: 1.25; }
+    .access-opt-desc { font-size: 11px; color: var(--muted); margin-top: 2px; line-height: 1.3; }
+    .access-opt-check { font-size: 15px; font-weight: 700; color: var(--text); width: 16px; text-align: center; flex-shrink: 0; }
 
     /* Всплывающая плашка ввода ссылки */
     .link-popover {
@@ -563,26 +706,28 @@
 
     /* Модальные окна */
     .modal-bg {
-      display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45);
+      display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5);
       justify-content: center; align-items: center; z-index: 100; padding: 16px;
     }
     .modal-box {
-      background: #fff; padding: 24px; border-radius: 12px; width: 100%; max-width: 310px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+      background: var(--popover-bg); color: var(--text); padding: 24px; border-radius: 12px; width: 100%; max-width: 310px;
+      border: 1px solid var(--border);
+      box-shadow: 0 10px 30px var(--shadow);
     }
     .modal-box h3 { margin: 0 0 14px; font-size: 18px; }
     .modal-box input {
       width: 100%; box-sizing: border-box; padding: 9px 12px; margin-bottom: 10px;
-      border: 1px solid #ddd; border-radius: 6px; font-size: 14px; outline: none;
+      border: 1px solid var(--border); border-radius: 6px; font-size: 14px; outline: none;
+      background: var(--bg); color: var(--text);
     }
-    .modal-box input:focus { border-color: #222; }
+    .modal-box input:focus { border-color: var(--text); }
     .modal-btns { display: flex; gap: 8px; margin-top: 4px; }
     .modal-btns button {
       flex: 1; padding: 9px; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 13px;
     }
-    .btn-primary { background: #222; color: #fff; border: none; }
-    .btn-secondary { background: #fff; color: #222; border: 1px solid #222; }
-    .modal-close { display: block; width: 100%; margin-top: 10px; background: none; border: none; color: #999; font-size: 12px; cursor: pointer; }
+    .btn-primary { background: var(--text); color: var(--bg); border: none; }
+    .btn-secondary { background: var(--bg); color: var(--text); border: 1px solid var(--text); }
+    .modal-close { display: block; width: 100%; margin-top: 10px; background: none; border: none; color: var(--subtle); font-size: 12px; cursor: pointer; }
 
     /* Список просмотров в модальном окне */
     .views-modal-box { max-width: 380px; }
@@ -592,20 +737,20 @@
       padding: 0;
       max-height: 290px;
       overflow-y: auto;
-      border-top: 1px solid #eee;
+      border-top: 1px solid var(--border-light);
     }
     .views-list li {
       display: flex;
       justify-content: space-between;
       align-items: center;
       padding: 9px 2px;
-      border-bottom: 1px solid #f2f2f2;
+      border-bottom: 1px solid var(--border-light);
       font-size: 13px;
       gap: 10px;
     }
-    .views-user { font-weight: 600; color: #222; }
-    .views-user.is-guest { font-weight: 400; color: #777; }
-    .views-date { font-size: 12px; color: #999; white-space: nowrap; }
+    .views-user { font-weight: 600; color: var(--text); }
+    .views-user.is-guest { font-weight: 400; color: var(--muted); }
+    .views-date { font-size: 12px; color: var(--subtle); white-space: nowrap; }
   </style>
 </head>
 <body>
@@ -621,9 +766,15 @@
       <div class="editor-header-inner">
         <div class="top-bar">
           <div class="top-left">
-            <a href="/" class="new-link">+ Новая запись</a>
+            <a href="/" id="newPostLink" class="new-link">+ Новая запись</a>
             <a href="/blog" id="adminBlogLink" class="new-link">Блог</a>
           </div>
+          <button id="themeBtn" class="theme-btn" type="button" title="Переключить тему">
+            <!-- Жёлтая луна (светлая тема -> переключить на тёмную) -->
+            <svg class="icon-light" width="17" height="17" viewBox="0 0 24 24" fill="#f5b014" stroke="#e09c00" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+            <!-- Луна с планетой/звёздами (тёмная тема -> переключить на светлую) -->
+            <svg class="icon-dark" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#a5b4fc" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5a8.5 8.5 0 1 0 11 11z" fill="rgba(165, 180, 252, 0.2)"/><circle cx="17.5" cy="6.5" r="2" fill="#fcd34d" stroke="#fcd34d"/><path d="M14.5 8.2c2-.8 4.4-1.8 6-3.4" stroke="#fcd34d" stroke-width="1.3"/></svg>
+          </button>
         </div>
 
         <div class="title-wrap">
@@ -651,7 +802,7 @@
                 </span>
               </button>
               <div class="color-popover" id="colorPopover">
-                <button type="button" class="color-swatch" data-color="#222222" style="background:#222222;" title="Чёрный (по умолчанию)"></button>
+                <button type="button" class="color-swatch" data-color="#222222" style="background:#222222;" title="По умолчанию"></button>
                 <button type="button" class="color-swatch" data-color="#d93025" style="background:#d93025;" title="Красный"></button>
                 <button type="button" class="color-swatch" data-color="#e37400" style="background:#e37400;" title="Оранжевый"></button>
                 <button type="button" class="color-swatch" data-color="#d4a017" style="background:#d4a017;" title="Жёлтый"></button>
@@ -665,13 +816,28 @@
             <button class="tool-btn" type="button" data-cmd="insertUnorderedList" title="Список">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
             </button>
+            <button id="codeBtn" class="tool-btn" type="button" title="Вставить блок кода">&lt;/&gt;</button>
             <span class="tool-sep"></span>
-            <button class="tool-btn" type="button" data-cmd="justifyCenter" title="По центру">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="6"/><line x1="21" y1="12" x2="3" y2="12"/><line x1="18" y1="18" x2="6" y2="18"/></svg>
-            </button>
-            <button class="tool-btn" type="button" data-cmd="justifyRight" title="По правому краю">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="12" x2="9" y2="12"/><line x1="21" y1="18" x2="3" y2="18"/></svg>
-            </button>
+            <div class="align-wrap" id="alignWrap">
+              <button class="tool-btn" type="button" id="alignBtn" title="Выравнивание текста">
+                <svg id="alignCurrentIcon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="17" y1="6" x2="3" y2="6"/><line x1="21" y1="12" x2="3" y2="12"/><line x1="15" y1="18" x2="3" y2="18"/></svg>
+                <span style="font-size:10px; opacity:0.75;">▾</span>
+              </button>
+              <div class="align-popover" id="alignPopover">
+                <button type="button" class="align-opt" data-align="justifyLeft" title="По левому краю">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="17" y1="6" x2="3" y2="6"/><line x1="21" y1="12" x2="3" y2="12"/><line x1="15" y1="18" x2="3" y2="18"/></svg>
+                </button>
+                <button type="button" class="align-opt" data-align="justifyCenter" title="По центру">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="6"/><line x1="21" y1="12" x2="3" y2="12"/><line x1="18" y1="18" x2="6" y2="18"/></svg>
+                </button>
+                <button type="button" class="align-opt" data-align="justifyRight" title="По правому краю">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="21" y1="6" x2="7" y2="6"/><line x1="21" y1="12" x2="3" y2="12"/><line x1="21" y1="18" x2="9" y2="18"/></svg>
+                </button>
+                <button type="button" class="align-opt" data-align="justifyFull" title="По ширине">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="12" x2="3" y2="12"/><line x1="21" y1="18" x2="3" y2="18"/></svg>
+                </button>
+              </div>
+            </div>
             <span class="tool-sep"></span>
             <button id="linkBtn" class="tool-btn" type="button">🔗 Ссылка</button>
             <button id="photoBtn" class="tool-btn" type="button">📷 Фото</button>
@@ -736,6 +902,7 @@
   <script>
     const ADMIN_LOGIN = 'lordman';
     const DEFAULT_RAINBOW = 'linear-gradient(90deg, #ff3b30, #ff9500, #ffcc00, #34c759, #007aff, #af52de)';
+    const DRAFT_KEY = 'tgtype_new_draft_v1';
 
     const pageLoader = document.getElementById('pageLoader');
     const editorHeader = document.getElementById('editorHeader');
@@ -746,6 +913,13 @@
     const metaInfoEl = document.getElementById('metaInfo');
     const storyEl = document.getElementById('story');
     const actionBtn = document.getElementById('actionBtn');
+    const themeBtn = document.getElementById('themeBtn');
+    const newPostLink = document.getElementById('newPostLink');
+    const codeBtn = document.getElementById('codeBtn');
+    const alignWrap = document.getElementById('alignWrap');
+    const alignBtn = document.getElementById('alignBtn');
+    const alignCurrentIcon = document.getElementById('alignCurrentIcon');
+    const alignPopover = document.getElementById('alignPopover');
     const photoBtn = document.getElementById('photoBtn');
     const linkBtn = document.getElementById('linkBtn');
     const linkPopover = document.getElementById('linkPopover');
@@ -768,6 +942,12 @@
     const authModal = document.getElementById('authModal');
     const loginInput = document.getElementById('loginInput');
     const passInput = document.getElementById('passInput');
+
+    // Переключение тёмной / светлой темы
+    themeBtn.addEventListener('click', () => {
+      const isDark = document.documentElement.classList.toggle('dark');
+      localStorage.setItem('tgtype_theme', isDark ? 'dark' : 'light');
+    });
 
     function showLoader() {
       if (pageLoader) {
@@ -801,6 +981,32 @@
     if (pathSlug) {
       showLoader();
     }
+
+    // Автосохранение и восстановление черновика для новой записи на /
+    function saveDraftToLocal() {
+      if (currentSlug || isViewMode) return;
+      const hasTitle = titleEl.innerText.trim().length > 0;
+      const hasStory = storyEl.innerText.trim().length > 0 || storyEl.querySelector('img, iframe, .tg-code-block');
+      if (!hasTitle && !hasStory) {
+        localStorage.removeItem(DRAFT_KEY);
+        return;
+      }
+      try {
+        localStorage.setItem(DRAFT_KEY, JSON.stringify({
+          title: titleEl.innerHTML,
+          story: storyEl.innerHTML,
+          at: Date.now()
+        }));
+      } catch (e) {}
+    }
+
+    function clearDraftFromLocal() {
+      localStorage.removeItem(DRAFT_KEY);
+    }
+
+    newPostLink.addEventListener('click', () => {
+      clearDraftFromLocal();
+    });
 
     let initialSnapshot = { title: '', story: '', meta: '' };
 
@@ -838,6 +1044,22 @@
     }
 
     captureInitialSnapshot();
+
+    // Восстанавливаем черновик, если открыта главная страница /
+    if (!pathSlug) {
+      try {
+        const rawDraft = localStorage.getItem(DRAFT_KEY);
+        if (rawDraft) {
+          const parsed = JSON.parse(rawDraft);
+          if (parsed && (parsed.title || parsed.story)) {
+            titleEl.innerHTML = parsed.title || '';
+            storyEl.innerHTML = parsed.story || '';
+            updatePublishState();
+          }
+        }
+      } catch (e) {}
+    }
+
     function updateFixedHeader() {
       if (!editorHeader.classList.contains('is-editing')) {
         editorHeader.classList.remove('is-fixed');
@@ -873,12 +1095,14 @@
       const canEdit = titleEl.isContentEditable;
       titleSideLabel.classList.toggle('visible', hasText && canEdit);
     }
+    updateTitleSideLabel();
+
     titleEl.addEventListener('input', () => {
       updateTitleSideLabel();
       updatePublishState();
+      saveDraftToLocal();
     });
     metaInfoEl.addEventListener('input', updatePublishState);
-
     function formatRuDate(timestamp) {
       if (!timestamp) return '—';
       return new Date(timestamp).toLocaleString('ru-RU', {
@@ -916,10 +1140,114 @@
       sel.addRange(range);
     }
 
+    // Подсветка синтаксиса для блока кода
+    function escapeHtml(str) {
+      return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    function highlightCodeText(raw) {
+      let html = escapeHtml(raw);
+      html = html.replace(/(\/\/[^\n]*|\/\*[\s\S]*?\*\/|#[^\n]*)/g, '<span class="hl-com">$1</span>');
+      html = html.replace(/(&quot;[^&\n]*?&quot;|'[^'\n]*?'|`[^`]*?`)/g, '<span class="hl-str">$1</span>');
+      html = html.replace(/(&lt;\/?[a-zA-Z0-9-]+(?:\s+[^&]*?)?\/?&gt;)/g, '<span class="hl-tag">$1</span>');
+      html = html.replace(/\b(const|let|var|function|return|if|else|for|while|async|await|try|catch|finally|class|import|from|export|default|new|true|false|null|undefined|def|print|elif|None|True|False)\b/g, '<span class="hl-kw">$1</span>');
+      html = html.replace(/\b(\d+(?:\.\d+)?)\b/g, '<span class="hl-num">$1</span>');
+      return html;
+    }
+
+    function applyCodeHighlight(codeEl) {
+      if (!codeEl) return;
+      const raw = codeEl.textContent || '';
+      codeEl.innerHTML = raw ? highlightCodeText(raw) : '';
+    }
+
+    function refreshAllCodeBlocks() {
+      storyEl.querySelectorAll('.tg-code-block code').forEach(applyCodeHighlight);
+    }
+
+    function syncCodeEditableState() {
+      const canEdit = storyEl.isContentEditable;
+      storyEl.querySelectorAll('.tg-code-block code').forEach(code => {
+        code.contentEditable = canEdit ? 'true' : 'false';
+      });
+    }
+
+    codeBtn.addEventListener('mousedown', e => e.preventDefault());
+    codeBtn.addEventListener('click', () => {
+      colorPopover.classList.remove('open');
+      alignPopover.classList.remove('open');
+
+      const block = document.createElement('div');
+      block.className = 'tg-code-block';
+      block.setAttribute('contenteditable', 'false');
+      block.innerHTML = `
+        <div class="tg-code-head">
+          <span>CODE</span>
+          <div class="tg-code-actions">
+            <button type="button" class="tg-code-copy">Скопировать</button>
+            <button type="button" class="tg-code-del" title="Удалить блок">✕</button>
+          </div>
+        </div>
+        <pre><code contenteditable="true" spellcheck="false"></code></pre>
+      `;
+
+      const afterP = document.createElement('p');
+      afterP.innerHTML = '<br>';
+
+      const sel = window.getSelection();
+      if (sel && sel.rangeCount && storyEl.contains(sel.anchorNode)) {
+        const range = sel.getRangeAt(0);
+        range.deleteContents();
+        range.insertNode(afterP);
+        range.insertNode(block);
+      } else {
+        storyEl.appendChild(block);
+        storyEl.appendChild(afterP);
+      }
+
+      const codeEl = block.querySelector('code');
+      codeEl.focus();
+      updatePublishState();
+      saveDraftToLocal();
+    });
+
+    storyEl.addEventListener('focusout', e => {
+      const codeEl = e.target.closest('.tg-code-block code');
+      if (codeEl && storyEl.contains(codeEl)) {
+        applyCodeHighlight(codeEl);
+        updatePublishState();
+        saveDraftToLocal();
+      }
+    });
+
+    // Выпадающее меню выравнивания
+    alignBtn.addEventListener('mousedown', e => e.preventDefault());
+    alignBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      colorPopover.classList.remove('open');
+      alignPopover.classList.toggle('open');
+    });
+
+    document.querySelectorAll('.align-opt').forEach(opt => {
+      opt.addEventListener('mousedown', e => e.preventDefault());
+      opt.addEventListener('click', e => {
+        e.stopPropagation();
+        const cmd = opt.dataset.align;
+        storyEl.focus();
+        document.execCommand(cmd, false, null);
+        alignCurrentIcon.innerHTML = opt.querySelector('svg').innerHTML;
+        document.querySelectorAll('.align-opt').forEach(b => b.classList.toggle('active', b === opt));
+        alignPopover.classList.remove('open');
+        updatePublishState();
+        saveDraftToLocal();
+      });
+    });
+
     // Палитра цветов текста
     colorBtn.addEventListener('mousedown', e => e.preventDefault());
     colorBtn.addEventListener('click', e => {
       e.stopPropagation();
+      alignPopover.classList.remove('open');
       colorPopover.classList.toggle('open');
     });
 
@@ -941,19 +1269,20 @@
         }
         colorPopover.classList.remove('open');
         updatePublishState();
+        saveDraftToLocal();
       });
     });
 
     document.addEventListener('click', e => {
-      if (!colorWrap.contains(e.target)) {
-        colorPopover.classList.remove('open');
-      }
+      if (!colorWrap.contains(e.target)) colorPopover.classList.remove('open');
+      if (!alignWrap.contains(e.target)) alignPopover.classList.remove('open');
     });
 
     document.querySelectorAll('.tool-btn[data-cmd]').forEach(btn => {
       btn.addEventListener('mousedown', e => e.preventDefault());
       btn.addEventListener('click', () => {
         colorPopover.classList.remove('open');
+        alignPopover.classList.remove('open');
         storyEl.focus();
         const cmd = btn.dataset.cmd;
         const arg = btn.dataset.arg || null;
@@ -973,11 +1302,12 @@
             const inner = existingBlock.innerHTML || '<br>';
             document.execCommand('insertHTML', false, `<p>${inner}</p>`);
             updatePublishState();
+            saveDraftToLocal();
             return;
           }
 
           let lineBlock = el?.closest('p, div, blockquote, h3');
-          if (lineBlock === storyEl) lineBlock = null;
+          if (lineBlock === storyEl || lineBlock?.closest('.tg-code-block')) lineBlock = null;
 
           if (lineBlock && storyEl.contains(lineBlock)) {
             const range = document.createRange();
@@ -988,6 +1318,7 @@
             const inner = lineBlock.innerHTML || '<br>';
             document.execCommand('insertHTML', false, `<${tag}>${inner}</${tag}>`);
             updatePublishState();
+            saveDraftToLocal();
             return;
           }
 
@@ -1014,14 +1345,9 @@
             const inner = temp.innerHTML || '<br>';
             document.execCommand('insertHTML', false, `<${tag}>${inner}</${tag}>`);
             updatePublishState();
+            saveDraftToLocal();
             return;
           }
-        }
-
-        if ((cmd === 'justifyCenter' || cmd === 'justifyRight') && document.queryCommandState(cmd)) {
-          document.execCommand('justifyLeft', false, null);
-          updatePublishState();
-          return;
         }
 
         if (cmd === 'insertUnorderedList') {
@@ -1032,18 +1358,18 @@
             const curNode = window.getSelection()?.anchorNode;
             const curEl = curNode?.nodeType === 3 ? curNode.parentElement : curNode;
             const li = curEl?.closest('li');
-            if (li && storyEl.contains(li)) {
-              placeCaretAtEnd(li);
-            }
+            if (li && storyEl.contains(li)) placeCaretAtEnd(li);
           }
           updatePublishState();
+          saveDraftToLocal();
           return;
         }
-
         document.execCommand(cmd, false, arg);
         updatePublishState();
+        saveDraftToLocal();
       });
     });
+
     function hideLinkPopover() {
       linkPopover.style.display = 'none';
       linkUrlInput.value = '';
@@ -1053,6 +1379,7 @@
     linkBtn.addEventListener('mousedown', e => e.preventDefault());
     linkBtn.addEventListener('click', () => {
       colorPopover.classList.remove('open');
+      alignPopover.classList.remove('open');
       const sel = window.getSelection();
       if (!sel || !sel.rangeCount) return;
 
@@ -1067,6 +1394,7 @@
         document.execCommand('unlink', false, null);
         hideLinkPopover();
         updatePublishState();
+        saveDraftToLocal();
         return;
       }
 
@@ -1110,6 +1438,7 @@
 
         hideLinkPopover();
         updatePublishState();
+        saveDraftToLocal();
       } else if (e.key === 'Escape') {
         hideLinkPopover();
       }
@@ -1119,6 +1448,7 @@
 
     photoBtn.addEventListener('click', () => {
       colorPopover.classList.remove('open');
+      alignPopover.classList.remove('open');
       fileInput.click();
     });
     fileInput.addEventListener('change', e => {
@@ -1156,6 +1486,7 @@
         sel.addRange(range);
       }
       updatePublishState();
+      saveDraftToLocal();
     }
 
     function parseYandexMusicEmbed(text) {
@@ -1170,10 +1501,7 @@
         if (!allowedHosts.test(urlObj.hostname)) return null;
 
         const isTall = /\/iframe\/album\/\d+\/?(?:$|\?)/i.test(src) || /video|embed|map-widget/i.test(src);
-        return {
-          src: src,
-          isAlbum: isTall
-        };
+        return { src: src, isAlbum: isTall };
       } catch (e) {
         return null;
       }
@@ -1210,8 +1538,10 @@
       sel.removeAllRanges();
       sel.addRange(newRange);
       updatePublishState();
+      saveDraftToLocal();
     }
 
+    // Клики внутри статьи: удаление плеера, копирование или удаление блока кода
     storyEl.addEventListener('click', e => {
       const delBtn = e.target.closest('.tg-ymusic-del');
       if (delBtn && storyEl.contains(delBtn)) {
@@ -1219,10 +1549,41 @@
         e.stopPropagation();
         delBtn.closest('.tg-ymusic-embed')?.remove();
         updatePublishState();
+        saveDraftToLocal();
+        return;
+      }
+
+      const codeDelBtn = e.target.closest('.tg-code-del');
+      if (codeDelBtn && storyEl.contains(codeDelBtn)) {
+        e.preventDefault();
+        e.stopPropagation();
+        codeDelBtn.closest('.tg-code-block')?.remove();
+        updatePublishState();
+        saveDraftToLocal();
+        return;
+      }
+
+      const copyCodeBtn = e.target.closest('.tg-code-copy');
+      if (copyCodeBtn && storyEl.contains(copyCodeBtn)) {
+        e.preventDefault();
+        e.stopPropagation();
+        const codeText = copyCodeBtn.closest('.tg-code-block')?.querySelector('code')?.textContent || '';
+        navigator.clipboard?.writeText(codeText);
+        copyCodeBtn.textContent = 'Скопировано!';
+        setTimeout(() => { copyCodeBtn.textContent = 'Скопировать'; }, 1500);
       }
     });
-
     storyEl.addEventListener('keydown', e => {
+      // Внутри блока кода Enter делает обычный перенос строки, а Tab вставляет 2 пробела
+      const activeCode = e.target.closest('.tg-code-block code');
+      if (activeCode && storyEl.contains(activeCode)) {
+        if (e.key === 'Tab') {
+          e.preventDefault();
+          document.execCommand('insertText', false, '  ');
+        }
+        return;
+      }
+
       if (e.key === 'Enter' && !e.shiftKey) {
         const sel = window.getSelection();
         const node = sel?.anchorNode;
@@ -1251,8 +1612,10 @@
         }
       }
     });
+
     storyEl.addEventListener('beforeinput', e => {
       if (e.defaultPrevented) return;
+      if (e.target.closest('.tg-code-block code')) return;
       if (e.inputType === 'insertParagraph' || e.inputType === 'insertLineBreak') {
         const block = getActiveStoryBlock();
         if (block && storyEl.contains(block)) {
@@ -1261,7 +1624,13 @@
       }
     });
 
-    storyEl.addEventListener('input', () => {
+    storyEl.addEventListener('input', e => {
+      if (e.target.closest('.tg-code-block code')) {
+        updatePublishState();
+        saveDraftToLocal();
+        return;
+      }
+
       if (resetAfterBlockBreak) {
         resetAfterBlockBreak = false;
 
@@ -1292,6 +1661,7 @@
         }
       }
       updatePublishState();
+      saveDraftToLocal();
     });
 
     titleEl.addEventListener('paste', e => {
@@ -1300,6 +1670,7 @@
       document.execCommand('insertText', false, text);
       updateTitleSideLabel();
       updatePublishState();
+      saveDraftToLocal();
     });
 
     function sanitizePastedHtml(rawHtml) {
@@ -1373,6 +1744,20 @@
 
     storyEl.addEventListener('paste', e => {
       const cd = e.clipboardData || window.clipboardData;
+
+      // Вставка внутрь блока кода — всегда строго чистым текстом 1-в-1 без форматирования
+      const targetCode = e.target.closest('.tg-code-block code');
+      if (targetCode && storyEl.contains(targetCode)) {
+        e.preventDefault();
+        const plainCode = cd ? cd.getData('text/plain') : '';
+        if (plainCode) {
+          document.execCommand('insertText', false, plainCode);
+          updatePublishState();
+          saveDraftToLocal();
+        }
+        return;
+      }
+
       const items = cd ? cd.items : [];
       for (const item of items) {
         if (item.kind === 'file' && item.type.indexOf('image') === 0) {
@@ -1398,6 +1783,7 @@
         if (cleanHtml.trim()) {
           document.execCommand('insertHTML', false, cleanHtml);
           updatePublishState();
+          saveDraftToLocal();
           return;
         }
       }
@@ -1405,6 +1791,7 @@
       if (text) {
         document.execCommand('insertText', false, text);
         updatePublishState();
+        saveDraftToLocal();
       }
     });
 
@@ -1433,6 +1820,7 @@
           storyEl.focus();
           document.execCommand('insertHTML', false, `<img src="${dataUrl}"><br>`);
           updatePublishState();
+          saveDraftToLocal();
         };
         img.src = event.target.result;
       };
@@ -1518,6 +1906,18 @@
       }
     }
 
+    function showAuthButtonNotice(text, cssClass, fallbackText) {
+      if (logoutMsgTimer) clearTimeout(logoutMsgTimer);
+      authBtn.classList.remove('is-logged-out', 'is-logged-in');
+      authBtn.classList.add(cssClass);
+      authBtn.textContent = text;
+      logoutMsgTimer = setTimeout(() => {
+        logoutMsgTimer = null;
+        authBtn.classList.remove('is-logged-out', 'is-logged-in');
+        authBtn.textContent = fallbackText;
+      }, 2500);
+    }
+
     window.addEventListener('DOMContentLoaded', () => {
       if (typeof firebase !== 'undefined') {
         firebase.initializeApp({
@@ -1531,20 +1931,18 @@
         db = firebase.firestore();
         auth = firebase.auth();
 
-               auth.onAuthStateChanged(user => {
+        auth.onAuthStateChanged(user => {
           currentUser = user;
           const login = getLoginName(user);
 
           if (user) {
             isManualLogout = false;
-            if (logoutMsgTimer) {
-              clearTimeout(logoutMsgTimer);
-              logoutMsgTimer = null;
+            if (!logoutMsgTimer) {
+              authBtn.classList.remove('is-logged-out', 'is-logged-in');
+              authBtn.textContent = `Выйти (${login})`;
             }
-            authBtn.classList.remove('is-logged-out');
-            authBtn.textContent = `Выйти (${login})`;
           } else if (!logoutMsgTimer) {
-            authBtn.classList.remove('is-logged-out');
+            authBtn.classList.remove('is-logged-out', 'is-logged-in');
             authBtn.textContent = 'Войти';
           }
 
@@ -1622,21 +2020,13 @@
       setAuthMode(!isRegMode);
       loginInput.focus();
     });
-        authBtn.addEventListener('click', async () => {
-      if (authBtn.classList.contains('is-logged-out')) return;
+
+    authBtn.addEventListener('click', async () => {
+      if (authBtn.classList.contains('is-logged-out') || authBtn.classList.contains('is-logged-in')) return;
 
       if (currentUser) {
         isManualLogout = true;
-        if (logoutMsgTimer) clearTimeout(logoutMsgTimer);
-        authBtn.textContent = 'Вы вышли из системы';
-        authBtn.classList.add('is-logged-out');
-        logoutMsgTimer = setTimeout(() => {
-          logoutMsgTimer = null;
-          authBtn.classList.remove('is-logged-out');
-          if (!currentUser) {
-            authBtn.textContent = 'Войти';
-          }
-        }, 2500);
+        showAuthButtonNotice('Вы вышли из системы', 'is-logged-out', 'Войти');
         await auth.signOut();
       } else {
         setAuthMode(false);
@@ -1644,9 +2034,11 @@
         loginInput.focus();
       }
     });
+
     document.getElementById('closeModalBtn').addEventListener('click', () => {
       authModal.style.display = 'none';
     });
+
     function cleanLogin(raw) {
       return raw.trim().toLowerCase().replace(/[^a-z0-9_-]/g, '');
     }
@@ -1679,7 +2071,7 @@
           await auth.createUserWithEmailAndPassword(`${login}@tgtype.local`, pass);
           localStorage.setItem('tgtype_last_reg', String(Date.now()));
           authModal.style.display = 'none';
-          setStatus(`Аккаунт ${login} зарегистрирован!`, 'ok');
+          showAuthButtonNotice(`Аккаунт создан: ${login}`, 'is-logged-in', `Выйти (${login})`);
         } catch (err) {
           if (err.code === 'auth/email-already-in-use') {
             modalMsg.textContent = 'Этот логин уже занят. Придумайте другой.';
@@ -1710,7 +2102,7 @@
           localStorage.removeItem('tgtype_login_fails');
           localStorage.removeItem('tgtype_login_lock');
           authModal.style.display = 'none';
-          setStatus(`Вход выполнен: ${login}`, 'ok');
+          showAuthButtonNotice(`Вход выполнен: ${login}`, 'is-logged-in', `Выйти (${login})`);
         } catch (err) {
           if (err.code === 'auth/too-many-requests') {
             localStorage.setItem('tgtype_login_lock', String(Date.now() + ONE_HOUR));
@@ -1822,9 +2214,10 @@
           btn.innerHTML = isPrivate
             ? `${lockSvg}<span>Ограниченный доступ</span><span class="chevron">▾</span>`
             : `${globeSvg}<span>Открытый доступ</span><span class="chevron">▾</span>`;
-          if (checks) checks.textContent = isPrivate ? '' : '✓';
-          if (checks) checks.textContent = isPrivate ? '✓' : '';
+          if (checks[0]) checks[0].textContent = isPrivate ? '' : '✓';
+          if (checks[1]) checks[1].textContent = isPrivate ? '✓' : '';
         }
+
         function renderList(filterText = '') {
           ul.innerHTML = '';
           const q = filterText.toLowerCase().trim();
@@ -2049,10 +2442,12 @@
 
           titleEl.innerHTML = data.title || '';
           storyEl.innerHTML = data.story || '';
+          refreshAllCodeBlocks();
+          syncCodeEditableState();
           currentArticleViews = Number(data.views) || 0;
           currentArticleViewsLog = Array.isArray(data.viewsLog) ? data.viewsLog : [];
 
-                   if (data.customMeta !== undefined) {
+          if (data.customMeta !== undefined) {
             metaInfoEl.textContent = data.customMeta;
           } else {
             const rawAuthor = Array.isArray(data.ownerLogin) ? data.ownerLogin.at(0) : (data.ownerLogin || '');
@@ -2091,6 +2486,7 @@
     function setEditable(canEdit) {
       titleEl.contentEditable = Boolean(canEdit);
       storyEl.contentEditable = Boolean(canEdit);
+      syncCodeEditableState();
       toolbar.style.display = canEdit ? 'flex' : 'none';
       toolbarRow.classList.toggle('view-mode', !canEdit);
       if (canEdit) {
@@ -2137,6 +2533,7 @@
         return;
       }
 
+      refreshAllCodeBlocks();
       actionBtn.disabled = true;
       actionBtn.classList.add('is-saving');
       setStatus('Публикация...');
@@ -2172,6 +2569,7 @@
         }
 
         await db.collection('articles').doc(targetSlug).set(payload, { merge: true });
+        clearDraftFromLocal();
 
         if (isAdmin(currentUser)) {
           metaInfoEl.textContent = payload.customMeta;
@@ -2183,7 +2581,6 @@
         window.history.pushState({}, '', '/' + targetSlug);
         document.title = titleText;
         setStatus('');
-
         // Сначала красиво заливаем кнопку зелёным прямо на её месте в тулбаре
         actionBtn.classList.remove('is-saving');
         actionBtn.disabled = false;
@@ -2210,11 +2607,6 @@
   </script>
 </body>
 </html>
-
-
-
-
-
 
 
 
