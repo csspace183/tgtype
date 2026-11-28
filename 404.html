@@ -382,15 +382,8 @@
     .publish-btn .edit-pencil-icon {
       display: none;
     }
-        @keyframes editBtnSlideOut {
-      from {
-        opacity: 0.7;
-        transform: translateX(-140px);
-      }
-      to {
-        opacity: 1;
-        transform: translateX(0);
-      }
+    .toolbar-row.view-mode .publish-btn {
+      transition: transform 0.36s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.3s ease, color 0.2s ease, border-color 0.2s ease, opacity 0.2s ease;
     }
     .toolbar-row.view-mode .publish-btn.is-scrolled {
       position: fixed;
@@ -398,7 +391,15 @@
       left: calc(50% + 395px);
       z-index: 94;
       box-shadow: 0 2px 10px var(--shadow);
-      animation: editBtnSlideOut 0.36s cubic-bezier(0.22, 1, 0.36, 1);
+      transform: translateX(0);
+    }
+    .toolbar-row.view-mode .publish-btn.is-returning {
+      position: fixed;
+      top: 108px;
+      left: calc(50% + 395px);
+      z-index: 94;
+      box-shadow: none;
+      transform: translateX(-142px);
     }
 
     @media (max-width: 1180px) {
@@ -1190,7 +1191,7 @@
             <a href="/" id="newPostLink" class="new-link">+ Новая запись</a>
             <a href="/blog" id="adminBlogLink" class="new-link">Блог</a>
           </div>
-          <span class="site-ver-badge">build v0.1.2</span>
+          <span class="site-ver-badge">build v0.1.3</span>
           <button id="themeBtn" class="theme-btn" type="button" title="Переключить тему">
             <svg class="icon-light" width="17" height="17" viewBox="0 0 24 24" fill="#f5b014" stroke="#e09c00" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
             <svg class="icon-dark" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#a5b4fc" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5a8.5 8.5 0 1 0 11 11z" fill="rgba(165, 180, 252, 0.2)"/><circle cx="17.5" cy="6.5" r="2" fill="#fcd34d" stroke="#fcd34d"/><path d="M14.5 8.2c2-.8 4.4-1.8 6-3.4" stroke="#fcd34d" stroke-width="1.3"/></svg>
@@ -1419,8 +1420,11 @@
     let viewCountedForSlug = false;
     let savedLinkRange = null;
     let savedBtnTimer = null;
+    let editBtnReturnTimer = null;
+    let wasEditBtnScrolled = false;
     let logoutMsgTimer = null;
     let isManualLogout = false;
+
 
     const pathSlug = window.location.pathname.replace(/^\/+|\/+$/g, '');
     let currentSlug = pathSlug;
@@ -1507,11 +1511,47 @@
         }
       } catch (e) {}
     }
-        function updateFixedHeader(animateOpen = false) {
-      const scrolled = window.scrollY > 28;
+    function updateFixedHeader(animateOpen = false) {
+      const scrolled = window.scrollY > 95;
       themeBtn.classList.toggle('is-scrolled', scrolled);
-      actionBtn.classList.toggle('is-scrolled', scrolled && isViewMode);
       scrollTopBtn.classList.toggle('visible', window.scrollY > 300);
+
+      const shouldFloatEdit = scrolled && isViewMode && window.innerWidth > 1180;
+      if (shouldFloatEdit) {
+        if (editBtnReturnTimer) {
+          clearTimeout(editBtnReturnTimer);
+          editBtnReturnTimer = null;
+        }
+        actionBtn.classList.remove('is-returning');
+        if (!wasEditBtnScrolled) {
+          actionBtn.classList.add('is-returning');
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+              actionBtn.classList.remove('is-returning');
+              actionBtn.classList.add('is-scrolled');
+            });
+          });
+        } else {
+          actionBtn.classList.add('is-scrolled');
+        }
+        wasEditBtnScrolled = true;
+      } else {
+        if (wasEditBtnScrolled && isViewMode && window.innerWidth > 1180) {
+          actionBtn.classList.remove('is-scrolled');
+          actionBtn.classList.add('is-returning');
+          if (editBtnReturnTimer) clearTimeout(editBtnReturnTimer);
+          editBtnReturnTimer = setTimeout(() => {
+            editBtnReturnTimer = null;
+            actionBtn.classList.remove('is-returning');
+          }, 360);
+        } else {
+          actionBtn.classList.remove('is-scrolled', 'is-returning');
+        }
+        wasEditBtnScrolled = false;
+        if (window.innerWidth <= 1180) {
+          actionBtn.classList.toggle('is-scrolled', window.scrollY > 28 && isViewMode);
+        }
+      }
 
       if (!editorHeader.classList.contains('is-editing')) {
         editorHeader.classList.remove('is-fixed', 'is-opening', 'is-closing');
