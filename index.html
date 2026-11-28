@@ -25,8 +25,10 @@
       --shadow: rgba(0, 0, 0, 0.12);
       --code-bg: #f6f8fa;
       --code-header: #eef1f5;
+      --code-inner-bg: #ffffff;
       --code-border: #e1e4e8;
       --code-text: #24292e;
+
       --hl-kw: #d73a49;
       --hl-str: #032f62;
       --hl-com: #6a737d;
@@ -47,8 +49,10 @@
       --shadow: rgba(0, 0, 0, 0.45);
       --code-bg: #252629;
       --code-header: #252629;
+      --code-inner-bg: #1b1d21;
       --code-border: #34363b;
       --code-text: #e4e4e4;
+
       --hl-kw: #c792ea;
       --hl-str: #a5d6ff;
       --hl-com: #8b949e;
@@ -330,18 +334,19 @@
       opacity: 0;
       transition: opacity 0.15s ease;
     }
-    .side-label.visible { opacity: 1; }
+       .side-label.visible { opacity: 1; }
+    .side-label.is-hiding { opacity: 0 !important; transition: opacity 0.2s ease; }
     @media (max-width: 960px) {
       .side-label { display: none; }
     }
-            #metaInfo {
+    #metaInfo {
       font-size: 14px;
       color: var(--muted);
       margin-bottom: 20px;
       min-height: 18px;
       transition: margin-bottom 0.36s cubic-bezier(0.22, 1, 0.36, 1);
     }
-    #metaInfo.no-toolbar, #metaInfo.can-edit-btn { margin-bottom: 52px; }
+    #metaInfo.no-toolbar, #metaInfo.can-edit-btn { margin-bottom: 38px; }
 
     /* Строка с панелью инструментов и кнопкой ОПУБЛИКОВАТЬ вровень */
     .toolbar-row {
@@ -351,14 +356,15 @@
       gap: 12px;
       margin-bottom: 18px;
       min-height: 34px;
-      max-height: 120px;
-      transition: max-height 0.36s cubic-bezier(0.22, 1, 0.36, 1), margin-bottom 0.36s cubic-bezier(0.22, 1, 0.36, 1);
+      max-height: 44px;
+      transition: max-height 0.36s cubic-bezier(0.22, 1, 0.36, 1), margin-bottom 0.36s cubic-bezier(0.22, 1, 0.36, 1), min-height 0.36s cubic-bezier(0.22, 1, 0.36, 1);
     }
     .toolbar-row.is-collapsing {
       max-height: 0;
       min-height: 0;
       margin-bottom: 0;
     }
+
     .toolbar-row.is-collapsing .toolbar {
       opacity: 0;
       pointer-events: none;
@@ -381,10 +387,10 @@
         transform: translateY(0);
       }
     }
-            .toolbar-row.view-mode .publish-btn {
+        .toolbar-row.view-mode .publish-btn {
       position: absolute;
       right: 0;
-      bottom: -14px;
+      bottom: 0;
       transition: opacity 0.3s ease, transform 0.3s ease, background-color 0.25s ease, color 0.25s ease;
     }
 
@@ -635,11 +641,15 @@
     }
     .tg-code-del:hover { border-color: #d9534f; color: #d9534f; }
     #story[contenteditable="false"] .tg-code-del { display: none; }
-    .tg-code-body {
+        .tg-code-body {
       position: relative;
+      margin: 4px 12px 8px;
+      border-radius: 8px;
+      border: 1px solid var(--code-border);
+      background: var(--code-inner-bg);
     }
     #story .tg-code-block.is-collapsed .tg-code-body {
-      max-height: 54px;
+      max-height: 58px;
       overflow: hidden;
     }
     #story .tg-code-block.is-collapsed .tg-code-body::after {
@@ -649,13 +659,12 @@
       right: 0;
       bottom: 0;
       height: 22px;
-      background: linear-gradient(to bottom, transparent, var(--code-bg));
+      background: linear-gradient(to bottom, transparent, var(--code-inner-bg));
       pointer-events: none;
     }
-
     #story .tg-code-block pre {
       margin: 0;
-      padding: 6px 16px 14px;
+      padding: 10px 14px;
       overflow-x: auto;
       font-size: 13.5px;
       line-height: 1.55;
@@ -665,6 +674,7 @@
       tab-size: 2;
       outline: none;
     }
+
     #story .tg-code-block code {
       font-family: inherit;
       display: block;
@@ -1333,11 +1343,21 @@
       themeBtn.classList.toggle('is-scrolled', scrolled);
       actionBtn.classList.toggle('is-scrolled', scrolled && isViewMode);
       scrollTopBtn.classList.toggle('visible', window.scrollY > 300);
-      if (!editorHeader.classList.contains('is-editing')) {
-        editorHeader.classList.remove('is-fixed');
-        headerSpacer.style.display = 'none';
+           if (!editorHeader.classList.contains('is-editing')) {
+        if (editorHeader.classList.contains('is-fixed')) {
+          const prevScrollY = window.scrollY;
+          const spacerH = headerSpacer.offsetHeight || parseFloat(headerSpacer.style.height) || 0;
+          editorHeader.classList.remove('is-fixed');
+          headerSpacer.style.display = 'none';
+          if (spacerH > 0 && prevScrollY > 0) {
+            window.scrollTo({ top: Math.max(0, prevScrollY - spacerH), behavior: 'instant' });
+          }
+        } else {
+          headerSpacer.style.display = 'none';
+        }
         return;
       }
+
       const triggerY = 28;
       if (window.scrollY > triggerY) {
         if (!editorHeader.classList.contains('is-fixed')) {
@@ -3070,9 +3090,11 @@
           const btnRect = actionBtn.getBoundingClientRect();
           const shiftX = Math.max(0, rowRect.right - btnRect.right);
 
-          cancelEditBtn.classList.add('is-hiding');
+                   cancelEditBtn.classList.add('is-hiding');
+          titleSideLabel.classList.add('is-hiding');
           toolbarRow.classList.add('is-collapsing');
           metaInfoEl.classList.add('can-edit-btn');
+
           if (editorHeader.classList.contains('is-fixed')) {
             editorHeader.classList.add('is-closing');
           }
@@ -3089,9 +3111,11 @@
             savedBtnTimer = null;
             actionBtn.classList.remove('is-sliding-right');
             actionBtn.style.transform = '';
-            cancelEditBtn.classList.remove('is-hiding');
+                        cancelEditBtn.classList.remove('is-hiding');
+            titleSideLabel.classList.remove('is-hiding');
             toolbarRow.classList.remove('is-collapsing');
             editorHeader.classList.remove('is-closing');
+
 
             isViewMode = true;
             captureInitialSnapshot();
