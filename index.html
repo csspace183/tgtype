@@ -1395,18 +1395,18 @@
       }
     }
 
-    function openViewsModal() {
-      viewsModalTitle.textContent = `Просмотры (${currentArticleViews})`;
+    function openViewsModal(viewsCount = currentArticleViews, viewsLog = currentArticleViewsLog) {
+      viewsModalTitle.textContent = `Просмотры (${viewsCount})`;
       viewsList.innerHTML = '';
 
-      if (!currentArticleViewsLog || currentArticleViewsLog.length === 0) {
+      if (!viewsLog || viewsLog.length === 0) {
         viewsEmptyMsg.style.display = 'block';
-        viewsEmptyMsg.textContent = currentArticleViews > 0
+        viewsEmptyMsg.textContent = viewsCount > 0
           ? 'Детальная история ведётся только для новых просмотров.'
           : 'Пока никто не просматривал эту статью.';
       } else {
         viewsEmptyMsg.style.display = 'none';
-        const sorted = [...currentArticleViewsLog].sort((a, b) => (b.at || 0) - (a.at || 0));
+        const sorted = [...viewsLog].sort((a, b) => (b.at || 0) - (a.at || 0));
         sorted.forEach(item => {
           const li = document.createElement('li');
           const who = item.user ? item.user : 'Гость';
@@ -1415,6 +1415,9 @@
           viewsList.appendChild(li);
         });
       }
+
+      viewsModal.style.display = 'flex';
+    }
 
       viewsModal.style.display = 'flex';
     }
