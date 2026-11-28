@@ -106,8 +106,7 @@
     }
     html.dark .theme-btn .icon-light { display: none; }
     html:not(.dark) .theme-btn .icon-dark { display: none; }
-
-        .publish-btn {
+    .publish-btn {
       position: relative;
       overflow: hidden;
       z-index: 1;
@@ -115,19 +114,20 @@
       color: var(--text);
       border: 2px solid var(--text);
       border-radius: 20px;
-      padding: 6px 18px;
+      padding: 6px 14px;
       font-weight: 700;
-      font-size: 12px;
-      letter-spacing: 0.5px;
+      font-size: 11.5px;
+      letter-spacing: 0.4px;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 7px;
+      gap: 6px;
       transition: color 0.2s ease, border-color 0.2s ease, opacity 0.2s ease;
       white-space: nowrap;
       flex-shrink: 0;
     }
+
     .publish-btn::before {
       content: "";
       position: absolute;
@@ -175,7 +175,7 @@
       gap: 8px;
       flex-shrink: 0;
     }
-        .cancel-edit-btn {
+         .cancel-edit-btn {
       display: none;
       border-radius: 20px;
       border: 1px solid var(--border);
@@ -184,13 +184,14 @@
       font-size: 11px;
       font-weight: 700;
       letter-spacing: 0.4px;
-      padding: 7px 14px;
+      padding: 6px 11px;
       cursor: pointer;
       align-items: center;
       justify-content: center;
       white-space: nowrap;
       transition: border-color 0.15s ease, color 0.15s ease;
     }
+
     .cancel-edit-btn:hover {
       border-color: var(--text);
       color: var(--text);
@@ -352,24 +353,27 @@
       min-height: 18px;
     }
     #metaInfo.no-toolbar { margin-bottom: 28px; }
-
-    /* Строка с панелью инструментов и кнопкой ОПУБЛИКОВАТЬ вровень (постоянная высота, чтобы текст не двигался) */
+    /* Строка с панелью инструментов и кнопкой ОПУБЛИКОВАТЬ вровень (всегда в 1 линию) */
     .toolbar-row {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      gap: 12px;
+      gap: 8px;
       margin-bottom: 18px;
-      min-height: 64px;
+      min-height: 44px;
     }
     .toolbar {
       display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
+      gap: 5px;
+      flex-wrap: nowrap;
       align-items: center;
       opacity: 1;
       transition: opacity 0.3s ease;
     }
+    .toolbar::-webkit-scrollbar {
+      display: none;
+    }
+
     .toolbar-row.view-mode .toolbar,
     .toolbar-row.is-collapsing .toolbar {
       opacity: 0;
@@ -395,11 +399,33 @@
       box-shadow: 0 2px 10px var(--shadow);
       animation: editBtnFadeIn 0.32s cubic-bezier(0.22, 1, 0.36, 1);
     }
+    а
+    
+        .tool-btn:hover { border-color: var(--text); color: var(--text); }
+    .tool-btn.active {
+      background: var(--text);
+      border-color: var(--text);
+      color: var(--bg);
+    }
     @media (max-width: 768px) {
       .theme-btn {
         position: static;
         box-shadow: none;
         flex-shrink: 0;
+      }
+      .toolbar-row {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+      }
+      .publish-group {
+        justify-content: flex-end;
+      }
+      .toolbar {
+        overflow-x: auto;
+        scrollbar-width: none;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: 2px;
       }
       .toolbar-row.view-mode .publish-btn.is-scrolled {
         position: static;
@@ -416,13 +442,14 @@
       width: 1px;
       height: 18px;
       background: var(--border);
-      margin: 0 2px;
+      margin: 0 1px;
+      flex-shrink: 0;
     }
     .tool-btn {
       background: none;
       border: 1px solid var(--border);
       border-radius: 4px;
-      padding: 4px 9px;
+      padding: 4px 7px;
       cursor: pointer;
       color: var(--muted);
       font-size: 13px;
@@ -431,14 +458,9 @@
       justify-content: center;
       gap: 4px;
       min-height: 28px;
+      white-space: nowrap;
+      flex-shrink: 0;
     }
-        .tool-btn:hover { border-color: var(--text); color: var(--text); }
-    .tool-btn.active {
-      background: var(--text);
-      border-color: var(--text);
-      color: var(--bg);
-    }
-
 
     /* Выпадающее меню выравнивания */
     .align-wrap {
@@ -1128,7 +1150,7 @@
             <a href="/" id="newPostLink" class="new-link">+ Новая запись</a>
             <a href="/blog" id="adminBlogLink" class="new-link">Блог</a>
           </div>
-          <span class="site-ver-badge">build v0.0.5</span>
+          <span class="site-ver-badge">build v0.0.6</span>
           <button id="themeBtn" class="theme-btn" type="button" title="Переключить тему">
             <svg class="icon-light" width="17" height="17" viewBox="0 0 24 24" fill="#f5b014" stroke="#e09c00" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
             <svg class="icon-dark" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#a5b4fc" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5a8.5 8.5 0 1 0 11 11z" fill="rgba(165, 180, 252, 0.2)"/><circle cx="17.5" cy="6.5" r="2" fill="#fcd34d" stroke="#fcd34d"/><path d="M14.5 8.2c2-.8 4.4-1.8 6-3.4" stroke="#fcd34d" stroke-width="1.3"/></svg>
@@ -1963,68 +1985,24 @@
         storyEl.focus();
         const cmd = btn.dataset.cmd;
         const arg = btn.dataset.arg || null;
-
         if (cmd === 'formatBlock' && arg) {
           const sel = window.getSelection();
           if (!sel || !sel.rangeCount) return;
           const node = sel.anchorNode;
-          const el = node?.nodeType === 3 ? node.parentElement : node;
+          if (!node || !storyEl.contains(node)) return;
+          const el = node.nodeType === 3 ? node.parentElement : node;
+          if (el?.closest('.tg-code-block')) return;
 
           const existingBlock = el?.closest(arg.toLowerCase());
           if (existingBlock && storyEl.contains(existingBlock)) {
-            const range = document.createRange();
-            range.selectNode(existingBlock);
-            sel.removeAllRanges();
-            sel.addRange(range);
-            const inner = existingBlock.innerHTML || '<br>';
-            document.execCommand('insertHTML', false, `<p>${inner}</p>`);
-            updatePublishState();
-            saveDraftToLocal();
-            return;
+            document.execCommand('formatBlock', false, 'P');
+          } else {
+            document.execCommand('formatBlock', false, arg);
           }
-
-          let lineBlock = el?.closest('p, div, blockquote, h3');
-          if (lineBlock === storyEl || lineBlock?.closest('.tg-code-block')) lineBlock = null;
-
-          if (lineBlock && storyEl.contains(lineBlock)) {
-            const range = document.createRange();
-            range.selectNode(lineBlock);
-            sel.removeAllRanges();
-            sel.addRange(range);
-            const tag = arg.toLowerCase();
-            const inner = lineBlock.innerHTML || '<br>';
-            document.execCommand('insertHTML', false, `<${tag}>${inner}</${tag}>`);
-            updatePublishState();
-            saveDraftToLocal();
-            return;
-          }
-
-          if (node && storyEl.contains(node)) {
-            let startNode = node;
-            while (startNode.previousSibling && startNode.previousSibling.nodeName !== 'BR' && !/^(P|DIV|H3|BLOCKQUOTE|UL)$/i.test(startNode.previousSibling.nodeName)) {
-              startNode = startNode.previousSibling;
-            }
-            let endNode = startNode;
-            while (endNode.nextSibling && endNode.nextSibling.nodeName !== 'BR' && !/^(P|DIV|H3|BLOCKQUOTE|UL)$/i.test(endNode.nextSibling.nodeName)) {
-              endNode = endNode.nextSibling;
-            }
-
-            const range = document.createRange();
-            range.setStartBefore(startNode);
-            range.setEndAfter(endNode);
-            sel.removeAllRanges();
-            sel.addRange(range);
-
-            const frag = range.cloneContents();
-            const temp = document.createElement('div');
-            temp.appendChild(frag);
-            const tag = arg.toLowerCase();
-            const inner = temp.innerHTML || '<br>';
-            document.execCommand('insertHTML', false, `<${tag}>${inner}</${tag}>`);
-            updatePublishState();
-            saveDraftToLocal();
-            return;
-          }
+          updateActiveFormatButtons();
+          updatePublishState();
+          saveDraftToLocal();
+          return;
         }
 
         if (cmd === 'insertUnorderedList') {
