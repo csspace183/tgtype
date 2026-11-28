@@ -669,7 +669,7 @@
     .no-edit-rights .tg-code-edit {
       display: none !important;
     }
-    .tg-code-head-toggle {
+        .tg-code-head-toggle {
       background: none;
       color: var(--muted);
       border: 1px solid var(--code-border);
@@ -687,8 +687,27 @@
       color: var(--text);
       border-color: var(--text);
     }
-    .tg-code-block.is-collapsed .tg-code-head-toggle {
-      display: none !important;
+    .tg-code-head-copy {
+      background: none;
+      color: var(--muted);
+      border: 1px solid var(--code-border);
+      border-radius: 6px;
+      padding: 3px 8px;
+      font-size: 11.5px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: color 0.15s ease, border-color 0.15s ease;
+    }
+    .tg-code-head-copy:hover {
+      color: var(--text);
+      border-color: var(--text);
+    }
+    #story .tg-code-block.is-collapsed .tg-code-foot,
+    #story .tg-code-block.is-short .tg-code-foot {
+      display: none;
     }
 
        .tg-code-del {
@@ -1102,7 +1121,7 @@
             <a href="/" id="newPostLink" class="new-link">+ Новая запись</a>
             <a href="/blog" id="adminBlogLink" class="new-link">Блог</a>
           </div>
-          <span class="site-ver-badge">build v0.0.3</span>
+          <span class="site-ver-badge">build v0.0.4</span>
           <button id="themeBtn" class="theme-btn" type="button" title="Переключить тему">
             <svg class="icon-light" width="17" height="17" viewBox="0 0 24 24" fill="#f5b014" stroke="#e09c00" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
             <svg class="icon-dark" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#a5b4fc" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5a8.5 8.5 0 1 0 11 11z" fill="rgba(165, 180, 252, 0.2)"/><circle cx="17.5" cy="6.5" r="2" fill="#fcd34d" stroke="#fcd34d"/><path d="M14.5 8.2c2-.8 4.4-1.8 6-3.4" stroke="#fcd34d" stroke-width="1.3"/></svg>
@@ -1573,24 +1592,23 @@
       sel.removeAllRanges();
       sel.addRange(range);
     }
-    function updateCodeToggleUI(block) {
+        function updateCodeToggleUI(block) {
       if (!block) return;
       const toggleBtn = block.querySelector('.tg-code-toggle');
       const headToggleBtn = block.querySelector('.tg-code-head-toggle');
       const preEl = block.querySelector('pre');
       if (!preEl) return;
       const isShort = preEl.scrollHeight <= 60;
+      block.classList.toggle('is-short', isShort);
       if (isShort) {
         block.classList.remove('is-collapsed');
-        if (toggleBtn) toggleBtn.style.visibility = 'hidden';
         if (headToggleBtn) headToggleBtn.style.display = 'none';
         return;
       }
-      if (toggleBtn) toggleBtn.style.visibility = 'visible';
       if (headToggleBtn) headToggleBtn.style.display = 'inline-flex';
       const collapsed = block.classList.contains('is-collapsed');
       if (toggleBtn) toggleBtn.textContent = collapsed ? 'Развернуть ▾' : 'Свернуть ▴';
-      if (headToggleBtn) headToggleBtn.textContent = 'Свернуть ▴';
+      if (headToggleBtn) headToggleBtn.textContent = collapsed ? 'Развернуть ▾' : 'Свернуть ▴';
     }
 
     function normalizeCodeBlockStructure(block) {
@@ -1648,17 +1666,25 @@
       if (oldRightToggle) oldRightToggle.remove();
       const oldEditBtn = rightBox?.querySelector('.tg-code-edit');
       if (oldEditBtn) oldEditBtn.remove();
-
       if (leftBox && !leftBox.querySelector('.tg-code-head-toggle')) {
         const headToggle = document.createElement('button');
         headToggle.type = 'button';
         headToggle.className = 'tg-code-head-toggle';
-        headToggle.textContent = 'Свернуть ▴';
+        headToggle.textContent = 'Развернуть ▾';
         leftBox.appendChild(headToggle);
+      }
+      if (leftBox && !leftBox.querySelector('.tg-code-head-copy')) {
+        const headCopy = document.createElement('button');
+        headCopy.type = 'button';
+        headCopy.className = 'tg-code-head-copy tg-code-copy';
+        headCopy.title = 'Скопировать';
+        headCopy.innerHTML = COPY_ICON_SVG;
+        leftBox.appendChild(headCopy);
       }
 
 
       let foot = block.querySelector('.tg-code-foot');
+
       if (!foot) {
         foot = document.createElement('div');
         foot.className = 'tg-code-foot';
@@ -1718,16 +1744,18 @@
       block.className = 'tg-code-block';
       block.setAttribute('contenteditable', 'false');
             block.innerHTML = `
-                <div class="tg-code-head">
+                        <div class="tg-code-head">
           <div class="tg-code-head-left">
             <span class="tg-code-lang" contenteditable="true" spellcheck="false">code</span>
             <span class="tg-code-tag-wrap is-empty">• <span class="tg-code-tag" contenteditable="true" spellcheck="false"></span></span>
-            <button type="button" class="tg-code-head-toggle" style="display:none;">Свернуть ▴</button>
+            <button type="button" class="tg-code-head-toggle" style="display:none;">Развернуть ▾</button>
+            <button type="button" class="tg-code-head-copy tg-code-copy" title="Скопировать">${COPY_ICON_SVG}</button>
           </div>
           <div class="tg-code-head-right">
             <button type="button" class="tg-code-del" title="Удалить блок">✕</button>
           </div>
         </div>
+
 
         <div class="tg-code-body">
           <pre><code contenteditable="true" spellcheck="false"></code></pre>
