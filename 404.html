@@ -124,7 +124,7 @@
       align-items: center;
       justify-content: center;
       gap: 7px;
-      transition: color 0.35s ease, border-color 0.35s ease, background-color 0.25s ease, opacity 0.2s ease;
+      transition: color 0.2s ease, border-color 0.2s ease, opacity 0.2s ease;
       white-space: nowrap;
       flex-shrink: 0;
     }
@@ -586,8 +586,8 @@
       outline: none;
       min-width: 40px;
     }
-    .tg-code-lang::after {
-      content: " • v2";
+      .tg-code-lang::after {
+      content: " • v3";
       font-size: 11px;
       font-weight: 600;
       color: #34c759;
@@ -3038,9 +3038,11 @@
         loginInput.focus();
         return;
       }
-            if (isViewMode) {
+             if (isViewMode) {
+        const savedScrollY = window.scrollY;
+        actionBtn.blur();
         isViewMode = false;
-        const inMiddle = window.scrollY > 28;
+        const inMiddle = savedScrollY > 28;
         if (!inMiddle) {
           toolbarRow.classList.add('is-collapsing');
           cancelEditBtn.classList.add('is-hiding');
@@ -3050,6 +3052,10 @@
         setEditable(true, inMiddle);
         actionBtn.textContent = 'ОПУБЛИКОВАТЬ';
         captureInitialSnapshot();
+        if (inMiddle && window.scrollY !== savedScrollY) {
+          window.scrollTo({ top: savedScrollY, behavior: 'instant' });
+        }
+
         if (!inMiddle) {
           requestAnimationFrame(() => {
             requestAnimationFrame(() => {
