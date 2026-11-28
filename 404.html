@@ -139,9 +139,36 @@
       opacity: 1;
       cursor: default;
     }
-    .publish-btn.is-saved::before {
+        .publish-btn.is-saved::before {
       transform: scaleX(1);
     }
+    .publish-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    .cancel-edit-btn {
+      display: none;
+      width: 31px;
+      height: 31px;
+      border-radius: 50%;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1;
+      cursor: pointer;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      transition: border-color 0.15s ease, color 0.15s ease;
+    }
+    .cancel-edit-btn:hover {
+      border-color: #d9534f;
+      color: #d9534f;
+    }
+
 
     .editable { outline: none; width: 100%; box-sizing: border-box; word-wrap: break-word; }
     .editable:empty:before {
@@ -884,7 +911,10 @@
             <button id="photoBtn" class="tool-btn" type="button">📷 Фото</button>
             <input type="file" id="fileInput" accept="image/*" style="display:none">
           </div>
-          <button id="actionBtn" class="publish-btn" type="button" disabled>ОПУБЛИКОВАТЬ</button>
+                    <div class="publish-group">
+            <button id="actionBtn" class="publish-btn" type="button" disabled>ОПУБЛИКОВАТЬ</button>
+            <button id="cancelEditBtn" class="cancel-edit-btn" type="button" title="Закрыть редактирование">✕</button>
+          </div>
         </div>
       </div>
     </div>
@@ -954,6 +984,7 @@
     const metaInfoEl = document.getElementById('metaInfo');
     const storyEl = document.getElementById('story');
     const actionBtn = document.getElementById('actionBtn');
+    const cancelEditBtn = document.getElementById('cancelEditBtn');
     const themeBtn = document.getElementById('themeBtn');
     const newPostLink = document.getElementById('newPostLink');
     const codeBtn = document.getElementById('codeBtn');
@@ -2590,11 +2621,28 @@
       }
     }
 
+        cancelEditBtn.addEventListener('click', () => {
+      if (isViewMode || !currentSlug) return;
+      titleEl.innerHTML = initialSnapshot.title;
+      storyEl.innerHTML = initialSnapshot.story;
+      if (currentUser && isAdmin(currentUser)) {
+        metaInfoEl.textContent = initialSnapshot.meta;
+      }
+      refreshAllCodeBlocks();
+      isViewMode = true;
+      setEditable(false);
+      actionBtn.textContent = 'РЕДАКТИРОВАТЬ';
+      updateEditVisibility();
+      updateViewsBadge();
+      setStatus('');
+    });
+
     function setEditable(canEdit) {
       titleEl.contentEditable = Boolean(canEdit);
       storyEl.contentEditable = Boolean(canEdit);
       syncCodeEditableState();
       toolbar.style.display = canEdit ? 'flex' : 'none';
+      cancelEditBtn.style.display = (canEdit && currentSlug) ? 'inline-flex' : 'none';
       toolbarRow.classList.toggle('view-mode', !canEdit);
       if (canEdit) {
         toolbarRow.classList.remove('hidden');
