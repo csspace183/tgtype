@@ -98,8 +98,12 @@
       padding: 0;
       transition: transform 0.15s ease, border-color 0.15s ease, background-color 0.2s ease;
     }
+    @keyframes smoothFadeIn {
+      0% { opacity: 0; }
+      100% { opacity: 1; }
+    }
     .theme-btn {
-      transition: transform 0.15s ease, border-color 0.15s ease, background-color 0.2s ease, opacity 0.32s ease;
+      transition: transform 0.15s ease, border-color 0.15s ease, background-color 0.2s ease, opacity 0.25s ease;
     }
     .theme-btn:hover {
       border-color: var(--text);
@@ -108,6 +112,10 @@
     .theme-btn.is-hidden-in-edit {
       opacity: 0 !important;
       pointer-events: none;
+      transition: opacity 0.18s ease !important;
+    }
+    .theme-btn.is-fading-in {
+      animation: smoothFadeIn 0.36s cubic-bezier(0.22, 1, 0.36, 1) forwards !important;
     }
 
     html.dark .theme-btn .icon-light { display: none; }
@@ -434,15 +442,11 @@
       animation: none !important;
       transform: none !important;
       opacity: 1;
-      transition: opacity 0.34s ease, background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
     }
-    .toolbar-row.view-mode .publish-btn.is-scrolled.is-appearing {
+    .toolbar-row.view-mode .publish-btn.is-scrolled.is-fading-in {
       display: inline-flex !important;
-      animation: none !important;
       transform: none !important;
-      opacity: 0 !important;
-      transition: none !important;
-      pointer-events: none;
+      animation: smoothFadeIn 0.36s cubic-bezier(0.22, 1, 0.36, 1) forwards !important;
     }
 
     @media (max-width: 1180px) {
@@ -1287,7 +1291,7 @@
             <a href="/" id="newPostLink" class="new-link">+ Новая запись</a>
             <a href="/blog" id="adminBlogLink" class="new-link">Блог</a>
           </div>
-          <span class="site-ver-badge">build v0.2.6</span>
+          <span class="site-ver-badge">build v0.2.7</span>
           <button id="themeBtn" class="theme-btn" type="button" title="Переключить тему">
             <svg class="icon-light" width="17" height="17" viewBox="0 0 24 24" fill="#f5b014" stroke="#e09c00" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
             <svg class="icon-dark" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#a5b4fc" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5a8.5 8.5 0 1 0 11 11z" fill="rgba(165, 180, 252, 0.2)"/><circle cx="17.5" cy="6.5" r="2" fill="#fcd34d" stroke="#fcd34d"/><path d="M14.5 8.2c2-.8 4.4-1.8 6-3.4" stroke="#fcd34d" stroke-width="1.3"/></svg>
@@ -3575,20 +3579,19 @@
       }
       const inMiddleClose = keepY > 95;
       const publishWasHidden = getComputedStyle(actionBtn).display === 'none';
-      if (inMiddleClose) {
-        cancelEditBtn.style.transition = 'opacity 0.2s ease';
+        if (inMiddleClose) {
+        cancelEditBtn.style.transition = 'opacity 0.18s ease';
         cancelEditBtn.style.opacity = '0';
-        // Сразу ставим кнопке РЕДАКТИРОВАТЬ прозрачность 0 без анимации выезда сбоку
-        actionBtn.classList.remove('is-saved', 'is-sliding-right', 'is-slide-back');
-        actionBtn.classList.add('is-scrolled', 'is-appearing');
+
+        // Мгновенно запускаем чистое плавное проявление (0% -> 100%) для обеих кнопок без провалов
+        actionBtn.classList.remove('is-saved', 'is-sliding-right', 'is-slide-back', 'no-slide-anim');
+        actionBtn.classList.add('is-scrolled', 'is-fading-in');
         actionBtn.disabled = false;
         setActionBtnText('РЕДАКТИРОВАТЬ');
         toolbarRow.classList.add('view-mode');
-        // Принудительно фиксируем кадр с opacity: 0, затем плавно проявляем одновременно с луной и уездом панели
-        void actionBtn.offsetWidth;
-        actionBtn.classList.remove('is-appearing');
-        actionBtn.classList.add('no-slide-anim');
+
         themeBtn.classList.remove('is-hidden-in-edit');
+        themeBtn.classList.add('is-fading-in');
       }
 
        else if (publishWasHidden) {
@@ -3604,9 +3607,10 @@
         actionBtn.classList.remove('is-saved');
         setActionBtnText('РЕДАКТИРОВАТЬ');
       }
-        savedBtnTimer = setTimeout(() => {
+            savedBtnTimer = setTimeout(() => {
         savedBtnTimer = null;
-        actionBtn.classList.remove('is-sliding-right', 'is-appearing');
+        actionBtn.classList.remove('is-sliding-right', 'is-fading-in');
+        themeBtn.classList.remove('is-fading-in');
         actionBtn.style.transform = '';
         actionBtn.style.removeProperty('display');
         if (!inMiddleClose) {
@@ -3624,10 +3628,10 @@
 
         isViewMode = true;
         if (!restoreInitial) captureInitialSnapshot();
-        setEditable(false);
         if (inMiddleClose) {
           actionBtn.classList.add('is-scrolled', 'no-slide-anim');
         }
+        setEditable(false);
         updateEditVisibility();
         updateViewsBadge();
         setStatus('');
@@ -3638,7 +3642,7 @@
             window.scrollBy({ top: diff, behavior: 'instant' });
           }
         }
-      }, 340);
+      }, 360);
 
     }
 
