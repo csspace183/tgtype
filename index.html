@@ -1831,7 +1831,8 @@ function sanitizePastedHtml(rawHtml) {
             const dateStr = formatRuDate(post.updatedAt);
             const fullUrl = `${window.location.origin}/${post.id}`;
             const authorPart = adminMode ? ` • Автор: <b>${ownerName}</b>` : '';
-            const viewsPart = adminMode ? ` • <span class="blog-views-link" title="Показать историю просмотров">👁 ${Number(post.views) || 0}</span>` : '';
+            const eyeSvg = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+            const viewsPart = adminMode ? ` • <button type="button" class="blog-views-link" title="Показать историю просмотров">${eyeSvg}<span>${Number(post.views) || 0}</span></button>` : '';
 
             const li = document.createElement('li');
             li.className = 'post-item';
