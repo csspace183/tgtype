@@ -345,42 +345,36 @@
     #metaInfo {
       font-size: 14px;
       color: var(--muted);
-      margin-bottom: 20px;
+      margin-bottom: 16px;
       min-height: 18px;
-      transition: margin-bottom 0.36s cubic-bezier(0.22, 1, 0.36, 1);
     }
-    #metaInfo.no-toolbar, #metaInfo.can-edit-btn { margin-bottom: 38px; }
+    #metaInfo.no-toolbar { margin-bottom: 28px; }
 
-    /* Строка с панелью инструментов и кнопкой ОПУБЛИКОВАТЬ вровень */
+    /* Строка с панелью инструментов и кнопкой ОПУБЛИКОВАТЬ вровень (постоянная высота, чтобы текст не двигался) */
     .toolbar-row {
       display: flex;
       justify-content: space-between;
       align-items: center;
       gap: 12px;
       margin-bottom: 18px;
-      min-height: 34px;
-      max-height: 44px;
-      transition: max-height 0.36s cubic-bezier(0.22, 1, 0.36, 1), margin-bottom 0.36s cubic-bezier(0.22, 1, 0.36, 1), min-height 0.36s cubic-bezier(0.22, 1, 0.36, 1);
+      min-height: 64px;
     }
-    .toolbar-row.is-collapsing {
-      max-height: 0;
-      min-height: 0;
-      margin-bottom: 0;
+    .toolbar {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+      opacity: 1;
+      transition: opacity 0.3s ease;
     }
-
+    .toolbar-row.view-mode .toolbar,
     .toolbar-row.is-collapsing .toolbar {
       opacity: 0;
       pointer-events: none;
-      transition: opacity 0.22s ease;
     }
-    .toolbar-row.view-mode {
-      position: relative;
-      height: 0;
-      min-height: 0;
-      margin: 0;
-    }
+    .toolbar-row.hidden { display: none; }
 
-        @keyframes editBtnFadeIn {
+    @keyframes editBtnFadeIn {
       from {
         opacity: 0;
         transform: translateY(-6px);
@@ -390,17 +384,9 @@
         transform: translateY(0);
       }
     }
-        .toolbar-row.view-mode .publish-btn {
-      position: absolute;
-      right: 0;
-      bottom: -16px;
-      transition: opacity 0.3s ease, transform 0.3s ease, background-color 0.25s ease, color 0.25s ease;
-    }
-
     .toolbar-row.view-mode .publish-btn.is-scrolled {
       position: fixed;
       top: 25px;
-      bottom: auto;
       right: 74px;
       z-index: 94;
       box-shadow: 0 2px 10px var(--shadow);
@@ -412,29 +398,17 @@
         box-shadow: none;
         flex-shrink: 0;
       }
-              .toolbar-row.view-mode .publish-btn.is-scrolled {
-        position: absolute;
-        top: auto;
-        bottom: -16px;
-        right: 0;
+      .toolbar-row.view-mode .publish-btn.is-scrolled {
+        position: static;
         box-shadow: none;
         animation: none;
       }
-
       .scroll-top-btn {
         right: 16px;
         bottom: 16px;
       }
     }
 
-
-    .toolbar-row.hidden { display: none; }
-    .toolbar {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      align-items: center;
-    }
     .tool-sep {
       width: 1px;
       height: 18px;
@@ -545,15 +519,11 @@
       transition: transform 0.12s ease;
     }
     .color-swatch:hover { transform: scale(1.18); }
-       #story {
+         #story {
       font-family: Georgia, "Times New Roman", Times, serif;
       font-size: 18px;
       line-height: 1.58;
       min-height: 350px;
-      padding-top: 24px;
-    }
-    .editor-header.is-editing + #story {
-      padding-top: 0;
     }
 
     #story p, #story div { margin: 0; line-height: 1.58; }
@@ -609,13 +579,22 @@
       align-items: center;
       gap: 8px;
     }
-    .tg-code-lang {
+       .tg-code-lang {
       font-size: 14px;
       font-weight: 700;
       color: var(--text);
       outline: none;
       min-width: 40px;
     }
+    .tg-code-lang::after {
+      content: " • v2";
+      font-size: 11px;
+      font-weight: 600;
+      color: #34c759;
+      margin-left: 4px;
+      user-select: none;
+    }
+
     .tg-code-head-toggle {
       background: none;
       color: var(--muted);
@@ -2990,7 +2969,6 @@
       titleSideLabel.classList.add('is-hiding');
       storyEl.classList.add('is-hiding-code-del');
       toolbarRow.classList.add('is-collapsing');
-      metaInfoEl.classList.add('can-edit-btn');
 
       if (editorHeader.classList.contains('is-fixed')) {
         editorHeader.classList.add('is-closing');
@@ -3019,7 +2997,7 @@
         updateEditVisibility();
         updateViewsBadge();
         setStatus('');
-      }, 380);
+      }, 360);
     }
 
     cancelEditBtn.addEventListener('click', () => {
@@ -3032,7 +3010,6 @@
       titleEl.contentEditable = Boolean(canEdit);
       storyEl.contentEditable = Boolean(canEdit);
       syncCodeEditableState();
-      toolbar.style.display = canEdit ? 'flex' : 'none';
       cancelEditBtn.style.display = (canEdit && currentSlug) ? 'inline-flex' : 'none';
       toolbarRow.classList.toggle('view-mode', !canEdit);
       if (canEdit) {
@@ -3045,7 +3022,6 @@
       updateTitleSideLabel();
       updatePublishState();
     }
-
     function slugify(text) {
       const map = {'а':'a','б':'b','в':'v','г':'g','д':'d','е':'e','ё':'yo','ж':'zh','з':'z','и':'i','й':'y','к':'k','л':'l','м':'m','н':'n','о':'o','п':'p','р':'r','с':'s','т':'t','у':'u','ф':'f','х':'h','ц':'ts','ч':'ch','ш':'sh','щ':'sch','ъ':'','ы':'y','ь':'','э':'e','ю':'yu','я':'ya'};
       return text.toLowerCase().split('').map(c => map[c] || c).join('')
