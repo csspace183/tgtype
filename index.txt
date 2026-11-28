@@ -34,26 +34,26 @@
       --hl-num: #005cc5;
     }
     html.dark {
-      --bg: #141414;
-      --text: #e6e6e6;
-      --muted: #8e8e8e;
-      --subtle: #777777;
-      --border: #2e2e2e;
-      --border-light: #242424;
-      --surface: #1c1c1c;
-      --hover-bg: #252525;
-      --link: #58a6ff;
-      --popover-bg: #1f1f1f;
+      --bg: #1e1e1e;
+      --text: #e4e4e4;
+      --muted: #9a9a9a;
+      --subtle: #7e7e7e;
+      --border: #363636;
+      --border-light: #2b2b2b;
+      --surface: #252525;
+      --hover-bg: #2f2f2f;
+      --link: #6eb5ff;
+      --popover-bg: #262626;
       --shadow: rgba(0, 0, 0, 0.45);
-      --code-bg: #1b1d21;
-      --code-header: #23262b;
-      --code-border: #2f333a;
-      --code-text: #e6edf3;
-      --hl-kw: #ff7b72;
+      --code-bg: #252629;
+      --code-header: #252629;
+      --code-border: #34363b;
+      --code-text: #e4e4e4;
+      --hl-kw: #c792ea;
       --hl-str: #a5d6ff;
       --hl-com: #8b949e;
       --hl-tag: #7ee787;
-      --hl-num: #79c0ff;
+      --hl-num: #f78c6c;
     }
 
     body {
@@ -406,10 +406,10 @@
     #story img { max-width: 100%; height: auto; display: block; margin: 18px 0; border-radius: 4px; }
     #story a { color: var(--link); text-decoration: underline; cursor: pointer; }
 
-    /* Блок кода с подсветкой синтаксиса и кнопкой копирования */
+    /* Блок кода с автоподсветкой и нижней панелью как на скриншоте */
     #story .tg-code-block {
       margin: 18px 0;
-      border-radius: 10px;
+      border-radius: 12px;
       border: 1px solid var(--code-border);
       background: var(--code-bg);
       overflow: hidden;
@@ -419,53 +419,74 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 6px 12px;
+      padding: 10px 16px 4px;
       background: var(--code-header);
-      border-bottom: 1px solid var(--code-border);
-      font-size: 11px;
-      color: var(--muted);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
       user-select: none;
     }
-    .tg-code-actions {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .tg-code-copy, .tg-code-del {
-      background: var(--bg);
-      color: var(--text);
+    .tg-code-del {
+      background: none;
+      color: var(--muted);
       border: 1px solid var(--code-border);
       border-radius: 6px;
-      padding: 3px 9px;
+      padding: 2px 8px;
       font-size: 11px;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       cursor: pointer;
-      transition: border-color 0.15s ease, color 0.15s ease;
     }
-    .tg-code-copy:hover { border-color: var(--text); }
     .tg-code-del:hover { border-color: #d9534f; color: #d9534f; }
     #story[contenteditable="false"] .tg-code-del { display: none; }
     #story .tg-code-block pre {
       margin: 0;
-      padding: 13px 15px;
+      padding: 8px 16px 14px;
       overflow-x: auto;
       font-size: 13.5px;
-      line-height: 1.52;
+      line-height: 1.55;
       color: var(--code-text);
-      white-space: pre;
+      white-space: pre-wrap;
+      word-break: break-word;
       tab-size: 2;
       outline: none;
     }
     #story .tg-code-block code {
       font-family: inherit;
       display: block;
-      min-height: 20px;
+      min-height: 22px;
       outline: none;
     }
     #story .tg-code-block code:empty::before {
       content: "Вставьте или введите код / текст...";
       color: var(--subtle);
       pointer-events: none;
+    }
+    .tg-code-foot {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      padding: 8px 14px;
+      border-top: 1px solid var(--code-border);
+      background: var(--code-bg);
+      user-select: none;
+    }
+    .tg-code-copy {
+      background: none;
+      color: var(--muted);
+      border: none;
+      border-radius: 6px;
+      padding: 4px 8px;
+      font-size: 12px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: color 0.15s ease, background-color 0.15s ease;
+    }
+    .tg-code-copy:hover {
+      color: var(--text);
+      background: var(--hover-bg);
     }
     .hl-kw { color: var(--hl-kw); font-weight: 600; }
     .hl-str { color: var(--hl-str); }
@@ -770,9 +791,7 @@
             <a href="/blog" id="adminBlogLink" class="new-link">Блог</a>
           </div>
           <button id="themeBtn" class="theme-btn" type="button" title="Переключить тему">
-            <!-- Жёлтая луна (светлая тема -> переключить на тёмную) -->
             <svg class="icon-light" width="17" height="17" viewBox="0 0 24 24" fill="#f5b014" stroke="#e09c00" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-            <!-- Луна с планетой/звёздами (тёмная тема -> переключить на светлую) -->
             <svg class="icon-dark" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#a5b4fc" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5a8.5 8.5 0 1 0 11 11z" fill="rgba(165, 180, 252, 0.2)"/><circle cx="17.5" cy="6.5" r="2" fill="#fcd34d" stroke="#fcd34d"/><path d="M14.5 8.2c2-.8 4.4-1.8 6-3.4" stroke="#fcd34d" stroke-width="1.3"/></svg>
           </button>
         </div>
@@ -791,6 +810,7 @@
             <button class="tool-btn" type="button" data-cmd="italic" title="Курсив">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="4" x2="10" y2="4"/><line x1="14" y1="20" x2="5" y2="20"/><line x1="15" y1="4" x2="9" y2="20"/></svg>
             </button>
+            <button class="tool-btn" type="button" data-cmd="strikeThrough" title="Зачёркнутый">
             <button class="tool-btn" type="button" data-cmd="strikeThrough" title="Зачёркнутый">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4H9a3 3 0 0 0-2.83 4"/><path d="M14 12a4 4 0 0 1 0 8H6"/><line x1="4" y1="12" x2="20" y2="12"/></svg>
             </button>
@@ -1140,29 +1160,92 @@
       sel.addRange(range);
     }
 
-    // Подсветка синтаксиса для блока кода
+    // Подсветка синтаксиса для блока кода с автоопределением языка
+    const COPY_ICON_SVG = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
+
     function escapeHtml(str) {
       return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     }
 
-    function highlightCodeText(raw) {
-      let html = escapeHtml(raw);
-      html = html.replace(/(\/\/[^\n]*|\/\*[\s\S]*?\*\/|#[^\n]*)/g, '<span class="hl-com">$1</span>');
-      html = html.replace(/(&quot;[^&\n]*?&quot;|'[^'\n]*?'|`[^`]*?`)/g, '<span class="hl-str">$1</span>');
-      html = html.replace(/(&lt;\/?[a-zA-Z0-9-]+(?:\s+[^&]*?)?\/?&gt;)/g, '<span class="hl-tag">$1</span>');
-      html = html.replace(/\b(const|let|var|function|return|if|else|for|while|async|await|try|catch|finally|class|import|from|export|default|new|true|false|null|undefined|def|print|elif|None|True|False)\b/g, '<span class="hl-kw">$1</span>');
-      html = html.replace(/\b(\d+(?:\.\d+)?)\b/g, '<span class="hl-num">$1</span>');
-      return html;
+    function detectCodeLanguage(raw) {
+      const s = (raw || '').trim();
+      if (!s) return 'code';
+      if (/<!DOCTYPE|<html|<div|<script|<style|<\/[a-z]+>/i.test(s)) return 'html';
+      if (/\b(const|let|var|function|async|await|document\.|window\.|=>)\b/.test(s)) return 'javascript';
+      if (/\b(def |import |from |elif |print\(|None|True|False)\b/.test(s)) return 'python';
+      if (/^###?\s|^\s*-\s+\*\*/m.test(s)) return 'markdown';
+      if (/\{[\s\S]*?:[\s\S]*?;[\s\S]*?\}/.test(s) && !/\bfunction\b/.test(s)) return 'css';
+      return 'code';
     }
 
-    function applyCodeHighlight(codeEl) {
+    function highlightCodeText(raw) {
+      let html = escapeHtml(raw);
+      const tokens = [];
+      const saveTok = (cls, text) => {
+        const id = `\u0000TOK${tokens.length}\u0000`;
+        tokens.push(`<span class="${cls}">${text}</span>`);
+        return id;
+      };
+
+      html = html.replace(/(\/\/[^\n]*|\/\*[\s\S]*?\*\/|#[^\n]*)/g, m => saveTok('hl-com', m));
+      html = html.replace(/(&quot;[^&\n]*?&quot;|'[^'\n]*?'|`[^`]*?`)/g, m => saveTok('hl-str', m));
+      html = html.replace(/(&lt;\/?[a-zA-Z0-9-]+(?:\s+[^&]*?)?\/?&gt;)/g, m => saveTok('hl-tag', m));
+      html = html.replace(/\b(const|let|var|function|return|if|else|for|while|async|await|try|catch|finally|class|import|from|export|default|new|true|false|null|undefined|def|print|elif|None|True|False)\b/g, '<span class="hl-kw">$1</span>');
+      html = html.replace(/\b(\d+(?:\.\d+)?)\b/g, '<span class="hl-num">$1</span>');
+
+      return html.replace(/\u0000TOK(\d+)\u0000/g, (_, idx) => tokens[Number(idx)]);
+    }
+
+    function getCaretOffsetIn(root) {
+      const sel = window.getSelection();
+      if (!sel || !sel.rangeCount || !root.contains(sel.anchorNode)) return null;
+      const range = sel.getRangeAt(0);
+      const pre = range.cloneRange();
+      pre.selectNodeContents(root);
+      pre.setEnd(range.endContainer, range.endOffset);
+      return pre.toString().length;
+    }
+
+    function setCaretOffsetIn(root, offset) {
+      if (offset === null || offset === undefined) return;
+      const sel = window.getSelection();
+      const range = document.createRange();
+      let current = 0;
+      const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null);
+      let node;
+      while ((node = walker.nextNode())) {
+        const next = current + node.nodeValue.length;
+        if (offset <= next) {
+          range.setStart(node, Math.max(0, offset - current));
+          range.collapse(true);
+          sel.removeAllRanges();
+          sel.addRange(range);
+          return;
+        }
+        current = next;
+      }
+      range.selectNodeContents(root);
+      range.collapse(false);
+      sel.removeAllRanges();
+      sel.addRange(range);
+    }
+
+    function applyCodeHighlight(codeEl, preserveCaret = false) {
       if (!codeEl) return;
+      const caretPos = preserveCaret ? getCaretOffsetIn(codeEl) : null;
       const raw = codeEl.textContent || '';
       codeEl.innerHTML = raw ? highlightCodeText(raw) : '';
+      const langLabel = codeEl.closest('.tg-code-block')?.querySelector('.tg-code-lang');
+      if (langLabel) {
+        langLabel.textContent = detectCodeLanguage(raw);
+      }
+      if (preserveCaret && caretPos !== null) {
+        setCaretOffsetIn(codeEl, caretPos);
+      }
     }
 
     function refreshAllCodeBlocks() {
-      storyEl.querySelectorAll('.tg-code-block code').forEach(applyCodeHighlight);
+      storyEl.querySelectorAll('.tg-code-block code').forEach(c => applyCodeHighlight(c, false));
     }
 
     function syncCodeEditableState() {
@@ -1182,13 +1265,13 @@
       block.setAttribute('contenteditable', 'false');
       block.innerHTML = `
         <div class="tg-code-head">
-          <span>CODE</span>
-          <div class="tg-code-actions">
-            <button type="button" class="tg-code-copy">Скопировать</button>
-            <button type="button" class="tg-code-del" title="Удалить блок">✕</button>
-          </div>
+          <span class="tg-code-lang">code</span>
+          <button type="button" class="tg-code-del" title="Удалить блок">✕</button>
         </div>
         <pre><code contenteditable="true" spellcheck="false"></code></pre>
+        <div class="tg-code-foot">
+          <button type="button" class="tg-code-copy" title="Скопировать код">${COPY_ICON_SVG}</button>
+        </div>
       `;
 
       const afterP = document.createElement('p');
@@ -1214,12 +1297,11 @@
     storyEl.addEventListener('focusout', e => {
       const codeEl = e.target.closest('.tg-code-block code');
       if (codeEl && storyEl.contains(codeEl)) {
-        applyCodeHighlight(codeEl);
+        applyCodeHighlight(codeEl, false);
         updatePublishState();
         saveDraftToLocal();
       }
     });
-
     // Выпадающее меню выравнивания
     alignBtn.addEventListener('mousedown', e => e.preventDefault());
     alignBtn.addEventListener('click', e => {
@@ -1364,6 +1446,7 @@
           saveDraftToLocal();
           return;
         }
+
         document.execCommand(cmd, false, arg);
         updatePublishState();
         saveDraftToLocal();
@@ -1455,7 +1538,6 @@
       for (const f of e.target.files || []) compressAndInsertImage(f);
       fileInput.value = '';
     });
-
     let resetAfterBlockBreak = false;
 
     function getActiveStoryBlock() {
@@ -1569,12 +1651,12 @@
         e.stopPropagation();
         const codeText = copyCodeBtn.closest('.tg-code-block')?.querySelector('code')?.textContent || '';
         navigator.clipboard?.writeText(codeText);
-        copyCodeBtn.textContent = 'Скопировано!';
-        setTimeout(() => { copyCodeBtn.textContent = 'Скопировать'; }, 1500);
+        copyCodeBtn.innerHTML = `${COPY_ICON_SVG}<span>Скопировано!</span>`;
+        setTimeout(() => { copyCodeBtn.innerHTML = COPY_ICON_SVG; }, 1500);
       }
     });
+
     storyEl.addEventListener('keydown', e => {
-      // Внутри блока кода Enter делает обычный перенос строки, а Tab вставляет 2 пробела
       const activeCode = e.target.closest('.tg-code-block code');
       if (activeCode && storyEl.contains(activeCode)) {
         if (e.key === 'Tab') {
@@ -1745,13 +1827,14 @@
     storyEl.addEventListener('paste', e => {
       const cd = e.clipboardData || window.clipboardData;
 
-      // Вставка внутрь блока кода — всегда строго чистым текстом 1-в-1 без форматирования
+      // Вставка внутрь блока кода — чистым текстом 1-в-1 с мгновенной подсветкой
       const targetCode = e.target.closest('.tg-code-block code');
       if (targetCode && storyEl.contains(targetCode)) {
         e.preventDefault();
         const plainCode = cd ? cd.getData('text/plain') : '';
         if (plainCode) {
           document.execCommand('insertText', false, plainCode);
+          applyCodeHighlight(targetCode, true);
           updatePublishState();
           saveDraftToLocal();
         }
@@ -1826,6 +1909,7 @@
       };
       reader.readAsDataURL(file);
     }
+
     let db = null;
     let auth = null;
 
@@ -1917,7 +2001,6 @@
         authBtn.textContent = fallbackText;
       }, 2500);
     }
-
     window.addEventListener('DOMContentLoaded', () => {
       if (typeof firebase !== 'undefined') {
         firebase.initializeApp({
@@ -2123,7 +2206,6 @@
         }
       }
     });
-
     function updateEditVisibility() {
       if (!isViewMode) {
         actionBtn.style.display = 'inline-block';
@@ -2581,6 +2663,7 @@
         window.history.pushState({}, '', '/' + targetSlug);
         document.title = titleText;
         setStatus('');
+
         // Сначала красиво заливаем кнопку зелёным прямо на её месте в тулбаре
         actionBtn.classList.remove('is-saving');
         actionBtn.disabled = false;
@@ -2607,27 +2690,6 @@
   </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
