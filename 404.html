@@ -805,6 +805,10 @@
     #story .tg-code-block.is-short .tg-code-foot {
       display: none;
     }
+    #story .tg-code-block.is-collapsed,
+    #story .tg-code-block.is-short {
+      padding-bottom: 6px;
+    }
 
        .tg-code-del {
       background: none;
@@ -1223,7 +1227,7 @@
             <a href="/" id="newPostLink" class="new-link">+ Новая запись</a>
             <a href="/blog" id="adminBlogLink" class="new-link">Блог</a>
           </div>
-          <span class="site-ver-badge">build v0.1.5</span>
+          <span class="site-ver-badge">build v0.1.6</span>
           <button id="themeBtn" class="theme-btn" type="button" title="Переключить тему">
             <svg class="icon-light" width="17" height="17" viewBox="0 0 24 24" fill="#f5b014" stroke="#e09c00" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
             <svg class="icon-dark" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#a5b4fc" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5a8.5 8.5 0 1 0 11 11z" fill="rgba(165, 180, 252, 0.2)"/><circle cx="17.5" cy="6.5" r="2" fill="#fcd34d" stroke="#fcd34d"/><path d="M14.5 8.2c2-.8 4.4-1.8 6-3.4" stroke="#fcd34d" stroke-width="1.3"/></svg>
@@ -2403,11 +2407,30 @@
           sel.addRange(range);
           return;
         }
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          e.stopPropagation();
+          const sel = window.getSelection();
+          if (sel && sel.rangeCount) {
+            const range = sel.getRangeAt(0);
+            range.deleteContents();
+            const nl = document.createTextNode('\n');
+            range.insertNode(nl);
+            range.setStartAfter(nl);
+            range.collapse(true);
+            sel.removeAllRanges();
+            sel.addRange(range);
+          }
+          updatePublishState();
+          saveDraftToLocal();
+          return;
+        }
         if (e.key === 'Tab') {
           e.preventDefault();
           document.execCommand('insertText', false, '  ');
         }
         return;
+
       }
 
       if (e.key === 'Enter' && !e.shiftKey) {
@@ -2586,14 +2609,23 @@
 
     storyEl.addEventListener('paste', e => {
       const cd = e.clipboardData || window.clipboardData;
-
-      // Вставка внутрь блока кода — чистым текстом 1-в-1 с мгновенной подсветкой
+      // Вставка внутрь блока кода — сохраняем все переносы строк и отступы 1-в-1 как в Блокноте
       const targetCode = e.target.closest('.tg-code-block code');
       if (targetCode && storyEl.contains(targetCode)) {
         e.preventDefault();
-        const plainCode = cd ? cd.getData('text/plain') : '';
+        const plainCode = (cd ? cd.getData('text/plain') : '').replace(/\r\n/g, '\n');
         if (plainCode) {
-          document.execCommand('insertText', false, plainCode);
+          const sel = window.getSelection();
+          if (sel && sel.rangeCount) {
+            const range = sel.getRangeAt(0);
+            range.deleteContents();
+            const textNode = document.createTextNode(plainCode);
+            range.insertNode(textNode);
+            range.setStartAfter(textNode);
+            range.collapse(true);
+            sel.removeAllRanges();
+            sel.addRange(range);
+          }
           applyCodeHighlight(targetCode, true);
           updatePublishState();
           saveDraftToLocal();
