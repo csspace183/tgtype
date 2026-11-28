@@ -360,6 +360,9 @@
     .auth-bar { font-size: 12px; color: #aaa; display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
     .auth-bar button, .auth-bar a { background: none; border: 0; padding: 0; font: inherit; color: #aaa; cursor: pointer; text-decoration: underline; }
     .auth-bar button:hover, .auth-bar a:hover { color: #222; }
+    .auth-bar button.is-logged-out { color: #d9534f; text-decoration: none; cursor: default; }
+    .auth-bar button.is-logged-out:hover { color: #d9534f; }
+
     .views-badge {
       display: none;
       align-items: center;
@@ -1528,7 +1531,7 @@
         db = firebase.firestore();
         auth = firebase.auth();
 
-        auth.onAuthStateChanged(user => {
+               auth.onAuthStateChanged(user => {
           currentUser = user;
           const login = getLoginName(user);
 
@@ -1538,8 +1541,10 @@
               clearTimeout(logoutMsgTimer);
               logoutMsgTimer = null;
             }
+            authBtn.classList.remove('is-logged-out');
             authBtn.textContent = `Выйти (${login})`;
           } else if (!logoutMsgTimer) {
+            authBtn.classList.remove('is-logged-out');
             authBtn.textContent = 'Войти';
           }
 
@@ -1556,7 +1561,9 @@
           }
 
           if (pathSlug === 'blog') {
-            loadBlogPage(isManualLogout);
+            if (!isManualLogout) {
+              loadBlogPage();
+            }
             isManualLogout = false;
           } else if (isViewMode && currentSlug) {
             trackArticleView(currentSlug);
@@ -1615,31 +1622,28 @@
       setAuthMode(!isRegMode);
       loginInput.focus();
     });
+        authBtn.addEventListener('click', async () => {
+      if (authBtn.classList.contains('is-logged-out')) return;
 
-    authBtn.addEventListener('click', async () => {
       if (currentUser) {
         isManualLogout = true;
         if (logoutMsgTimer) clearTimeout(logoutMsgTimer);
         authBtn.textContent = 'Вы вышли из системы';
+        authBtn.classList.add('is-logged-out');
         logoutMsgTimer = setTimeout(() => {
           logoutMsgTimer = null;
+          authBtn.classList.remove('is-logged-out');
           if (!currentUser) {
             authBtn.textContent = 'Войти';
           }
-        }, 2200);
+        }, 2500);
         await auth.signOut();
       } else {
-        if (logoutMsgTimer) {
-          clearTimeout(logoutMsgTimer);
-          logoutMsgTimer = null;
-          authBtn.textContent = 'Войти';
-        }
         setAuthMode(false);
         authModal.style.display = 'flex';
         loginInput.focus();
       }
     });
-
     document.getElementById('closeModalBtn').addEventListener('click', () => {
       authModal.style.display = 'none';
     });
