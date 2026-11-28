@@ -589,20 +589,48 @@
       outline: none;
       min-width: 40px;
     }
-         .tg-code-lang::after {
-      content: " • v4";
-      font-size: 11px;
+         .tg-code-tag-wrap {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 11.5px;
       font-weight: 600;
       color: #34c759;
-      margin-left: 4px;
+    }
+    .tg-code-tag-wrap.is-empty {
+      display: none;
+    }
+    #story[contenteditable="true"] .tg-code-tag-wrap.is-empty {
+      display: inline-flex;
+      opacity: 0.65;
+    }
+    .tg-code-tag {
+      outline: none;
+      color: #34c759;
+      min-width: 6px;
+    }
+    .tg-code-tag:empty::before {
+      content: "подпись...";
+      color: #34c759;
+      opacity: 0.7;
+      pointer-events: none;
+    }
+    .tg-code-dev-ver {
+      display: none;
+      font-size: 11px;
+      font-weight: 600;
+      color: #58a6ff;
       user-select: none;
+    }
+    body.is-admin-user .tg-code-dev-ver {
+      display: inline;
     }
     .tg-code-foot-right {
       display: flex;
       align-items: center;
       gap: 6px;
     }
-    .tg-code-edit, .tg-code-save {
+    .tg-code-edit {
       background: none;
       color: var(--muted);
       border: 1px solid var(--code-border);
@@ -614,24 +642,16 @@
       display: inline-flex;
       align-items: center;
       gap: 4px;
-      transition: color 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
+      transition: color 0.15s ease, border-color 0.15s ease;
     }
     .tg-code-edit:hover {
       color: var(--text);
       border-color: var(--text);
     }
-    .tg-code-save {
-      background: #28a745;
-      border-color: #28a745;
-      color: #fff;
-      font-weight: 600;
+    #story[contenteditable="true"] .tg-code-edit,
+    .no-edit-rights .tg-code-edit {
+      display: none !important;
     }
-    .tg-code-save:hover {
-      opacity: 0.9;
-    }
-    #story[contenteditable="true"] .tg-code-edit { display: none; }
-    #story[contenteditable="false"] .tg-code-save { display: none; }
-    .no-edit-rights .tg-code-edit { display: none !important; }
 
     .tg-code-head-toggle {
       background: none;
@@ -1565,7 +1585,7 @@
         pre.replaceWith(bodyWrap);
         bodyWrap.appendChild(pre);
       }
-      if (head && !head.querySelector('.tg-code-head-left')) {
+           if (head && !head.querySelector('.tg-code-head-left')) {
         const langEl = head.querySelector('.tg-code-lang');
         const delBtn = head.querySelector('.tg-code-del');
         const langText = langEl ? langEl.textContent : 'code';
@@ -1593,22 +1613,41 @@
         head.appendChild(left);
         head.appendChild(right);
       }
+      const leftBox = head?.querySelector('.tg-code-head-left');
+      if (leftBox && !leftBox.querySelector('.tg-code-tag-wrap')) {
+        const tagWrap = document.createElement('span');
+        tagWrap.className = 'tg-code-tag-wrap is-empty';
+        tagWrap.innerHTML = '• <span class="tg-code-tag" spellcheck="false"></span>';
+        const toggleEl = leftBox.querySelector('.tg-code-head-toggle');
+        if (toggleEl) leftBox.insertBefore(tagWrap, toggleEl);
+        else leftBox.appendChild(tagWrap);
+      }
+      const tagWrapEl = leftBox?.querySelector('.tg-code-tag-wrap');
+      const tagTextEl = tagWrapEl?.querySelector('.tg-code-tag');
+      if (tagWrapEl && tagTextEl) {
+        tagWrapEl.classList.toggle('is-empty', !tagTextEl.textContent.trim());
+      }
+      if (leftBox && !leftBox.querySelector('.tg-code-dev-ver')) {
+        const devVer = document.createElement('span');
+        devVer.className = 'tg-code-dev-ver';
+        devVer.textContent = '• v5';
+        const toggleEl = leftBox.querySelector('.tg-code-head-toggle');
+        if (toggleEl) leftBox.insertBefore(devVer, toggleEl);
+        else leftBox.appendChild(devVer);
+      }
       let foot = block.querySelector('.tg-code-foot');
       if (!foot) {
         foot = document.createElement('div');
         foot.className = 'tg-code-foot';
         block.appendChild(foot);
       }
-            if (!foot.querySelector('.tg-code-foot-right')) {
-        foot.innerHTML = `
-          <button type="button" class="tg-code-toggle">Развернуть ▾</button>
-          <div class="tg-code-foot-right">
-            <button type="button" class="tg-code-save" title="Сохранить статью и свернуть код">Сохранить</button>
-            <button type="button" class="tg-code-edit" title="Редактировать код">✎ Изменить</button>
-            <button type="button" class="tg-code-copy" title="Скопировать">${COPY_ICON_SVG}</button>
-          </div>
-        `;
-      }
+      foot.innerHTML = `
+        <button type="button" class="tg-code-toggle">Развернуть ▾</button>
+        <div class="tg-code-foot-right">
+          <button type="button" class="tg-code-edit" title="Редактировать код">Редактировать</button>
+          <button type="button" class="tg-code-copy" title="Скопировать">${COPY_ICON_SVG}</button>
+        </div>
+      `;
 
     }
 
@@ -1638,7 +1677,6 @@
         updateCodeToggleUI(block);
       });
     }
-
     function syncCodeEditableState() {
       const canEdit = storyEl.isContentEditable;
       storyEl.querySelectorAll('.tg-code-block code').forEach(code => {
@@ -1646,6 +1684,9 @@
       });
       storyEl.querySelectorAll('.tg-code-block .tg-code-lang').forEach(lang => {
         lang.contentEditable = canEdit ? 'true' : 'false';
+      });
+      storyEl.querySelectorAll('.tg-code-block .tg-code-tag').forEach(tag => {
+        tag.contentEditable = canEdit ? 'true' : 'false';
       });
     }
 
@@ -1661,6 +1702,8 @@
         <div class="tg-code-head">
           <div class="tg-code-head-left">
             <span class="tg-code-lang" contenteditable="true" spellcheck="false">code</span>
+            <span class="tg-code-tag-wrap is-empty">• <span class="tg-code-tag" contenteditable="true" spellcheck="false"></span></span>
+            <span class="tg-code-dev-ver">• v5</span>
             <button type="button" class="tg-code-head-toggle" style="display:none;" title="Свернуть">▾</button>
           </div>
           <div class="tg-code-head-right">
@@ -1670,15 +1713,13 @@
         <div class="tg-code-body">
           <pre><code contenteditable="true" spellcheck="false"></code></pre>
         </div>
-                <div class="tg-code-foot">
+        <div class="tg-code-foot">
           <button type="button" class="tg-code-toggle" style="visibility:hidden;">Развернуть ▾</button>
           <div class="tg-code-foot-right">
-            <button type="button" class="tg-code-save" title="Сохранить статью и свернуть код">Сохранить</button>
-            <button type="button" class="tg-code-edit" title="Редактировать код">✎ Изменить</button>
+            <button type="button" class="tg-code-edit" title="Редактировать код">Редактировать</button>
             <button type="button" class="tg-code-copy" title="Скопировать">${COPY_ICON_SVG}</button>
           </div>
         </div>
-
       `;
 
       const afterP = document.createElement('p');
@@ -2089,25 +2130,8 @@
         }
         return;
       }
-
-      const saveCodeBtn = e.target.closest('.tg-code-save');
-      if (saveCodeBtn && storyEl.contains(saveCodeBtn)) {
-        e.preventDefault();
-        e.stopPropagation();
-        const block = saveCodeBtn.closest('.tg-code-block');
-        block.classList.add('is-collapsed');
-        updateCodeToggleUI(block);
-        if (!isViewMode) {
-          if (hasUnsavedChanges()) {
-            actionBtn.click();
-          } else {
-            finishEditingTransition(false);
-          }
-        }
-        return;
-      }
-
       const toggleCodeBtn = e.target.closest('.tg-code-toggle, .tg-code-head-toggle');
+
       if (toggleCodeBtn && storyEl.contains(toggleCodeBtn)) {
         e.preventDefault();
         e.stopPropagation();
@@ -2176,8 +2200,15 @@
         }
       }
     });
-
-        storyEl.addEventListener('input', e => {
+    storyEl.addEventListener('input', e => {
+      const tagEdit = e.target.closest('.tg-code-tag');
+      if (tagEdit && storyEl.contains(tagEdit)) {
+        const wrap = tagEdit.closest('.tg-code-tag-wrap');
+        if (wrap) wrap.classList.toggle('is-empty', !tagEdit.textContent.trim());
+        updatePublishState();
+        saveDraftToLocal();
+        return;
+      }
       const langEdit = e.target.closest('.tg-code-lang');
       if (langEdit && storyEl.contains(langEdit)) {
         langEdit.dataset.customTitle = '1';
@@ -2185,6 +2216,7 @@
         saveDraftToLocal();
         return;
       }
+
       if (e.target.closest('.tg-code-block code')) {
         updatePublishState();
         saveDraftToLocal();
@@ -2442,18 +2474,45 @@
     viewsModal.addEventListener('click', e => {
       if (e.target === viewsModal) viewsModal.style.display = 'none';
     });
-
     async function trackArticleView(slug) {
-      if (!db || !slug || viewCountedForSlug || !isViewMode || lockedPrivateArticle) return;
-      if (currentUser && (currentUser.uid === currentArticleOwner || isAdmin(currentUser))) return;
+      if (!db || !slug || !isViewMode || lockedPrivateArticle) return;
 
       const key = 'tgtype_v_' + slug;
+      const guestTs = Number(localStorage.getItem(key + '_guest_at') || 0);
+      const viewerLogin = currentUser ? getLoginName(currentUser) : '';
+
+      // Если пользователь раньше открыл эту статью как Гость, а затем вошёл в аккаунт — заменяем Гостя на его логин
+      if (viewerLogin && guestTs > 0) {
+        localStorage.removeItem(key + '_guest_at');
+        if (currentUser.uid !== currentArticleOwner && !isAdmin(currentUser)) {
+          try {
+            const snap = await db.collection('articles').doc(slug).get();
+            if (snap.exists) {
+              const log = Array.isArray(snap.data().viewsLog) ? [...snap.data().viewsLog] : [];
+              const idx = log.findIndex(item => !item.user && item.at === guestTs);
+              if (idx > -1) {
+                log[idx] = { user: viewerLogin, at: guestTs };
+                await db.collection('articles').doc(slug).update({ viewsLog: log });
+                currentArticleViewsLog = log;
+                updateViewsBadge();
+              }
+            }
+          } catch (e) {}
+        }
+        return;
+      }
+
+      if (viewCountedForSlug) return;
+      if (currentUser && (currentUser.uid === currentArticleOwner || isAdmin(currentUser))) return;
       if (localStorage.getItem(key)) return;
 
       viewCountedForSlug = true;
       localStorage.setItem(key, '1');
-      const viewerLogin = currentUser ? getLoginName(currentUser) : '';
-      const entry = { user: viewerLogin, at: Date.now() };
+      const nowTs = Date.now();
+      if (!viewerLogin) {
+        localStorage.setItem(key + '_guest_at', String(nowTs));
+      }
+      const entry = { user: viewerLogin, at: nowTs };
 
       try {
         await db.collection('articles').doc(slug).update({
@@ -2465,6 +2524,7 @@
         updateViewsBadge();
       } catch (e) {
         localStorage.removeItem(key);
+        localStorage.removeItem(key + '_guest_at');
         viewCountedForSlug = false;
       }
     }
@@ -2492,11 +2552,10 @@
         });
         db = firebase.firestore();
         auth = firebase.auth();
-
-        auth.onAuthStateChanged(user => {
+                  auth.onAuthStateChanged(user => {
           currentUser = user;
           const login = getLoginName(user);
-
+          document.body.classList.toggle('is-admin-user', Boolean(user && isAdmin(user)));
           if (user) {
             isManualLogout = false;
             if (!logoutMsgTimer) {
@@ -3046,7 +3105,8 @@
         hideLoader();
       }
     }
-    function finishEditingTransition(restoreInitial = false) {
+        function finishEditingTransition(restoreInitial = false) {
+      const keepY = window.scrollY;
       if (restoreInitial) {
         titleEl.innerHTML = initialSnapshot.title;
         storyEl.innerHTML = initialSnapshot.story;
@@ -3060,7 +3120,6 @@
       const btnRect = actionBtn.getBoundingClientRect();
       const shiftX = Math.max(0, rowRect.right - btnRect.right);
 
-      cancelEditBtn.classList.add('is-hiding');
       titleSideLabel.classList.add('is-hiding');
       storyEl.classList.add('is-hiding-code-del');
       toolbarRow.classList.add('is-collapsing');
@@ -3069,18 +3128,40 @@
         editorHeader.classList.add('is-closing');
       }
 
-      actionBtn.classList.add('is-sliding-right');
-      if (shiftX > 0 && !editorHeader.classList.contains('is-fixed')) {
-        actionBtn.style.transform = `translateX(${shiftX}px)`;
+      // Если кнопка ОПУБЛИКОВАТЬ была скрыта (правок не было) — плавно превращаем саму кнопку ЗАКРЫТЬ в РЕДАКТИРОВАТЬ без пустоты
+      const publishWasHidden = getComputedStyle(actionBtn).display === 'none';
+      if (publishWasHidden) {
+        cancelEditBtn.style.transition = 'opacity 0.22s ease, transform 0.22s ease';
+        cancelEditBtn.style.opacity = '0';
+        cancelEditBtn.style.transform = 'scale(0.95)';
+        actionBtn.style.setProperty('display', 'inline-flex', 'important');
+        actionBtn.style.opacity = '0';
+        actionBtn.disabled = false;
+        actionBtn.textContent = 'РЕДАКТИРОВАТЬ';
+        requestAnimationFrame(() => {
+          actionBtn.style.transition = 'opacity 0.24s ease';
+          actionBtn.style.opacity = '1';
+        });
+      } else {
+        cancelEditBtn.classList.add('is-hiding');
+        actionBtn.classList.add('is-sliding-right');
+        if (shiftX > 0 && !editorHeader.classList.contains('is-fixed')) {
+          actionBtn.style.transform = `translateX(${shiftX}px)`;
+        }
+        actionBtn.classList.remove('is-saved');
+        actionBtn.textContent = 'РЕДАКТИРОВАТЬ';
       }
-      actionBtn.classList.remove('is-saved');
-      actionBtn.textContent = 'РЕДАКТИРОВАТЬ';
 
       savedBtnTimer = setTimeout(() => {
         savedBtnTimer = null;
         actionBtn.classList.remove('is-sliding-right');
         actionBtn.style.transform = '';
+        actionBtn.style.opacity = '';
+        actionBtn.style.transition = '';
         cancelEditBtn.classList.remove('is-hiding');
+        cancelEditBtn.style.opacity = '';
+        cancelEditBtn.style.transform = '';
+        cancelEditBtn.style.transition = '';
         titleSideLabel.classList.remove('is-hiding');
         storyEl.classList.remove('is-hiding-code-del');
         toolbarRow.classList.remove('is-collapsing');
@@ -3092,7 +3173,10 @@
         updateEditVisibility();
         updateViewsBadge();
         setStatus('');
-      }, 360);
+        if (keepY > 28) {
+          window.scrollTo({ top: keepY, behavior: 'instant' });
+        }
+      }, 280);
     }
 
     cancelEditBtn.addEventListener('click', () => {
@@ -3147,11 +3231,15 @@
         setEditable(true, inMiddle);
         actionBtn.textContent = 'ОПУБЛИКОВАТЬ';
         captureInitialSnapshot();
-        if (inMiddle) {
-          window.scrollTo({ top: savedScrollY, behavior: 'instant' });
-          requestAnimationFrame(() => {
-            window.scrollTo({ top: savedScrollY, behavior: 'instant' });
-          });
+                if (inMiddle) {
+          let frames = 0;
+          const lockScroll = () => {
+            if (window.scrollY !== savedScrollY) {
+              window.scrollTo({ top: savedScrollY, behavior: 'instant' });
+            }
+            if (++frames < 6) requestAnimationFrame(lockScroll);
+          };
+          lockScroll();
         }
 
         if (!inMiddle) {
