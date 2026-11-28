@@ -382,7 +382,17 @@
     .publish-btn .edit-pencil-icon {
       display: none;
     }
-       @keyframes editBtnSlideOut {
+        @keyframes editBtnFadeOnly {
+      from {
+        opacity: 0;
+        transform: scale(0.95);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+    @keyframes editBtnSlideOut {
       from {
         opacity: 0.7;
         transform: translateX(-140px);
@@ -392,6 +402,7 @@
         transform: translateX(0);
       }
     }
+
     @keyframes editBtnSlideIn {
       from {
         opacity: 0.7;
@@ -412,6 +423,9 @@
     }
     .toolbar-row.view-mode .publish-btn.is-slide-back {
       animation: editBtnSlideIn 0.36s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    .toolbar-row.view-mode .publish-btn.is-scrolled.is-appearing {
+      animation: editBtnFadeOnly 0.34s ease !important;
     }
 
     @media (max-width: 1180px) {
@@ -646,19 +660,35 @@
     }
     /* Блок кода / промпта: карточка с заголовком, превью в несколько строк и нижней панелью */
     #story .tg-code-block {
+      position: relative;
       margin: 18px 0;
       border-radius: 12px;
-      border: 1px solid var(--code-border);
+      border: 1.5px solid var(--code-border);
       background: var(--code-bg);
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
       transition: box-shadow 0.15s ease, border-color 0.15s ease;
     }
     html.dark #story .tg-code-block {
-      border-color: #464a54;
+      border-color: #4a4e58;
     }
     #story .tg-code-block.is-selected-block {
+      user-select: none !important;
       border-color: #1a73e8 !important;
-      box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.35);
+    }
+    #story .tg-code-block.is-selected-block * {
+      user-select: none !important;
+    }
+    #story .tg-code-block.is-selected-block *::selection {
+      background: transparent !important;
+    }
+    #story .tg-code-block.is-selected-block::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: 10.5px;
+      background: rgba(26, 115, 232, 0.28);
+      pointer-events: none;
+      z-index: 5;
     }
 
     .tg-code-head {
@@ -827,16 +857,17 @@
       opacity: 0;
       pointer-events: none;
     }
-    .tg-code-body {
+        .tg-code-body {
       position: relative;
       margin: 8px 10px 10px;
       border-radius: 10px;
-      border: 1px solid var(--code-border);
+      border: 1.5px solid var(--code-border);
       background: var(--code-inner-bg);
     }
     html.dark .tg-code-body {
-      border-color: #464a54;
+      border-color: #4a4e58;
     }
+
     #story .tg-code-block.is-collapsed .tg-code-body pre {
       max-height: 43px;
       padding-bottom: 6px;
@@ -1229,7 +1260,7 @@
             <a href="/" id="newPostLink" class="new-link">+ Новая запись</a>
             <a href="/blog" id="adminBlogLink" class="new-link">Блог</a>
           </div>
-          <span class="site-ver-badge">build v0.1.9</span>
+          <span class="site-ver-badge">build v0.2.0</span>
           <button id="themeBtn" class="theme-btn" type="button" title="Переключить тему">
             <svg class="icon-light" width="17" height="17" viewBox="0 0 24 24" fill="#f5b014" stroke="#e09c00" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
             <svg class="icon-dark" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#a5b4fc" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5a8.5 8.5 0 1 0 11 11z" fill="rgba(165, 180, 252, 0.2)"/><circle cx="17.5" cy="6.5" r="2" fill="#fcd34d" stroke="#fcd34d"/><path d="M14.5 8.2c2-.8 4.4-1.8 6-3.4" stroke="#fcd34d" stroke-width="1.3"/></svg>
@@ -1975,16 +2006,12 @@
 
           tagNode.style.color = applied;
           if (wrap) wrap.style.color = applied;
-          if (color === '#222222') {
-            colorBar.style.backgroundColor = 'transparent';
-            colorBar.style.backgroundImage = DEFAULT_RAINBOW;
-          } else {
-            colorBar.style.backgroundImage = 'none';
-            colorBar.style.backgroundColor = color;
-          }
-          colorPopover.classList.remove('open');
-          updatePublishState();
-          saveDraftToLocal();
+                  colorBar.style.backgroundColor = 'transparent';
+        colorBar.style.backgroundImage = DEFAULT_RAINBOW;
+        colorPopover.classList.remove('open');
+        updatePublishState();
+        saveDraftToLocal();
+
           return;
         }
         storyEl.focus();
@@ -1997,16 +2024,12 @@
           anchor.style.color = color === '#222222' ? '' : color;
         }
 
-        if (color === '#222222') {
-          colorBar.style.backgroundColor = 'transparent';
-          colorBar.style.backgroundImage = DEFAULT_RAINBOW;
-        } else {
-          colorBar.style.backgroundImage = 'none';
-          colorBar.style.backgroundColor = color;
-        }
+                colorBar.style.backgroundColor = 'transparent';
+        colorBar.style.backgroundImage = DEFAULT_RAINBOW;
         colorPopover.classList.remove('open');
         updatePublishState();
         saveDraftToLocal();
+
       });
     });
     function updateActiveFormatButtons() {
@@ -3546,7 +3569,6 @@
         storyEl.classList.remove('is-hiding-code-del');
         toolbarRow.classList.remove('is-collapsing');
         editorHeader.classList.remove('is-closing');
-
         isViewMode = true;
         if (!restoreInitial) captureInitialSnapshot();
         setEditable(false);
@@ -3559,7 +3581,10 @@
           if (Math.abs(diff) > 0.5) {
             window.scrollBy({ top: diff, behavior: 'instant' });
           }
+          actionBtn.classList.add('is-appearing');
+          setTimeout(() => actionBtn.classList.remove('is-appearing'), 360);
         }
+
       }, 280);
     }
 
