@@ -604,10 +604,14 @@
       display: inline-flex;
       opacity: 0.65;
     }
-    .tg-code-tag {
+        .tg-code-tag {
       outline: none;
       color: #34c759;
       min-width: 6px;
+    }
+    .tg-code-tag font[color],
+    .tg-code-tag span[style*="color"] {
+      color: inherit;
     }
     .tg-code-tag:empty::before {
       content: "подпись...";
@@ -615,16 +619,25 @@
       opacity: 0.7;
       pointer-events: none;
     }
-    .tg-code-dev-ver {
-      display: none;
+    .site-ver-badge {
+      position: fixed;
+      top: 6px;
+      right: 118px;
+      z-index: 94;
       font-size: 11px;
       font-weight: 600;
-      color: #58a6ff;
+      color: var(--muted);
+      opacity: 0.7;
+      pointer-events: none;
       user-select: none;
     }
-    body.is-admin-user .tg-code-dev-ver {
-      display: inline;
+    @media (max-width: 768px) {
+      .site-ver-badge {
+        position: static;
+        margin-right: 8px;
+      }
     }
+
     .tg-code-foot-right {
       display: flex;
       align-items: center;
@@ -1089,6 +1102,7 @@
             <a href="/" id="newPostLink" class="new-link">+ Новая запись</a>
             <a href="/blog" id="adminBlogLink" class="new-link">Блог</a>
           </div>
+            <span class="site-ver-badge">v1</span>
           <button id="themeBtn" class="theme-btn" type="button" title="Переключить тему">
             <svg class="icon-light" width="17" height="17" viewBox="0 0 24 24" fill="#f5b014" stroke="#e09c00" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
             <svg class="icon-dark" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#a5b4fc" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5a8.5 8.5 0 1 0 11 11z" fill="rgba(165, 180, 252, 0.2)"/><circle cx="17.5" cy="6.5" r="2" fill="#fcd34d" stroke="#fcd34d"/><path d="M14.5 8.2c2-.8 4.4-1.8 6-3.4" stroke="#fcd34d" stroke-width="1.3"/></svg>
@@ -1404,25 +1418,27 @@
         headerSpacer.style.display = 'none';
         return;
       }
-
-            const triggerY = 28;
+      const triggerY = 95;
       if (window.scrollY > triggerY) {
         if (!editorHeader.classList.contains('is-fixed')) {
-          headerSpacer.style.display = 'none';
-          editorHeader.classList.add('is-fixed', 'is-opening');
-          requestAnimationFrame(() => {
+          const fullH = editorHeader.offsetHeight;
+          headerSpacer.style.height = fullH + 'px';
+          headerSpacer.style.display = 'block';
+          if (animateOpen) {
+            editorHeader.classList.add('is-fixed', 'is-opening');
             requestAnimationFrame(() => {
-              editorHeader.classList.remove('is-opening');
+              requestAnimationFrame(() => {
+                editorHeader.classList.remove('is-opening');
+              });
             });
-          });
+          } else {
+            editorHeader.classList.add('is-fixed');
+          }
         }
-      }
-
-      else {
+      } else {
         editorHeader.classList.remove('is-fixed', 'is-opening');
         headerSpacer.style.display = 'none';
       }
-    }
 
     window.addEventListener('scroll', updateFixedHeader, { passive: true });
     window.addEventListener('resize', () => {
@@ -1627,14 +1643,9 @@
       if (tagWrapEl && tagTextEl) {
         tagWrapEl.classList.toggle('is-empty', !tagTextEl.textContent.trim());
       }
-      if (leftBox && !leftBox.querySelector('.tg-code-dev-ver')) {
-        const devVer = document.createElement('span');
-        devVer.className = 'tg-code-dev-ver';
-        devVer.textContent = '• v5';
-        const toggleEl = leftBox.querySelector('.tg-code-head-toggle');
-        if (toggleEl) leftBox.insertBefore(devVer, toggleEl);
-        else leftBox.appendChild(devVer);
-      }
+            const oldDevVer = leftBox?.querySelector('.tg-code-dev-ver');
+      if (oldDevVer) oldDevVer.remove();
+
       let foot = block.querySelector('.tg-code-foot');
       if (!foot) {
         foot = document.createElement('div');
@@ -1703,7 +1714,6 @@
           <div class="tg-code-head-left">
             <span class="tg-code-lang" contenteditable="true" spellcheck="false">code</span>
             <span class="tg-code-tag-wrap is-empty">• <span class="tg-code-tag" contenteditable="true" spellcheck="false"></span></span>
-            <span class="tg-code-dev-ver">• v5</span>
             <button type="button" class="tg-code-head-toggle" style="display:none;" title="Свернуть">▾</button>
           </div>
           <div class="tg-code-head-right">
@@ -1780,12 +1790,30 @@
       alignPopover.classList.remove('open');
       colorPopover.classList.toggle('open');
     });
-
     document.querySelectorAll('.color-swatch').forEach(swatch => {
       swatch.addEventListener('mousedown', e => e.preventDefault());
       swatch.addEventListener('click', e => {
         e.stopPropagation();
         const color = swatch.dataset.color;
+        const activeSel = window.getSelection();
+        const tagNode = activeSel?.anchorNode?.parentElement?.closest('.tg-code-tag') || activeSel?.focusNode?.parentElement?.closest('.tg-code-tag');
+        if (tagNode && storyEl.contains(tagNode)) {
+          const wrap = tagNode.closest('.tg-code-tag-wrap');
+          const applied = color === '#222222' ? '#34c759' : color;
+          tagNode.style.color = applied;
+          if (wrap) wrap.style.color = applied;
+          if (color === '#222222') {
+            colorBar.style.backgroundColor = 'transparent';
+            colorBar.style.backgroundImage = DEFAULT_RAINBOW;
+          } else {
+            colorBar.style.backgroundImage = 'none';
+            colorBar.style.backgroundColor = color;
+          }
+          colorPopover.classList.remove('open');
+          updatePublishState();
+          saveDraftToLocal();
+          return;
+        }
         storyEl.focus();
         document.execCommand('styleWithCSS', false, true);
         document.execCommand('foreColor', false, color);
@@ -3129,19 +3157,10 @@
       }
 
       // Если кнопка ОПУБЛИКОВАТЬ была скрыта (правок не было) — плавно превращаем саму кнопку ЗАКРЫТЬ в РЕДАКТИРОВАТЬ без пустоты
-      const publishWasHidden = getComputedStyle(actionBtn).display === 'none';
+           const publishWasHidden = getComputedStyle(actionBtn).display === 'none';
       if (publishWasHidden) {
-        cancelEditBtn.style.transition = 'opacity 0.22s ease, transform 0.22s ease';
+        cancelEditBtn.style.transition = 'opacity 0.24s ease';
         cancelEditBtn.style.opacity = '0';
-        cancelEditBtn.style.transform = 'scale(0.95)';
-        actionBtn.style.setProperty('display', 'inline-flex', 'important');
-        actionBtn.style.opacity = '0';
-        actionBtn.disabled = false;
-        actionBtn.textContent = 'РЕДАКТИРОВАТЬ';
-        requestAnimationFrame(() => {
-          actionBtn.style.transition = 'opacity 0.24s ease';
-          actionBtn.style.opacity = '1';
-        });
       } else {
         cancelEditBtn.classList.add('is-hiding');
         actionBtn.classList.add('is-sliding-right');
@@ -3221,7 +3240,7 @@
         const savedScrollY = window.scrollY;
         actionBtn.blur();
         isViewMode = false;
-        const inMiddle = savedScrollY > 28;
+        const inMiddle = savedScrollY > 95;
         if (!inMiddle) {
           toolbarRow.classList.add('is-collapsing');
           cancelEditBtn.classList.add('is-hiding');
