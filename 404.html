@@ -432,7 +432,13 @@
       gap: 4px;
       min-height: 28px;
     }
-    .tool-btn:hover { border-color: var(--text); color: var(--text); }
+        .tool-btn:hover { border-color: var(--text); color: var(--text); }
+    .tool-btn.active {
+      background: var(--text);
+      border-color: var(--text);
+      color: var(--bg);
+    }
+
 
     /* Выпадающее меню выравнивания */
     .align-wrap {
@@ -727,17 +733,16 @@
       opacity: 0;
       pointer-events: none;
     }
-
-        .tg-code-body {
+    .tg-code-body {
       position: relative;
-      margin: 4px 12px 8px;
+      margin: 4px 12px 10px;
       border-radius: 8px;
       border: 1px solid var(--code-border);
       background: var(--code-inner-bg);
+      overflow: hidden;
     }
     #story .tg-code-block.is-collapsed .tg-code-body {
       max-height: 58px;
-      overflow: hidden;
     }
     #story .tg-code-block.is-collapsed .tg-code-body::after {
       content: "";
@@ -745,10 +750,12 @@
       left: 0;
       right: 0;
       bottom: 0;
-      height: 22px;
+      height: 18px;
+      border-radius: 0 0 7px 7px;
       background: linear-gradient(to bottom, transparent, var(--code-inner-bg));
       pointer-events: none;
     }
+
     #story .tg-code-block pre {
       margin: 0;
       padding: 10px 14px;
@@ -1121,7 +1128,7 @@
             <a href="/" id="newPostLink" class="new-link">+ Новая запись</a>
             <a href="/blog" id="adminBlogLink" class="new-link">Блог</a>
           </div>
-          <span class="site-ver-badge">build v0.0.4</span>
+          <span class="site-ver-badge">build v0.0.5</span>
           <button id="themeBtn" class="theme-btn" type="button" title="Переключить тему">
             <svg class="icon-light" width="17" height="17" viewBox="0 0 24 24" fill="#f5b014" stroke="#e09c00" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
             <svg class="icon-dark" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#a5b4fc" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5a8.5 8.5 0 1 0 11 11z" fill="rgba(165, 180, 252, 0.2)"/><circle cx="17.5" cy="6.5" r="2" fill="#fcd34d" stroke="#fcd34d"/><path d="M14.5 8.2c2-.8 4.4-1.8 6-3.4" stroke="#fcd34d" stroke-width="1.3"/></svg>
@@ -1167,7 +1174,11 @@
             <button class="tool-btn" type="button" data-cmd="insertUnorderedList" title="Список">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
             </button>
+                       <button id="clearFormatBtn" class="tool-btn" type="button" title="Очистить форматирование">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7V4h16v3"/><path d="M9 20h6"/><path d="M13 4 8 20"/><line x1="16" y1="15" x2="21" y2="20"/><line x1="21" y1="15" x2="16" y2="20"/></svg>
+            </button>
             <button id="codeBtn" class="tool-btn" type="button" title="Вставить блок кода">&lt;/&gt;</button>
+
             <span class="tool-sep"></span>
             <div class="align-wrap" id="alignWrap">
               <button class="tool-btn" type="button" id="alignBtn" title="Выравнивание текста">
@@ -1281,8 +1292,10 @@
     });
 
     const themeBtn = document.getElementById('themeBtn');
-    const newPostLink = document.getElementById('newPostLink');
+       const newPostLink = document.getElementById('newPostLink');
+    const clearFormatBtn = document.getElementById('clearFormatBtn');
     const codeBtn = document.getElementById('codeBtn');
+
     const alignWrap = document.getElementById('alignWrap');
     const alignBtn = document.getElementById('alignBtn');
     const alignCurrentIcon = document.getElementById('alignCurrentIcon');
@@ -1869,6 +1882,72 @@
         updatePublishState();
         saveDraftToLocal();
       });
+    });
+    function updateActiveFormatButtons() {
+      if (!storyEl.isContentEditable) {
+        document.querySelectorAll('.tool-btn.active').forEach(b => b.classList.remove('active'));
+        return;
+      }
+      const sel = window.getSelection();
+      const node = sel && sel.rangeCount ? sel.anchorNode : null;
+      const insideStory = node && storyEl.contains(node);
+      const el = insideStory ? (node.nodeType === 3 ? node.parentElement : node) : null;
+
+      const boldBtn = document.querySelector('.tool-btn[data-cmd="bold"]');
+      const italicBtn = document.querySelector('.tool-btn[data-cmd="italic"]');
+      const strikeBtn = document.querySelector('.tool-btn[data-cmd="strikeThrough"]');
+      const listBtn = document.querySelector('.tool-btn[data-cmd="insertUnorderedList"]');
+      const hBtn = document.querySelector('.tool-btn[data-cmd="formatBlock"][data-arg="H3"]');
+      const quoteBtn = document.querySelector('.tool-btn[data-cmd="formatBlock"][data-arg="BLOCKQUOTE"]');
+
+      if (!insideStory) {
+        [boldBtn, italicBtn, strikeBtn, listBtn, hBtn, quoteBtn, linkBtn].forEach(b => b?.classList.remove('active'));
+        return;
+      }
+
+      try {
+        boldBtn?.classList.toggle('active', document.queryCommandState('bold'));
+        italicBtn?.classList.toggle('active', document.queryCommandState('italic'));
+        strikeBtn?.classList.toggle('active', document.queryCommandState('strikeThrough'));
+        listBtn?.classList.toggle('active', document.queryCommandState('insertUnorderedList'));
+      } catch (e) {}
+
+      hBtn?.classList.toggle('active', Boolean(el?.closest('h3')));
+      quoteBtn?.classList.toggle('active', Boolean(el?.closest('blockquote')));
+      linkBtn?.classList.toggle('active', Boolean(el?.closest('a')));
+    }
+
+    document.addEventListener('selectionchange', updateActiveFormatButtons);
+    storyEl.addEventListener('keyup', updateActiveFormatButtons);
+    storyEl.addEventListener('mouseup', updateActiveFormatButtons);
+
+    clearFormatBtn.addEventListener('mousedown', e => e.preventDefault());
+    clearFormatBtn.addEventListener('click', () => {
+      colorPopover.classList.remove('open');
+      alignPopover.classList.remove('open');
+      storyEl.focus();
+
+      const sel = window.getSelection();
+      if (!sel || !sel.rangeCount) return;
+
+      document.execCommand('removeFormat', false, null);
+      document.execCommand('unlink', false, null);
+
+      const node = sel.anchorNode;
+      const el = node?.nodeType === 3 ? node.parentElement : node;
+      const block = el?.closest('h3, blockquote');
+      if (block && storyEl.contains(block)) {
+        const p = document.createElement('p');
+        p.innerHTML = block.innerHTML || '<br>';
+        block.replaceWith(p);
+        placeCaretAtEnd(p);
+      }
+
+      colorBar.style.backgroundColor = 'transparent';
+      colorBar.style.backgroundImage = DEFAULT_RAINBOW;
+      updateActiveFormatButtons();
+      updatePublishState();
+      saveDraftToLocal();
     });
 
     document.addEventListener('click', e => {
