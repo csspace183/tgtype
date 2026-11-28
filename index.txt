@@ -3355,7 +3355,6 @@
         setStatus('Ошибка публикации: ' + e.message, 'error');
         updatePublishState();
       }
-
     });
   </script>
 </body>
