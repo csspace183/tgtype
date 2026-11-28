@@ -103,7 +103,7 @@
     html.dark .theme-btn .icon-light { display: none; }
     html:not(.dark) .theme-btn .icon-dark { display: none; }
 
-    .publish-btn {
+        .publish-btn {
       position: relative;
       overflow: hidden;
       z-index: 1;
@@ -116,7 +116,11 @@
       font-size: 12px;
       letter-spacing: 0.5px;
       cursor: pointer;
-      transition: color 0.25s ease, border-color 0.25s ease, background-color 0.25s ease, opacity 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      transition: color 0.35s ease, border-color 0.35s ease, background-color 0.25s ease, opacity 0.2s ease;
       white-space: nowrap;
       flex-shrink: 0;
     }
@@ -126,22 +130,38 @@
       inset: 0;
       background: #28a745;
       transform: scaleX(0);
-      transform-origin: left center;
-      transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+      transform-origin: right center;
+      transition: transform 0.48s cubic-bezier(0.22, 1, 0.36, 1);
       z-index: -1;
     }
-    .publish-btn:hover:not(:disabled):not(.is-saved) { background: var(--text); color: var(--bg); }
-    .publish-btn:disabled:not(.is-saved) { opacity: 0.35; cursor: default; }
-    .publish-btn.is-saving { opacity: 0.5; cursor: wait; }
+    .publish-btn:hover:not(:disabled):not(.is-saved):not(.is-saving) { background: var(--text); color: var(--bg); }
+    .publish-btn:disabled:not(.is-saved):not(.is-saving) { opacity: 0.35; cursor: default; }
+    .publish-btn.is-saving {
+      opacity: 1;
+      cursor: wait;
+      border-color: var(--text);
+      color: var(--text);
+    }
+    .btn-mini-spin {
+      width: 12px;
+      height: 12px;
+      border: 2px solid var(--border);
+      border-top-color: currentColor;
+      border-radius: 50%;
+      animation: tgSpin 0.65s linear infinite;
+      flex-shrink: 0;
+    }
     .publish-btn.is-saved {
       border-color: #28a745;
       color: #fff;
       opacity: 1;
       cursor: default;
     }
-        .publish-btn.is-saved::before {
+    .publish-btn.is-saved::before {
+      transform-origin: left center;
       transform: scaleX(1);
     }
+
     .publish-group {
       display: flex;
       align-items: center;
@@ -309,8 +329,9 @@
     @media (max-width: 960px) {
       .side-label { display: none; }
     }
-    #metaInfo { font-size: 14px; color: var(--muted); margin-bottom: 20px; min-height: 18px; }
-    #metaInfo.no-toolbar, #metaInfo.can-edit-btn { margin-bottom: 28px; }
+        #metaInfo { font-size: 14px; color: var(--muted); margin-bottom: 20px; min-height: 18px; }
+    #metaInfo.no-toolbar, #metaInfo.can-edit-btn { margin-bottom: 52px; }
+
 
     /* Строка с панелью инструментов и кнопкой ОПУБЛИКОВАТЬ вровень */
     .toolbar-row {
@@ -480,7 +501,10 @@
     }
     #story li:last-child { margin-bottom: 0; }
     #story img { max-width: 100%; height: auto; display: block; margin: 18px 0; border-radius: 4px; }
-    #story a { color: var(--link); text-decoration: underline; cursor: pointer; }
+        #story a { color: var(--link); text-decoration: underline; cursor: pointer; }
+    #story a font[color], #story a span[style*="color"], #story font[color] a, #story span[style*="color"] a {
+      color: inherit;
+    }
     html.dark #story [style*="color: rgb(34, 34, 34)"],
     html.dark #story [style*="color: rgb(0, 0, 0)"],
     html.dark #story [style*="color:#222"],
@@ -490,9 +514,9 @@
       color: var(--text) !important;
     }
 
-    /* Блок кода с автоподсветкой и нижней панелью как на скриншоте */
+    /* Блок кода / промпта: компактный свёрнутый вид со стрелкой и копированием в 1 клик */
     #story .tg-code-block {
-      margin: 18px 0;
+      margin: 14px 0;
       border-radius: 12px;
       border: 1px solid var(--code-border);
       background: var(--code-bg);
@@ -503,28 +527,80 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 10px 16px 4px;
+      gap: 10px;
+      padding: 10px 14px;
       background: var(--code-header);
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       font-size: 13px;
-      font-weight: 600;
       color: var(--text);
+      cursor: pointer;
       user-select: none;
+    }
+    .tg-code-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+      flex: 1;
+    }
+    .tg-code-arrow {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 18px;
+      height: 18px;
+      color: var(--muted);
+      transition: transform 0.2s ease, color 0.15s ease;
+      flex-shrink: 0;
+    }
+    .tg-code-block:not(.is-collapsed) .tg-code-arrow {
+      transform: rotate(90deg);
+      color: var(--text);
+    }
+    .tg-code-lang {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      color: var(--muted);
+      flex-shrink: 0;
+    }
+    .tg-code-preview {
+      font-size: 13px;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      opacity: 0.85;
+    }
+    .tg-code-block:not(.is-collapsed) .tg-code-preview {
+      display: none;
+    }
+    .tg-code-head-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
     }
     .tg-code-del {
       background: none;
       color: var(--muted);
       border: 1px solid var(--code-border);
       border-radius: 6px;
-      padding: 2px 8px;
+      padding: 3px 8px;
       font-size: 11px;
       cursor: pointer;
     }
     .tg-code-del:hover { border-color: #d9534f; color: #d9534f; }
     #story[contenteditable="false"] .tg-code-del { display: none; }
+    #story .tg-code-block.is-collapsed pre,
+    #story .tg-code-block.is-collapsed .tg-code-foot {
+      display: none;
+    }
     #story .tg-code-block pre {
       margin: 0;
-      padding: 8px 16px 14px;
+      padding: 10px 16px 14px;
+      border-top: 1px solid var(--code-border);
       overflow-x: auto;
       font-size: 13.5px;
       line-height: 1.55;
@@ -541,7 +617,7 @@
       outline: none;
     }
     #story .tg-code-block code:empty::before {
-      content: "Вставьте или введите код / текст...";
+      content: "Вставьте или введите код / промпт...";
       color: var(--subtle);
       pointer-events: none;
     }
@@ -549,29 +625,30 @@
       display: flex;
       justify-content: flex-end;
       align-items: center;
-      padding: 8px 14px;
+      padding: 7px 14px;
       border-top: 1px solid var(--code-border);
       background: var(--code-bg);
       user-select: none;
     }
     .tg-code-copy {
-      background: none;
+      background: var(--bg);
       color: var(--muted);
-      border: none;
+      border: 1px solid var(--code-border);
       border-radius: 6px;
-      padding: 4px 8px;
-      font-size: 12px;
+      padding: 3px 9px;
+      font-size: 11.5px;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
       gap: 5px;
-      transition: color 0.15s ease, background-color 0.15s ease;
+      transition: color 0.15s ease, border-color 0.15s ease;
     }
     .tg-code-copy:hover {
       color: var(--text);
-      background: var(--hover-bg);
+      border-color: var(--text);
     }
+
     .hl-kw { color: var(--hl-kw); font-weight: 600; }
     .hl-str { color: var(--hl-str); }
     .hl-com { color: var(--hl-com); font-style: italic; }
@@ -1335,22 +1412,45 @@
       sel.addRange(range);
     }
 
+     function updateCodeBlockPreview(block, rawText) {
+      if (!block) return;
+      let previewEl = block.querySelector('.tg-code-preview');
+      if (!previewEl) {
+        const left = block.querySelector('.tg-code-left') || block.querySelector('.tg-code-head');
+        if (left) {
+          previewEl = document.createElement('span');
+          previewEl.className = 'tg-code-preview';
+          left.appendChild(previewEl);
+        }
+      }
+      if (previewEl) {
+        const firstLine = (rawText || '').split(/\r?\n/).map(s => s.trim()).find(Boolean) || 'Пустой блок';
+        previewEl.textContent = firstLine;
+      }
+    }
+
     function applyCodeHighlight(codeEl, preserveCaret = false) {
       if (!codeEl) return;
       const caretPos = preserveCaret ? getCaretOffsetIn(codeEl) : null;
       const raw = codeEl.textContent || '';
       codeEl.innerHTML = raw ? highlightCodeText(raw) : '';
-      const langLabel = codeEl.closest('.tg-code-block')?.querySelector('.tg-code-lang');
+      const block = codeEl.closest('.tg-code-block');
+      const langLabel = block?.querySelector('.tg-code-lang');
       if (langLabel) {
         langLabel.textContent = detectCodeLanguage(raw);
       }
+      updateCodeBlockPreview(block, raw);
       if (preserveCaret && caretPos !== null) {
         setCaretOffsetIn(codeEl, caretPos);
       }
     }
 
-    function refreshAllCodeBlocks() {
-      storyEl.querySelectorAll('.tg-code-block code').forEach(c => applyCodeHighlight(c, false));
+    function refreshAllCodeBlocks(collapseAll = false) {
+      storyEl.querySelectorAll('.tg-code-block').forEach(block => {
+        const code = block.querySelector('code');
+        if (code) applyCodeHighlight(code, false);
+        if (collapseAll) block.classList.add('is-collapsed');
+      });
     }
 
     function syncCodeEditableState() {
@@ -1369,13 +1469,20 @@
       block.className = 'tg-code-block';
       block.setAttribute('contenteditable', 'false');
       block.innerHTML = `
-        <div class="tg-code-head">
-          <span class="tg-code-lang">code</span>
-          <button type="button" class="tg-code-del" title="Удалить блок">✕</button>
+        <div class="tg-code-head" title="Нажмите, чтобы свернуть или развернуть">
+          <div class="tg-code-left">
+            <span class="tg-code-arrow">▸</span>
+            <span class="tg-code-lang">code</span>
+            <span class="tg-code-preview">Пустой блок</span>
+          </div>
+          <div class="tg-code-head-actions">
+            <button type="button" class="tg-code-copy" title="Скопировать">${COPY_ICON_SVG}<span>Копировать</span></button>
+            <button type="button" class="tg-code-del" title="Удалить блок">✕</button>
+          </div>
         </div>
         <pre><code contenteditable="true" spellcheck="false"></code></pre>
         <div class="tg-code-foot">
-          <button type="button" class="tg-code-copy" title="Скопировать код">${COPY_ICON_SVG}</button>
+          <button type="button" class="tg-code-copy" title="Скопировать">${COPY_ICON_SVG}<span>Копировать</span></button>
         </div>
       `;
 
@@ -1447,6 +1554,12 @@
         document.execCommand('styleWithCSS', false, true);
         document.execCommand('foreColor', false, color);
         document.execCommand('styleWithCSS', false, false);
+        const sel = window.getSelection();
+        const anchor = sel?.anchorNode?.parentElement?.closest('a') || sel?.focusNode?.parentElement?.closest('a');
+        if (anchor && storyEl.contains(anchor)) {
+          anchor.style.color = color === '#222222' ? '' : color;
+        }
+
         if (color === '#222222') {
           colorBar.style.backgroundColor = 'transparent';
           colorBar.style.backgroundImage = DEFAULT_RAINBOW;
@@ -1750,16 +1863,36 @@
         return;
       }
 
-      const copyCodeBtn = e.target.closest('.tg-code-copy');
+           const copyCodeBtn = e.target.closest('.tg-code-copy');
       if (copyCodeBtn && storyEl.contains(copyCodeBtn)) {
         e.preventDefault();
         e.stopPropagation();
-        const codeText = copyCodeBtn.closest('.tg-code-block')?.querySelector('code')?.textContent || '';
+        const block = copyCodeBtn.closest('.tg-code-block');
+        const codeText = block?.querySelector('code')?.textContent || '';
         navigator.clipboard?.writeText(codeText);
-        copyCodeBtn.innerHTML = `${COPY_ICON_SVG}<span>Скопировано!</span>`;
-        setTimeout(() => { copyCodeBtn.innerHTML = COPY_ICON_SVG; }, 1500);
+        block.querySelectorAll('.tg-code-copy').forEach(btn => {
+          btn.innerHTML = `${COPY_ICON_SVG}<span>Скопировано!</span>`;
+        });
+        setTimeout(() => {
+          block.querySelectorAll('.tg-code-copy').forEach(btn => {
+            btn.innerHTML = `${COPY_ICON_SVG}<span>Копировать</span>`;
+          });
+        }, 1500);
+        return;
+      }
+
+      const codeHead = e.target.closest('.tg-code-head');
+      if (codeHead && storyEl.contains(codeHead)) {
+        e.preventDefault();
+        e.stopPropagation();
+        const block = codeHead.closest('.tg-code-block');
+        block.classList.toggle('is-collapsed');
+        if (!block.classList.contains('is-collapsed') && storyEl.isContentEditable) {
+          block.querySelector('code')?.focus();
+        }
       }
     });
+
 
     storyEl.addEventListener('keydown', e => {
       const activeCode = e.target.closest('.tg-code-block code');
@@ -2627,10 +2760,11 @@
           toolbarRow.style.display = '';
           storyEl.style.display = '';
 
-          titleEl.innerHTML = data.title || '';
+                    titleEl.innerHTML = data.title || '';
           storyEl.innerHTML = data.story || '';
-          refreshAllCodeBlocks();
+          refreshAllCodeBlocks(true);
           syncCodeEditableState();
+
           currentArticleViews = Number(data.views) || 0;
           currentArticleViewsLog = Array.isArray(data.viewsLog) ? data.viewsLog : [];
 
@@ -2737,10 +2871,12 @@
         return;
       }
 
-      refreshAllCodeBlocks();
+      refreshAllCodeBlocks(true);
       actionBtn.disabled = true;
       actionBtn.classList.add('is-saving');
-      setStatus('Публикация...');
+      actionBtn.innerHTML = '<span class="btn-mini-spin"></span><span>СОХРАНЕНИЕ...</span>';
+      setStatus('');
+
 
       try {
         let targetSlug = currentSlug;
@@ -2786,28 +2922,33 @@
         document.title = titleText;
         setStatus('');
 
-        // Сначала красиво заливаем кнопку зелёным прямо на её месте в тулбаре
+                // 1. Заливаем кнопку зелёным слева направо с галочкой
         actionBtn.classList.remove('is-saving');
         actionBtn.disabled = false;
-        actionBtn.textContent = 'СОХРАНЕНО';
+        actionBtn.textContent = '✓ СОХРАНЕНО';
         actionBtn.classList.add('is-saved');
 
         if (savedBtnTimer) clearTimeout(savedBtnTimer);
         savedBtnTimer = setTimeout(() => {
-          savedBtnTimer = null;
+          // 2. Зелёная шторка плавно уезжает вправо, а кнопка на том же месте переходит в РЕДАКТИРОВАТЬ
           actionBtn.classList.remove('is-saved');
-          isViewMode = true;
-          captureInitialSnapshot();
-          setEditable(false);
           actionBtn.textContent = 'РЕДАКТИРОВАТЬ';
-          updateEditVisibility();
-          updateViewsBadge();
-        }, 1500);
+          savedBtnTimer = setTimeout(() => {
+            savedBtnTimer = null;
+            isViewMode = true;
+            captureInitialSnapshot();
+            setEditable(false);
+            updateEditVisibility();
+            updateViewsBadge();
+          }, 420);
+        }, 1250);
       } catch (e) {
         actionBtn.classList.remove('is-saving');
+        actionBtn.textContent = 'ОПУБЛИКОВАТЬ';
         setStatus('Ошибка публикации: ' + e.message, 'error');
         updatePublishState();
       }
+
     });
   </script>
 </body>
