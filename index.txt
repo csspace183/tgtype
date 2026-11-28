@@ -146,6 +146,7 @@
     .editor-header.is-fixed .side-label {
       font-size: 18px;
     }
+
     .title-wrap {
       position: relative;
       margin-bottom: 10px;
@@ -180,7 +181,6 @@
     }
     #metaInfo { font-size: 14px; color: #888; margin-bottom: 20px; min-height: 18px; }
     #metaInfo.no-toolbar, #metaInfo.can-edit-btn { margin-bottom: 28px; }
-
     /* Строка с панелью инструментов и кнопкой ОПУБЛИКОВАТЬ вровень */
     .toolbar-row {
       display: flex;
@@ -305,6 +305,7 @@
     #story li:last-child { margin-bottom: 0; }
     #story img { max-width: 100%; height: auto; display: block; margin: 18px 0; border-radius: 4px; }
     #story a { color: #0066cc; text-decoration: underline; cursor: pointer; }
+
     /* Встроенный плеер */
     #story .tg-ymusic-embed {
       position: relative;
@@ -394,7 +395,7 @@
     .post-info a { font-family: Georgia, serif; font-size: 20px; font-weight: 700; color: #222; text-decoration: none; }
     .post-info a:hover { color: #0066cc; }
     .post-meta { font-size: 12px; color: #888; margin-top: 4px; }
-        .blog-views-link {
+    .blog-views-link {
       display: inline-flex;
       align-items: center;
       gap: 4px;
@@ -413,7 +414,6 @@
       border-color: #222;
       color: #222;
     }
-
     .post-actions { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; flex-shrink: 0; }
     .mini-btn {
       background: #fff; border: 1px solid #ddd; border-radius: 15px;
@@ -441,8 +441,8 @@
       font-size: 12px;
       font-weight: 600;
       cursor: pointer;
-      border: 1px solid #d5e8d8;
-      background: #f2fbf4;
+      border: 1px solid #b7e4c7;
+      background: #ebfbee;
       color: #1e7e34;
       transition: all 0.18s ease;
       white-space: nowrap;
@@ -454,13 +454,13 @@
       margin-left: 2px;
     }
     .access-pill.is-private {
-      border-color: #e2e2e2;
-      background: #f4f4f4;
-      color: #444;
+      border-color: #ffc9c9;
+      background: #fff5f5;
+      color: #c92a2a;
     }
     .access-pill.is-private:hover {
-      border-color: #222;
-      color: #222;
+      border-color: #c92a2a;
+      color: #a61e1e;
     }
     .access-dropdown {
       display: none;
@@ -524,6 +524,7 @@
       text-align: center;
       flex-shrink: 0;
     }
+
     /* Всплывающая плашка ввода ссылки */
     .link-popover {
       display: none;
@@ -788,6 +789,7 @@
     let savedLinkRange = null;
     let savedBtnTimer = null;
     let logoutMsgTimer = null;
+    let isManualLogout = false;
 
     const pathSlug = window.location.pathname.replace(/^\/+|\/+$/g, '');
     let currentSlug = pathSlug;
@@ -833,7 +835,6 @@
     }
 
     captureInitialSnapshot();
-
     function updateFixedHeader() {
       if (!editorHeader.classList.contains('is-editing')) {
         editorHeader.classList.remove('is-fixed');
@@ -874,7 +875,8 @@
       updatePublishState();
     });
     metaInfoEl.addEventListener('input', updatePublishState);
- function formatRuDate(timestamp) {
+
+    function formatRuDate(timestamp) {
       if (!timestamp) return '—';
       return new Date(timestamp).toLocaleString('ru-RU', {
         day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
@@ -1039,7 +1041,6 @@
         updatePublishState();
       });
     });
-
     function hideLinkPopover() {
       linkPopover.style.display = 'none';
       linkUrlInput.value = '';
@@ -1112,7 +1113,8 @@
     });
 
     closeLinkPopover.addEventListener('click', hideLinkPopover);
- photoBtn.addEventListener('click', () => {
+
+    photoBtn.addEventListener('click', () => {
       colorPopover.classList.remove('open');
       fileInput.click();
     });
@@ -1246,7 +1248,6 @@
         }
       }
     });
-
     storyEl.addEventListener('beforeinput', e => {
       if (e.defaultPrevented) return;
       if (e.inputType === 'insertParagraph' || e.inputType === 'insertLineBreak') {
@@ -1297,7 +1298,8 @@
       updateTitleSideLabel();
       updatePublishState();
     });
-function sanitizePastedHtml(rawHtml) {
+
+    function sanitizePastedHtml(rawHtml) {
       const doc = new DOMParser().parseFromString(rawHtml, 'text/html');
       const allowedTags = new Set([
         'P', 'BR', 'B', 'STRONG', 'I', 'EM', 'U', 'S', 'STRIKE', 'DEL',
@@ -1433,7 +1435,6 @@ function sanitizePastedHtml(rawHtml) {
       };
       reader.readAsDataURL(file);
     }
-
     let db = null;
     let auth = null;
 
@@ -1473,6 +1474,7 @@ function sanitizePastedHtml(rawHtml) {
 
       viewsModal.style.display = 'flex';
     }
+
     viewsBadge.addEventListener('click', () => {
       if (currentUser && isAdmin(currentUser)) {
         openViewsModal();
@@ -1531,6 +1533,7 @@ function sanitizePastedHtml(rawHtml) {
           const login = getLoginName(user);
 
           if (user) {
+            isManualLogout = false;
             if (logoutMsgTimer) {
               clearTimeout(logoutMsgTimer);
               logoutMsgTimer = null;
@@ -1553,7 +1556,8 @@ function sanitizePastedHtml(rawHtml) {
           }
 
           if (pathSlug === 'blog') {
-            loadBlogPage();
+            loadBlogPage(isManualLogout);
+            isManualLogout = false;
           } else if (isViewMode && currentSlug) {
             trackArticleView(currentSlug);
           }
@@ -1614,15 +1618,16 @@ function sanitizePastedHtml(rawHtml) {
 
     authBtn.addEventListener('click', async () => {
       if (currentUser) {
-        await auth.signOut();
-        authBtn.textContent = 'Вы вышли из аккаунта';
+        isManualLogout = true;
         if (logoutMsgTimer) clearTimeout(logoutMsgTimer);
+        authBtn.textContent = 'Вы вышли из системы';
         logoutMsgTimer = setTimeout(() => {
           logoutMsgTimer = null;
           if (!currentUser) {
             authBtn.textContent = 'Войти';
           }
         }, 2200);
+        await auth.signOut();
       } else {
         if (logoutMsgTimer) {
           clearTimeout(logoutMsgTimer);
@@ -1740,7 +1745,7 @@ function sanitizePastedHtml(rawHtml) {
       metaInfoEl.classList.toggle('can-edit-btn', canEdit);
     }
 
-    async function loadBlogPage() {
+    async function loadBlogPage(skipAutoModal = false) {
       metaInfoEl.style.display = 'none';
       toolbarRow.style.display = 'none';
       storyEl.style.display = 'none';
@@ -1757,9 +1762,13 @@ function sanitizePastedHtml(rawHtml) {
         hideLoader();
         titleEl.textContent = 'Мои публикации';
         document.title = 'Мои публикации — tgtype';
-        setStatus('Войдите в аккаунт, чтобы увидеть свои публикации.', 'error');
-        setAuthMode(false);
-        authModal.style.display = 'flex';
+        if (skipAutoModal) {
+          setStatus('Вы вышли из системы.');
+        } else {
+          setStatus('Войдите в аккаунт, чтобы увидеть свои публикации.', 'error');
+          setAuthMode(false);
+          authModal.style.display = 'flex';
+        }
         return;
       }
 
@@ -2042,6 +2051,9 @@ function sanitizePastedHtml(rawHtml) {
           if (data.customMeta !== undefined) {
             metaInfoEl.textContent = data.customMeta;
           } else {
+          if (data.customMeta !== undefined) {
+            metaInfoEl.textContent = data.customMeta;
+          } else {
             const rawAuthor = Array.isArray(data.ownerLogin) ? data.ownerLogin.at(0) : (data.ownerLogin || '');
             const authorDisplay = rawAuthor || (data.author ? data.author.replace(/<[^>]*>/g, '').trim() : '');
             renderMeta(authorDisplay, data.updatedAt);
@@ -2169,14 +2181,9 @@ function sanitizePastedHtml(rawHtml) {
         currentSlug = targetSlug;
         window.history.pushState({}, '', '/' + targetSlug);
         document.title = titleText;
-        isViewMode = true;
-        captureInitialSnapshot();
-        setEditable(false);
-        updateEditVisibility();
-        updateViewsBadge();
         setStatus('');
 
-        // Красивая заливка зелёным и надпись СОХРАНЕНО
+        // Сначала красиво заливаем кнопку зелёным прямо на её месте в тулбаре
         actionBtn.classList.remove('is-saving');
         actionBtn.disabled = false;
         actionBtn.textContent = 'СОХРАНЕНО';
@@ -2186,9 +2193,13 @@ function sanitizePastedHtml(rawHtml) {
         savedBtnTimer = setTimeout(() => {
           savedBtnTimer = null;
           actionBtn.classList.remove('is-saved');
+          isViewMode = true;
+          captureInitialSnapshot();
+          setEditable(false);
           actionBtn.textContent = 'РЕДАКТИРОВАТЬ';
-          updatePublishState();
-        }, 1800);
+          updateEditVisibility();
+          updateViewsBadge();
+        }, 1500);
       } catch (e) {
         actionBtn.classList.remove('is-saving');
         setStatus('Ошибка публикации: ' + e.message, 'error');
@@ -2198,6 +2209,30 @@ function sanitizePastedHtml(rawHtml) {
   </script>
 </body>
 </html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
