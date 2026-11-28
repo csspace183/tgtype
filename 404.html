@@ -76,11 +76,11 @@
     .new-link { font-size: 13px; color: var(--subtle); text-decoration: none; }
     .new-link:hover { color: var(--text); }
 
-       /* Кнопка переключения темы по правому краю колонки текста */
+          /* Кнопка переключения темы в правом поле экрана (вне колонки текста) */
     .theme-btn {
       position: fixed;
-      top: 34px;
-      right: max(20px, calc(50% - 365px));
+      top: 24px;
+      right: 28px;
       z-index: 95;
       width: 34px;
       height: 34px;
@@ -95,9 +95,7 @@
       padding: 0;
       transition: transform 0.15s ease, border-color 0.15s ease, background-color 0.2s ease;
     }
-    .theme-btn.is-scrolled {
-      top: 16px;
-    }
+
     .theme-btn:hover {
       border-color: var(--text);
       transform: scale(1.06);
@@ -267,20 +265,19 @@
       min-height: 0;
       margin: 0;
     }
-        .toolbar-row.view-mode .publish-btn {
+           .toolbar-row.view-mode .publish-btn {
       position: absolute;
       right: 0;
       bottom: 22px;
     }
     .toolbar-row.view-mode .publish-btn.is-scrolled {
       position: fixed;
-      top: 16px;
+      top: 25px;
       bottom: auto;
-      right: max(64px, calc(50% - 321px));
+      right: 74px;
       z-index: 94;
       box-shadow: 0 2px 10px var(--shadow);
     }
-
     .toolbar-row.hidden { display: none; }
     .toolbar {
       display: flex;
@@ -1216,8 +1213,8 @@
       };
 
       html = html.replace(/(\/\/[^\n]*|\/\*[\s\S]*?\*\/|#[^\n]*)/g, m => saveTok('hl-com', m));
-      html = html.replace(/(&quot;[^&\n]*?&quot;|'[^'\n]*?'|`[^`]*?`)/g, m => saveTok('hl-str', m));
       html = html.replace(/(&lt;\/?[a-zA-Z0-9-]+(?:\s+[^&]*?)?\/?&gt;)/g, m => saveTok('hl-tag', m));
+      html = html.replace(/(&quot;[^&\n]*?&quot;|'[^'\n]*?'|`[^`]*?`)/g, m => saveTok('hl-str', m));
       html = html.replace(/\b(const|let|var|function|return|if|else|for|while|async|await|try|catch|finally|class|import|from|export|default|new|true|false|null|undefined|def|print|elif|None|True|False)\b/g, '<span class="hl-kw">$1</span>');
       html = html.replace(/\b(\d+(?:\.\d+)?)\b/g, '<span class="hl-num">$1</span>');
 
