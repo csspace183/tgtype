@@ -381,12 +381,13 @@
         transform: translateY(0);
       }
     }
-    .toolbar-row.view-mode .publish-btn {
+        .toolbar-row.view-mode .publish-btn {
       position: absolute;
       right: 0;
-      bottom: 22px;
+      bottom: 18px;
       transition: opacity 0.3s ease, transform 0.3s ease, background-color 0.25s ease, color 0.25s ease;
     }
+
     .toolbar-row.view-mode .publish-btn.is-scrolled {
       position: fixed;
       top: 25px;
@@ -559,12 +560,14 @@
       overflow: hidden;
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
     }
-    .tg-code-head {
+        .tg-code-head {
       display: flex;
       justify-content: space-between;
       align-items: center;
       gap: 10px;
-      padding: 10px 14px;
+      height: 40px;
+      box-sizing: border-box;
+      padding: 0 14px;
       background: var(--code-header);
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       font-size: 13px;
@@ -572,6 +575,7 @@
       cursor: pointer;
       user-select: none;
     }
+
     .tg-code-left {
       display: flex;
       align-items: center;
@@ -1455,18 +1459,41 @@
       sel.removeAllRanges();
       sel.addRange(range);
     }
-
-     function updateCodeBlockPreview(block, rawText) {
+    function normalizeCodeBlockStructure(block) {
       if (!block) return;
-      let previewEl = block.querySelector('.tg-code-preview');
-      if (!previewEl) {
-        const left = block.querySelector('.tg-code-left') || block.querySelector('.tg-code-head');
-        if (left) {
-          previewEl = document.createElement('span');
-          previewEl.className = 'tg-code-preview';
-          left.appendChild(previewEl);
+      const head = block.querySelector('.tg-code-head');
+      if (!head) return;
+      if (!head.querySelector('.tg-code-left')) {
+        const lang = head.querySelector('.tg-code-lang');
+        const copyBtn = head.querySelector('.tg-code-copy');
+        const delBtn = head.querySelector('.tg-code-del');
+
+        const left = document.createElement('div');
+        left.className = 'tg-code-left';
+        left.innerHTML = '<span class="tg-code-arrow">▸</span>';
+        if (lang) left.appendChild(lang);
+        const prev = document.createElement('span');
+        prev.className = 'tg-code-preview';
+        left.appendChild(prev);
+
+        const actions = document.createElement('div');
+        actions.className = 'tg-code-head-actions';
+        if (copyBtn) {
+          copyBtn.innerHTML = `${COPY_ICON_SVG}<span>Копировать</span>`;
+          actions.appendChild(copyBtn);
         }
+        if (delBtn) actions.appendChild(delBtn);
+
+        head.innerHTML = '';
+        head.appendChild(left);
+        head.appendChild(actions);
       }
+    }
+
+    function updateCodeBlockPreview(block, rawText) {
+      if (!block) return;
+      normalizeCodeBlockStructure(block);
+      const previewEl = block.querySelector('.tg-code-preview');
       if (previewEl) {
         const firstLine = (rawText || '').split(/\r?\n/).map(s => s.trim()).find(Boolean) || 'Пустой блок';
         previewEl.textContent = firstLine;
@@ -2921,7 +2948,7 @@
         alert('Введите заголовок!');
         return;
       }
-            refreshAllCodeBlocks(true);
+            refreshAllCodeBlocks(false);
       actionBtn.disabled = true;
       actionBtn.classList.add('is-saving');
       actionBtn.textContent = 'СОХРАНЕНИЕ...';
